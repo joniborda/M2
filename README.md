@@ -1,4 +1,4 @@
-# M2 - Sistema de Riego
+# M2 - SmartGarden
 
 ## Integrantes:
   Borda, Jonathan Matias  36274686 jonathanmatiasborda@gmail.com <br />
