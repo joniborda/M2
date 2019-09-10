@@ -57,7 +57,17 @@ Proyecto de la materia Sistemas Operativos Avanzados.
     •Pantalla lcd para monitoreo real del estado del terreno.
     •2 relé para encender y apagar las luces led que simulan a los aspersores.
     •Reloj RTC para programar los riegos.
-
+  
+  ## Diagrama de bloques
+  
+  ## Diagrama Funcional
+  ![](Sistema-Embebido/diagramas/diagrama-funcional.png)
+  ## Diagrama Físico
+  
+  ## Diagrama Software
+  
+  ## Diagrama lógico
+  
 # Firmware:
   
 # Descripción de la Aplicación Android:
