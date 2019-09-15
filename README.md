@@ -45,7 +45,6 @@ Proyecto de la materia Sistemas Operativos Avanzados.
     Sensor de humedad de suelo
     Sensor de humedad y temperatura ambiental
     Sensor de intensidad de luz
-    Reloj RTC
     
   ## Elementos a utilizar - ¿Qué función cumplen en el sistema?
     •Arduino uno
@@ -53,10 +52,9 @@ Proyecto de la materia Sistemas Operativos Avanzados.
     •2 sensores de humedad de suelo FC-28, 2 sensores de temperatura DHT11 y 2 sensores de intensidad de luz ldr para medir
     las variables a tener en cuenta a la hora de tomar una decisión respecto al riego del parque.
     •2 luces led roja para simular el riego de los aspersores, variando su intensidad según caudal de agua.
-    •2 luces led neutrales para la iluminación del parque en horarios nocturnos.
+    •1 luz led neutral para la iluminación del parque en horarios nocturnos.
     •Pantalla lcd para monitoreo real del estado del terreno.
-    •2 relé para encender y apagar las luces led que simulan a los aspersores.
-    •Reloj RTC para programar los riegos.
+    •1 relé para encender y apagar la luz led de ilumincación
   
   ## Diagrama de bloques
   
