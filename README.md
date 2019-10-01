@@ -56,8 +56,6 @@ Proyecto de la materia Sistemas Operativos Avanzados.
     •Pantalla lcd para monitoreo real del estado del terreno.
     •1 relé para encender y apagar la luz led de ilumincación
   
-  ## Diagrama de bloques
-  
   ## Diagrama Funcional
   ![](Sistema-Embebido/diagramas/diagrama-funcional.png)
   ## Diagrama Físico
