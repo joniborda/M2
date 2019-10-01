@@ -37,9 +37,7 @@ Proyecto de la materia Sistemas Operativos Avanzados.
 # Descripcion de partes:
 
   ## Actuadores
-    Luces led
-    Display LCD
-    Relé
+    Luces led (salidas analógicas)
     
   ## Sensores
     Sensor de humedad de suelo
@@ -51,10 +49,9 @@ Proyecto de la materia Sistemas Operativos Avanzados.
     •Dispositivo Bluetooth HC-05 para la comunicación entre el sistema embebido y la aplicación móvil.
     •2 sensores de humedad de suelo FC-28, 2 sensores de temperatura DHT11 y 2 sensores de intensidad de luz ldr para medir
     las variables a tener en cuenta a la hora de tomar una decisión respecto al riego del parque.
-    •2 luces led roja para simular el riego de los aspersores, variando su intensidad según caudal de agua.
-    •1 luz led neutral para la iluminación del parque en horarios nocturnos.
-    •Pantalla lcd para monitoreo real del estado del terreno.
-    •1 relé para encender y apagar la luz led de ilumincación
+    •2 luces led para simular el riego de los aspersores, variando su intensidad según caudal de agua.
+    •2 luces led para la iluminación del parque en horarios nocturnos.
+    •1 Pantalla lcd para monitoreo real del estado del terreno.
   
   ## Diagrama Funcional
   ![](Sistema-Embebido/diagramas/diagrama-funcional.png)
