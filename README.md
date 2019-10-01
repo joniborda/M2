@@ -58,7 +58,7 @@ Proyecto de la materia Sistemas Operativos Avanzados.
   ## Diagrama Físico
   ![](Sistema-Embebido/diagramas/diagrama-fisico.png)
   ## Diagrama Software
-  
+  ![](Sistema-Embebido/diagramas/diagrama-software.png)
   ## Diagrama lógico
   
 # Firmware:
