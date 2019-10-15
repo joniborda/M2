@@ -11,7 +11,7 @@ const int INST_SENSOR = 1; // instruccion para censar
 const int INST_IRRIGATE = 2; // instruccion para regar
 
 // milisegundos para comenzar censor
-const unsigned long INTERVAL_TO_SENSOR = 100*60; 
+const unsigned long MS_INTERVAL_TO_SENSOR = 4000; // 4 segundos
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
@@ -50,17 +50,13 @@ void setup() {
 
 void loop() {
 
-  /*currentMillis = millis();
-  if ((unsigned long)(currentMillis - previousMillis) >= INTERVAL_TO_SENSOR) {
- 	// to do anything
-  
+  currentMillis = millis();
+  if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_SENSOR) {
+    Serial.println("envio orden a esclavo");
+    serialSlave.write(INST_SENSOR);
     previousMillis = millis();
-  }*/
-  delay(4000);
-  Serial.println("envio orden a esclavo");
-  serialSlave.write(INST_SENSOR);
+  }
 
-  delay(4000);
   Serial.println("leerEsclavo");
   leerEsclavo();
 
@@ -68,9 +64,7 @@ void loop() {
 }
 
 void leerEsclavo() {
-  //if (serialSlave.available() > 0 ) {
-  	// leyendo lo que me envia el esclavo
-    static boolean recvinprogress=false;
+    static boolean recvinprogress = false;
     static byte ndx = 0;
     static const char startmarker = '<';
     static const char comma = ',';
@@ -96,7 +90,7 @@ void leerEsclavo() {
         } else {
           input[ndx] = '\0';
           ndx = 0;
-          if (index == 0) {
+          if (index == 0) { // cambiar por un switch
             temperatura1 = atoi(input);
           } else if (index == 1) {
             humedadAmbiente1 = atoi(input);
@@ -180,12 +174,16 @@ void verificarRiego() {
   }
 }
 
+int calcularEfectividad(temp, amb, suelo, luz) {
+  return PER_TEMP * abs(MAX_TEMP - tmp) - PER_HUM_AMB * abs(MAX_HUMEDAD - amb) - PER_HUM_SUE * abs(MAX_HUMEDAD - suelo) - PER_LUZ * abs(MAX_LUZ - luz);
+}
+
 int calcularEfectividad1() {
-  return PER_TEMP * abs(MAX_TEMP - temperatura1) - PER_HUM_AMB * abs(MAX_HUMEDAD - humedadAmbiente1) - PER_HUM_SUE * abs(MAX_HUMEDAD - humedadSuelo1) - PER_LUZ * abs(MAX_LUZ - luz1);
+  return calcularEfectividad(temperatura1, humedadAmbiente1, humedadSuelo1, luz1);
 }
 
 int calcularEfectividad2() {
-  return PER_TEMP * abs(MAX_TEMP - temperatura2) - PER_HUM_AMB * abs(MAX_HUMEDAD - humedadAmbiente2) - PER_HUM_SUE * abs(MAX_HUMEDAD - humedadSuelo2) - PER_LUZ * abs(MAX_LUZ - luz2);
+  return calcularEfectividad(temperatura2, humedadAmbiente2, humedadSuelo2, luz2);
 }
 
 void leerArchivo() {
