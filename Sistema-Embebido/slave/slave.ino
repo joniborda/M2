@@ -71,6 +71,9 @@ void censo() {
   humedadAmbiente1 = sensorDHT1.readHumidity();
 //  temperatura2 = sensorDHT2.readTemperature();
 //  humedadAmbiente2 = sensorDHT2.readHumidity();
+
+// luz1 = analogRead(PIN_SENSOR_LUZ1);
+// luz2 = analogRead(PIN_SENSOR_LUZ2);
   Serial.print("<");
   Serial.print(temperatura1);
   Serial.print(",");
