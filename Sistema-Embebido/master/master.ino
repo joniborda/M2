@@ -27,6 +27,14 @@ int humedadSuelo1 = 0;
 int humedadSuelo2 = 0;
 int luz1 = 0;
 int luz2 = 0;
+static const PER_TEMP = 0.2;
+static const PER_HUM_AMB = 0.2;
+static const PER_HUM_SUE = 0.4;
+static const PER_LUZ = 0.2;
+static const MAX_TEMP = 40;
+static const MAX_HUMEDAD = 100;
+static const MAX_LUZ = 100;
+
 boolean newdata = false;
 char recvchars[32];
 
@@ -122,6 +130,8 @@ void leerEsclavo() {
   Serial.print(humedadSuelo1);
   Serial.print(" luz1 ");
   Serial.print(luz1);
+  Serial.print(" efectividad1 ");
+  Serial.println(calcularEfectividad1());
   Serial.print("temperatura2 ");
   Serial.print(temperatura2);
   Serial.print(" humedadAmbiente2 ");
@@ -130,6 +140,8 @@ void leerEsclavo() {
   Serial.print(humedadSuelo2);
   Serial.print(" luz2 ");
   Serial.println(luz2);
+  Serial.print(" efectividad2 ");
+  Serial.println(calcularEfectividad2());
 
   myFile = SD.open("archivo.txt", FILE_WRITE);
   if (myFile) {
@@ -142,6 +154,8 @@ void leerEsclavo() {
     myFile.print(",");
     myFile.print(luz1);
     myFile.print(",");
+    myFile.println(calcularEfectividad1());
+    myFile.print(",");
     myFile.print(temperatura2);
     myFile.print(",");
     myFile.print(humedadAmbiente2);
@@ -149,6 +163,8 @@ void leerEsclavo() {
     myFile.print(humedadSuelo2);
     myFile.print(",");
     myFile.println(luz2);
+    myFile.print(",");
+    myFile.println(calcularEfectividad2());
     
     myFile.close(); //cerramos el archivo
   } else {
@@ -162,4 +178,12 @@ void verificarRiego() {
   	serialSlave.write(INST_IRRIGATE);
   	toIrrigate = false;
   }
+}
+
+int calcularEfectividad1() {
+  return PER_TEMP * abs(MAX_TEMP - temperatura1) - PER_HUM_AMB * abs(MAX_HUMEDAD - humedadAmbiente1) - PER_HUM_SUE * abs(MAX_HUMEDAD - humedadSuelo1) - PER_LUZ * abs(MAX_LUZ - luz1);
+}
+
+int calcularEfectividad2() {
+  return PER_TEMP * abs(MAX_TEMP - temperatura2) - PER_HUM_AMB * abs(MAX_HUMEDAD - humedadAmbiente2) - PER_HUM_SUE * abs(MAX_HUMEDAD - humedadSuelo2) - PER_LUZ * abs(MAX_LUZ - luz2);
 }
