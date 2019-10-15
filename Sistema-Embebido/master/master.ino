@@ -187,3 +187,41 @@ int calcularEfectividad1() {
 int calcularEfectividad2() {
   return PER_TEMP * abs(MAX_TEMP - temperatura2) - PER_HUM_AMB * abs(MAX_HUMEDAD - humedadAmbiente2) - PER_HUM_SUE * abs(MAX_HUMEDAD - humedadSuelo2) - PER_LUZ * abs(MAX_LUZ - luz2);
 }
+
+void leerArchivo() {
+  File dataFile = SD.open("archivo.txt");
+  static char caracter;
+  static char input[4];
+  static int i = 0;
+  static int finPalabra = 0;
+
+  // if the file is available, write to it:
+  if (dataFile) {
+    while (dataFile.available()) {
+      caracter = dataFile.read();
+      if (caracter == -1) { // -1 indica fin de archivo
+        finPalabra = 1;
+      }
+      if (caracter == '\N') {
+        finPalabra = 1;
+      }
+
+      if (finPalabra == 0) {
+          input[i++] = caracter;
+      } else {
+        input[i] = '\0';
+        i = 0;
+        Serial.print(atoi(input)); // solo imprimo la lectura
+        Serial.println(" ");
+        finPalabra = 0;
+      }
+    }
+
+    dataFile.close();
+  } else {
+    Serial.println("error opening archivo.txt");
+  }
+  i = 0; // es estatico así que tengo que resetearlo
+  finPalabra = 0;
+  input[0] = '\0';
+}
