@@ -11,7 +11,7 @@ const int INST_SENSOR = 1; // instruccion para censar
 const int INST_IRRIGATE = 2; // instruccion para regar
 
 // milisegundos para comenzar censor
-const unsigned long INTERVAL_TO_SENSOR = 1000*60; 
+const unsigned long INTERVAL_TO_SENSOR = 100*60; 
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
@@ -64,26 +64,26 @@ void leerEsclavo() {
   	// leyendo lo que me envia el esclavo
     static boolean recvinprogress=false;
     static byte ndx = 0;
-    char startmarker = '<';
-    char comma = ',';
-    char endmarker = '>';
-    char c;
+    static const char startmarker = '<';
+    static const char comma = ',';
+    static const char endmarker = '>';
+    static char charLeido;
     static char input[4];
     int index = 0;
   
     while(serialSlave.available() > 0) {
-      c = (char)serialSlave.read();
-      if (c == startmarker) {
+      charLeido = (char)serialSlave.read();
+      if (charLeido == startmarker) {
         recvinprogress = true;
-      } else if (c == endmarker) {
+      } else if (charLeido == endmarker) {
         recvinprogress = false;
       }
       
-      if(recvinprogress == true && c != startmarker && c != endmarker) {
-        if (c != comma) {
-          input[ndx] = c;
+      if(recvinprogress == true && charLeido != startmarker && charLeido != endmarker) {
+        if (charLeido != comma) {
+          input[ndx] = charLeido;
           Serial.print("c ");
-          Serial.println(c);
+          Serial.println(charLeido);
           ndx++;  
         } else {
           input[ndx] = '\0';
@@ -92,6 +92,18 @@ void leerEsclavo() {
             temperatura1 = atoi(input);
           } else if (index == 1) {
             humedadAmbiente1 = atoi(input);
+          } else if (index == 2) {
+            humedadSuelo1 = atoi(input);
+          } else if (index == 3) {
+            luz1 = atoi(input);
+          } else if (index == 4) {
+            temperatura2 = atoi(input);
+          } else if (index == 5) {
+            humedadAmbiente2 = atoi(input);
+          } else if (index == 6) {
+            humedadSuelo2 = atoi(input);
+          } else if (index == 7) {
+            luz2 = atoi(input);
           }
           index++;
         }
@@ -100,19 +112,43 @@ void leerEsclavo() {
   // el ultimo no tiene coma
   input[ndx] = '\0';
   ndx = 0;
-  humedadAmbiente1 = atoi(input);
+  luz2 = atoi(input);
   
-  Serial.print("temperatura ");
+  Serial.print("temperatura1 ");
   Serial.print(temperatura1);
-  Serial.print(" humedad ");
-  Serial.println(humedadAmbiente1);
+  Serial.print(" humedadAmbiente1 ");
+  Serial.print(humedadAmbiente1);
+  Serial.print(" humedadSuelo1 ");
+  Serial.print(humedadSuelo1);
+  Serial.print(" luz1 ");
+  Serial.print(luz1);
+  Serial.print("temperatura2 ");
+  Serial.print(temperatura2);
+  Serial.print(" humedadAmbiente2 ");
+  Serial.print(humedadAmbiente2);
+  Serial.print(" humedadSuelo2 ");
+  Serial.print(humedadSuelo2);
+  Serial.print(" luz2 ");
+  Serial.println(luz2);
 
-  myFile = SD.open("archivo.txt", FILE_WRITE);//abrimos  el archivo 
+  myFile = SD.open("archivo.txt", FILE_WRITE);
   if (myFile) {
     Serial.print("archivo.txt: ");
-    Serial.println(temperatura1);
-    //myFile.println(temperatura1);
-    //Serial.write();
+    myFile.print(temperatura1);
+    myFile.print(",");
+    myFile.print(humedadAmbiente1);
+    myFile.print(",");
+    myFile.print(humedadSuelo1);
+    myFile.print(",");
+    myFile.print(luz1);
+    myFile.print(",");
+    myFile.print(temperatura2);
+    myFile.print(",");
+    myFile.print(humedadAmbiente2);
+    myFile.print(",");
+    myFile.print(humedadSuelo2);
+    myFile.print(",");
+    myFile.println(luz2);
     
     myFile.close(); //cerramos el archivo
   } else {

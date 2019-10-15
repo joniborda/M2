@@ -5,18 +5,18 @@
 const int INST_SENSOR = 1; // instruccion para censar
 
 const unsigned int PIN_SENSOR_HUMEDAD_HANBIENTE1 = 4;
-const unsigned int PIN_SENSOR_HUMEDAD_HANBIENTE2 = 4;
-const unsigned int PIN_SENSOR_HUMEDAD_SUELO1 = 4;
-const unsigned int PIN_SENSOR_HUMEDAD_SUELO2 = 4;
-const unsigned int PIN_SENSOR_LUZ1 = 4;
-const unsigned int PIN_SENSOR_LUZ2 = 4;
+const unsigned int PIN_SENSOR_HUMEDAD_HANBIENTE2 = 5;
+const unsigned int PIN_SENSOR_HUMEDAD_SUELO1 = 6;
+const unsigned int PIN_SENSOR_HUMEDAD_SUELO2 = 7;
+const unsigned int PIN_SENSOR_LUZ1 = 8;
+const unsigned int PIN_SENSOR_LUZ2 = 9;
 // puerto hacia el maestro longaniza
 const int PUERTO_RX_MASTER = 2;
 const int PUERTO_TX_MASTER = 3;
 
 
 // milisegundos para hacer algo
-const unsigned long INTERVAL_TO_DOING = 1000*60; 
+const unsigned long INTERVAL_TO_DOING = 100*60; 
 
 SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
 
@@ -24,8 +24,8 @@ DHT sensorDHT1(PIN_SENSOR_HUMEDAD_HANBIENTE1, DHT11);
 //DHT sensorDHT2(PIN_SENSOR_HUMEDAD_HANBIENTE2, DHT11);
 
 bool toIrrigate = false;
-unsigned long currentMillis = millis(); // grab current time
-unsigned long previousMillis = 0;  // millis() returns an unsigned long.
+unsigned long currentMillis = millis();
+unsigned long previousMillis = 0;
 int temperatura1 = 0;
 int temperatura2 = 0;
 int humedadAmbiente1 = 0;
@@ -69,20 +69,31 @@ void loop() {
 void censo() {
 	temperatura1 = sensorDHT1.readTemperature();
   humedadAmbiente1 = sensorDHT1.readHumidity();
+//  temperatura2 = sensorDHT2.readTemperature();
+//  humedadAmbiente2 = sensorDHT2.readHumidity();
   Serial.print("<");
   Serial.print(temperatura1);
   Serial.print(",");
   Serial.print(humedadAmbiente1);
   Serial.println(">");
-  	//temperatura2 = sensorDHT2.readTemperature();
-  	//humedadAmbiente2 = sensorDHT2.readHumidity();
 }
 
 void enviarCenso() {
-	//TODO: ver como enviar el censo en string separado por coma
   serialMaster.print("<");
   serialMaster.print(temperatura1);
   serialMaster.print(",");
   serialMaster.print(humedadAmbiente1);
+  serialMaster.print(",");
+  serialMaster.print(humedadSuelo1);
+  serialMaster.print(",");
+  serialMaster.print(luz1);
+  serialMaster.print(",");
+  serialMaster.print(temperatura2);
+  serialMaster.print(",");
+  serialMaster.print(humedadAmbiente2);
+  serialMaster.print(",");
+  serialMaster.print(humedadSuelo2);
+  serialMaster.print(",");
+  serialMaster.print(luz2);
   serialMaster.print(">");
 }
