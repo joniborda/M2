@@ -15,7 +15,7 @@ const unsigned long MS_INTERVAL_TO_SENSOR = 4000; // 4 segundos
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
-File myFile;
+File filePointer;
 bool toIrrigate = false;
 unsigned long currentMillis = millis(); // grab current time
 unsigned long previousMillis = 0;  // millis() returns an unsigned long.
@@ -137,30 +137,30 @@ void leerEsclavo() {
   Serial.print(" efectividad2 ");
   Serial.println(calcularEfectividad2());
 
-  myFile = SD.open("archivo.txt", FILE_WRITE);
-  if (myFile) {
+  filePointer = SD.open("archivo.txt", FILE_WRITE);
+  if (filePointer) {
     Serial.print("archivo.txt: ");
-    myFile.print(temperatura1);
-    myFile.print(",");
-    myFile.print(humedadAmbiente1);
-    myFile.print(",");
-    myFile.print(humedadSuelo1);
-    myFile.print(",");
-    myFile.print(luz1);
-    myFile.print(",");
-    myFile.println(calcularEfectividad1());
-    myFile.print(",");
-    myFile.print(temperatura2);
-    myFile.print(",");
-    myFile.print(humedadAmbiente2);
-    myFile.print(",");
-    myFile.print(humedadSuelo2);
-    myFile.print(",");
-    myFile.println(luz2);
-    myFile.print(",");
-    myFile.println(calcularEfectividad2());
+    filePointer.print(temperatura1);
+    filePointer.print(",");
+    filePointer.print(humedadAmbiente1);
+    filePointer.print(",");
+    filePointer.print(humedadSuelo1);
+    filePointer.print(",");
+    filePointer.print(luz1);
+    filePointer.print(",");
+    filePointer.println(calcularEfectividad1());
+    filePointer.print(",");
+    filePointer.print(temperatura2);
+    filePointer.print(",");
+    filePointer.print(humedadAmbiente2);
+    filePointer.print(",");
+    filePointer.print(humedadSuelo2);
+    filePointer.print(",");
+    filePointer.println(luz2);
+    filePointer.print(",");
+    filePointer.println(calcularEfectividad2());
     
-    myFile.close(); //cerramos el archivo
+    filePointer.close(); //cerramos el archivo
   } else {
     Serial.println("Error al abrir el archivo");
   }
@@ -187,16 +187,16 @@ int calcularEfectividad2() {
 }
 
 void leerArchivo() {
-  File dataFile = SD.open("archivo.txt");
+  filePointer = SD.open("archivo.txt");
   static char caracter;
   static char input[4];
   static int i = 0;
   static int finPalabra = 0;
 
   // if the file is available, write to it:
-  if (dataFile) {
-    while (dataFile.available()) {
-      caracter = dataFile.read();
+  if (filePointer) {
+    while (filePointer.available()) {
+      caracter = filePointer.read();
       if (caracter == -1) { // -1 indica fin de archivo
         finPalabra = 1;
       }
@@ -215,7 +215,7 @@ void leerArchivo() {
       }
     }
 
-    dataFile.close();
+    filePointer.close();
   } else {
     Serial.println("error opening archivo.txt");
   }
