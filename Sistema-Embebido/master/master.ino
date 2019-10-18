@@ -11,7 +11,7 @@ const int INST_SENSOR = 1; // instruccion para censar
 const int INST_IRRIGATE = 2; // instruccion para regar
 
 // milisegundos para comenzar censor
-const unsigned long MS_INTERVAL_TO_SENSOR = 4000; // 4 segundos
+unsigned long MS_INTERVAL_TO_SENSOR = 1000; // 15 segundos
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
@@ -41,11 +41,12 @@ char recvchars[32];
 void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
+  Serial.print("iniciado");
 
-  if (!SD.begin(PIN_CS_SD)) {
+  /*if (!SD.begin(PIN_CS_SD)) {
     Serial.println("No se pudo inicializar la SD");
     return;
-  }
+  }*/
 }
 
 void loop() {
@@ -54,38 +55,43 @@ void loop() {
     Serial.println("envio orden a esclavo");
     serialSlave.write(INST_SENSOR);
     previousMillis = millis();
+    MS_INTERVAL_TO_SENSOR = 300000;
   }
 
-  Serial.println("leerEsclavo");
   leerEsclavo();
-  guardarEnArchivo();
+  //guardarEnArchivo();
 
-  verificarRiego();
+  //verificarRiego();
 }
 
 void leerEsclavo() {
     static boolean recvinprogress = false;
     static byte ndx = 0;
-    static const char startmarker = '<';
-    static const char comma = ',';
-    static const char endmarker = '>';
+    static const char START_MARKER = '<';
+    static const char COMMA = ',';
+    static const char END_MARKER = '>';
     static char charLeido;
     static char input[4];
     int index = 0;
-  
+    if (serialSlave.available() <= 0) {
+      return;  
+    } else {
+      Serial.println("leyendo");
+    }
     while(serialSlave.available() > 0) {
       charLeido = (char)serialSlave.read();
-      if (charLeido == startmarker) {
+      if (charLeido == START_MARKER) {
         recvinprogress = true;
-      } else if (charLeido == endmarker) {
+      } else if (charLeido == END_MARKER) {
         recvinprogress = false;
       }
       
-      if(recvinprogress == true && charLeido != startmarker && charLeido != endmarker) {
-        if (charLeido != comma) {
+      if(recvinprogress == true && charLeido != START_MARKER && charLeido != END_MARKER) {
+        if (charLeido != COMMA) {
           input[ndx] = charLeido;
-          Serial.print("c ");
-          Serial.println(charLeido);
+          String a = "";
+          a = a + "c " + charLeido + " index " + index + " ";
+          Serial.println(a);
           ndx++;  
         } else {
           input[ndx] = '\0';
@@ -116,10 +122,18 @@ void leerEsclavo() {
   ndx = 0;
   luz2 = atoi(input);
 
-  String ret = "";
-  ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + luz1 + "," + calcularEfectividad1() + ',';
-  ret = ret + temperatura2 + "," + humedadAmbiente2 + "," + luz2 + "," + calcularEfectividad2();
-  Serial.println(ret);
+  Serial.print("temp ");
+  Serial.print(temperatura1);
+  Serial.print("humedad ");
+  Serial.print(humedadAmbiente1);
+  Serial.print("humedads ");
+  Serial.print(humedadSuelo1);
+  Serial.print("luz1 ");
+  Serial.println(luz1);
+  /*String ret = "";
+  ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + luz1 + "," + calcularEfectividad1() + ",";
+  ret = ret + temperatura2 + "," + humedadAmbiente2 + "," + humedadSuelo2 + "," + luz2 + "," + calcularEfectividad2();
+  Serial.println(ret);*/
 }
 
 void leerArchivo() {
@@ -145,8 +159,8 @@ void leerArchivo() {
       } else {
         input[i] = '\0';
         i = 0;
-        Serial.print(atoi(input)); // solo imprimo la lectura
-        Serial.println(" ");
+        //Serial.print(atoi(input)); // solo imprimo la lectura
+        //Serial.println(" ");
         finPalabra = 0;
       }
     }
@@ -164,7 +178,7 @@ void guardarEnArchivo() {
   filePointer = SD.open("archivo.txt", FILE_WRITE);
   if (filePointer) {
     String ret = ""; // si no tiene un valor nulo concatena con basura
-    ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + luz1 + "," + calcularEfectividad1() + ',';
+    ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + luz1 + "," + calcularEfectividad1() + ",";
     ret = ret + temperatura2 + "," + humedadAmbiente2 + "," + luz2 + "," + calcularEfectividad2();
     Serial.print("archivo.txt: ");
     
