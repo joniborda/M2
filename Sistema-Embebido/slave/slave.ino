@@ -5,7 +5,7 @@
 const int INST_SENSOR = 1; // instruccion para censar
 
 const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE1 = 4;
-const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE2 = 5;
+const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE2 = 12;
 const unsigned int PIN_SENSOR_HUMEDAD_SUELO1 = A2;
 const unsigned int PIN_SENSOR_HUMEDAD_SUELO2 = A3; // no tengo
 const unsigned int PIN_SENSOR_LUZ1 = A0;
@@ -26,7 +26,7 @@ const unsigned long INTERVAL_TO_DOING = 6000;
 SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
 
 DHT sensorDHT1(PIN_SENSOR_HUMEDAD_AMBIENTE1, DHT11);
-//DHT sensorDHT2(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
+DHT sensorDHT2(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
 
 bool toIrrigate = false;
 unsigned long currentMillis = millis();
@@ -58,6 +58,7 @@ void loop() {
     if (valorRecibido == INST_SENSOR) {
       Serial.println("comienza censo");
       censo1();
+      censo2();
       enviarCenso();
     }
   }
@@ -102,6 +103,16 @@ void censo1() {
   humedadSuelo1 = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
   luz1 = analogRead(PIN_SENSOR_LUZ1);
   String ret = ""; // si no tiene un valor nulo concatena con basura
-  ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + luz1;
-  Serial.print(ret);
+  ret = ret + "temperatura1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1  " + humedadSuelo1 + ", luz1" + luz1;
+  Serial.println(ret);
+}
+
+void censo2() {
+  temperatura2 = sensorDHT2.readTemperature();
+  humedadAmbiente2 = sensorDHT2.readHumidity();
+  humedadSuelo2 = analogRead(PIN_SENSOR_HUMEDAD_SUELO2);
+  luz2 = analogRead(PIN_SENSOR_LUZ2);
+  String ret = ""; // si no tiene un valor nulo concatena con basura
+  ret = ret + "temperatura2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2  " + humedadSuelo2 + ", luz2" + luz2;
+  Serial.println(ret);
 }

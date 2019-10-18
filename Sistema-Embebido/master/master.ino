@@ -55,7 +55,7 @@ void loop() {
     Serial.println("envio orden a esclavo");
     serialSlave.write(INST_SENSOR);
     previousMillis = millis();
-    MS_INTERVAL_TO_SENSOR = 300000;
+    MS_INTERVAL_TO_SENSOR = 3000;
   }
 
   leerEsclavo();
@@ -130,6 +130,14 @@ void leerEsclavo() {
   Serial.print(humedadSuelo1);
   Serial.print("luz1 ");
   Serial.println(luz1);
+  Serial.print("temp ");
+  Serial.print(temperatura2);
+  Serial.print("humedad ");
+  Serial.print(humedadAmbiente2);
+  Serial.print("humedads ");
+  Serial.print(humedadSuelo2);
+  Serial.print("luz2 ");
+  Serial.println(luz2);
   /*String ret = "";
   ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + luz1 + "," + calcularEfectividad1() + ",";
   ret = ret + temperatura2 + "," + humedadAmbiente2 + "," + humedadSuelo2 + "," + luz2 + "," + calcularEfectividad2();
