@@ -122,26 +122,9 @@ void leerEsclavo() {
   ndx = 0;
   luz2 = atoi(input);
 
-  Serial.print("temp ");
-  Serial.print(temperatura1);
-  Serial.print("humedad ");
-  Serial.print(humedadAmbiente1);
-  Serial.print("humedads ");
-  Serial.print(humedadSuelo1);
-  Serial.print("luz1 ");
-  Serial.println(luz1);
-  Serial.print("temp ");
-  Serial.print(temperatura2);
-  Serial.print("humedad ");
-  Serial.print(humedadAmbiente2);
-  Serial.print("humedads ");
-  Serial.print(humedadSuelo2);
-  Serial.print("luz2 ");
-  Serial.println(luz2);
-  /*String ret = "";
-  ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + luz1 + "," + calcularEfectividad1() + ",";
-  ret = ret + temperatura2 + "," + humedadAmbiente2 + "," + humedadSuelo2 + "," + luz2 + "," + calcularEfectividad2();
-  Serial.println(ret);*/
+  String ret = "temp1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1 " + humedadSuelo1 + ", luz1 " + luz1 + ", efectividad1 " + calcularEfectividad1() + 
+              ", temp2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2 " + humedadSuelo2 + ", luz2 " + luz2 + ", efectividad2 " + calcularEfectividad2();
+  Serial.println(ret);
 }
 
 void leerArchivo() {
@@ -185,9 +168,8 @@ void leerArchivo() {
 void guardarEnArchivo() {
   filePointer = SD.open("archivo.txt", FILE_WRITE);
   if (filePointer) {
-    String ret = ""; // si no tiene un valor nulo concatena con basura
-    ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + luz1 + "," + calcularEfectividad1() + ",";
-    ret = ret + temperatura2 + "," + humedadAmbiente2 + "," + luz2 + "," + calcularEfectividad2();
+    String ret = "" + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + luz1 + "," + calcularEfectividad1() + "," +
+                 temperatura2 + "," + humedadAmbiente2 + humedadSuelo2 + "," + "," + luz2 + "," + calcularEfectividad2();
     Serial.print("archivo.txt: ");
     
     filePointer.print(ret);

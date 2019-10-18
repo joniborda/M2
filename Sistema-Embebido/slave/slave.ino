@@ -3,6 +3,7 @@
 #include <DHT_U.h>
 
 const int INST_SENSOR = 1; // instruccion para censar
+const int INST_SENSOR = 2; // instruccion para mantenimiento
 
 const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE1 = 4;
 const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE2 = 12;
@@ -18,7 +19,6 @@ const unsigned int PIN_LED2 = 8;
 // puerto hacia el maestro longaniza
 const int PUERTO_RX_MASTER = 2;
 const int PUERTO_TX_MASTER = 3;
-
 
 // milisegundos para hacer algo
 const unsigned long INTERVAL_TO_DOING = 6000; 
@@ -37,8 +37,8 @@ int humedadAmbiente1 = 0;
 int humedadAmbiente2 = 0;
 int humedadSuelo1 = 0;
 int humedadSuelo2 = 0;
-int luz1 = 0;
-int luz2 = 0;
+int sensorLuz1 = 0;
+int sensorLuz2 = 0;
 int valorRecibido = 0;
 
 void setup() {
@@ -55,11 +55,19 @@ void loop() {
     valorRecibido = (int)serialMaster.read();
     Serial.print("valor = ");
     Serial.println(valorRecibido);
-    if (valorRecibido == INST_SENSOR) {
-      Serial.println("comienza censo");
-      censo1();
-      censo2();
-      enviarCenso();
+
+    switch (valorRecibido) {
+      case INST_SENSOR: 
+        Serial.println("comienza censo");
+        censo1();
+        censo2();
+        enviarCenso();
+        break;
+      case INST_MANTENIMIENTO:
+        mantenimiento();
+        break;
+      default:
+        Serial.println("orden enviada fuera de rango");
     }
   }
 /*
@@ -74,36 +82,17 @@ void loop() {
 }
 
 void enviarCenso() {
-  String ret = "<"; // si no tiene un valor nulo concatena con basura
-  ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + luz1 + ",";
-  ret = ret + temperatura2 + "," + humedadAmbiente2 + "," + humedadSuelo2 + "," + luz2 + ">";
+  String ret = "<" + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + sensorLuz1 + "," + temperatura2 + "," + humedadAmbiente2 + "," + humedadSuelo2 + "," + sensorLuz2 + ">";
   serialMaster.print(ret);
-  Serial.print("<");
-  Serial.print(temperatura1);
-  Serial.print(",");
-  Serial.print(humedadAmbiente1);
-  Serial.print(",");
-  Serial.print(humedadSuelo1);
-  Serial.print(",");
-  Serial.print(luz1);
-  Serial.print(",");
-  Serial.print(temperatura2);
-  Serial.print(",");
-  Serial.print(humedadAmbiente2);
-  Serial.print(",");
-  Serial.print(humedadSuelo2);
-  Serial.print(",");
-  Serial.print(luz2);
-  Serial.print(">");
+  Serial.println(ret);
 }
 
 void censo1() {
   temperatura1 = sensorDHT1.readTemperature();
   humedadAmbiente1 = sensorDHT1.readHumidity();
   humedadSuelo1 = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
-  luz1 = analogRead(PIN_SENSOR_LUZ1);
-  String ret = ""; // si no tiene un valor nulo concatena con basura
-  ret = ret + "temperatura1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1  " + humedadSuelo1 + ", luz1" + luz1;
+  censarLuz1();
+  String ret = "temperatura1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1  " + humedadSuelo1 + ", sensorLuz1" + sensorLuz1;
   Serial.println(ret);
 }
 
@@ -111,8 +100,67 @@ void censo2() {
   temperatura2 = sensorDHT2.readTemperature();
   humedadAmbiente2 = sensorDHT2.readHumidity();
   humedadSuelo2 = analogRead(PIN_SENSOR_HUMEDAD_SUELO2);
-  luz2 = analogRead(PIN_SENSOR_LUZ2);
-  String ret = ""; // si no tiene un valor nulo concatena con basura
-  ret = ret + "temperatura2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2  " + humedadSuelo2 + ", luz2" + luz2;
+  censarLuz2();
+  String ret = "temperatura2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2  " + humedadSuelo2 + ", sensorLuz2" + sensorLuz2;
   Serial.println(ret);
+}
+
+void mantenimiento() {
+  censo1();
+  censo2();
+  if (abs(temperatura1 - temperatura2) > 10) {
+    Serial.println("sensor de temperatura fallando");
+  }
+
+  if (abs(humedadAmbiente1 - humedadAmbiente2) > 10) {
+    Serial.println("sensor de humedad ambiente fallando");
+  }
+
+  if (abs(humedadSuelo1 - humedadSuelo2) > 10) {
+    Serial.println("sensor de humedad suelo fallando");
+  }
+
+  if (abs(sensorLuz1 - sensorLuz2) > 10) {
+    Serial.println("hay diferencia entre los sensores de luz");
+    int prev_luz = luz1;
+    encenderLuz1();
+    censarLuz1();
+
+    if (prev_luz >= luz1) {
+      Serial.println('encendimos la luz1 y el ldr1 no se dio cuenta, entonces no funciona');
+    }
+    apagarLuz1();
+
+    encenderLuz2();
+    censarLuz2();
+
+    if (prev_luz >= luz2) {
+      Serial.println('encendimos la luz2 y el ldr2 no se dio cuenta, entonces no funciona');
+    }
+    apagarLuz2();
+  }
+}
+
+void encenderLuz1() {
+  digitalWrite(PIN_LED1, HIGH);
+}
+
+void apagarLuz1() {
+  digitalWrite(PIN_LED1, LOW);
+}
+
+void censarLuz1() {
+  sensorLuz1 = analogRead(PIN_SENSOR_LUZ1);
+}
+
+void encenderLuz2() {
+  digitalWrite(PIN_LED2, HIGH);
+}
+
+void apagarLuz2() {
+  digitalWrite(PIN_LED2, LOW);
+}
+
+void censarLuz2() {
+  sensorLuz2 = analogRead(PIN_SENSOR_LUZ2);
 }
