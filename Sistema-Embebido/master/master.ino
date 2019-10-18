@@ -86,7 +86,8 @@ void leerEsclavo() {
       if(recvinprogress == true && charLeido != START_MARKER) {
         if (charLeido != COMMA) {
           input[charIndex] = charLeido;
-          String a = "c " + charLeido + " fieldIndex " + fieldIndex + " ";
+          String a = "";
+          a = a +"c " + charLeido + " fieldIndex " + fieldIndex + " ";
           Serial.println(a);
           charIndex++;  
         } else {
@@ -139,7 +140,8 @@ void leerEsclavo() {
       Serial.println("Recibo un error");
     }
 
-    String ret = "temp1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1 " + humedadSuelo1 + ", luz1 " + luz1 + ", efectividad1 " + calcularEfectividad1() + 
+    String ret = "";
+    ret = ret + "temp1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1 " + humedadSuelo1 + ", luz1 " + luz1 + ", efectividad1 " + calcularEfectividad1() + 
                 ", temp2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2 " + humedadSuelo2 + ", luz2 " + luz2 + ", efectividad2 " + calcularEfectividad2();
     Serial.println(ret);
 
@@ -191,7 +193,8 @@ void leerArchivo() {
 void guardarEnArchivo() {
   filePointer = SD.open("archivo.txt", FILE_WRITE);
   if (filePointer) {
-    String ret = "" + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + luz1 + "," + calcularEfectividad1() + "," +
+    String ret = "";
+    ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + luz1 + "," + calcularEfectividad1() + "," +
                  temperatura2 + "," + humedadAmbiente2 + humedadSuelo2 + "," + "," + luz2 + "," + calcularEfectividad2();
     Serial.print("archivo.txt: ");
     
