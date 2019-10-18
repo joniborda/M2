@@ -82,7 +82,15 @@ void loop() {
 }
 
 void enviarCenso() {
-  String ret = "<" + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + sensorLuz1 + "," + temperatura2 + "," + humedadAmbiente2 + "," + humedadSuelo2 + "," + sensorLuz2 + ">";
+  /*
+  * Formato de envio:
+  *
+  * <instruccion,respuesta,temperatura1,humedadAmbiente1,humedadSuelo1,sensorLuz1,temperatura2,humedadAmbiente2,humedadSuelo2,sensorLuz2>
+  *
+  * La instruccion es la instruccion a la que responde
+  * La respuesta es el codigo de respuesta. Si es 0 es que está todo bien. Si es 1 o mas es porque hay errores
+  */
+  String ret = "<1,0," + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + sensorLuz1 + "," + temperatura2 + "," + humedadAmbiente2 + "," + humedadSuelo2 + "," + sensorLuz2 + ">";
   serialMaster.print(ret);
   Serial.println(ret);
 }
@@ -123,8 +131,8 @@ void mantenimiento() {
   if (abs(sensorLuz1 - sensorLuz2) > 10) {
     Serial.println("hay diferencia entre los sensores de luz");
     int prev_luz = luz1;
-    encenderLuz1();
-    censarLuz1();
+    encenderLuz1(); 
+    censarLuz1(); //censarlo inmediatamente no se si prueba que anda
 
     if (prev_luz >= luz1) {
       Serial.println('encendimos la luz1 y el ldr1 no se dio cuenta, entonces no funciona');
@@ -132,7 +140,7 @@ void mantenimiento() {
     apagarLuz1();
 
     encenderLuz2();
-    censarLuz2();
+    censarLuz2(); //censarlo inmediatamente no se si prueba que anda
 
     if (prev_luz >= luz2) {
       Serial.println('encendimos la luz2 y el ldr2 no se dio cuenta, entonces no funciona');

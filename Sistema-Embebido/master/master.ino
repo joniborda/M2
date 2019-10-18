@@ -11,12 +11,11 @@ const int INST_SENSOR = 1; // instruccion para censar
 const int INST_IRRIGATE = 2; // instruccion para regar
 
 // milisegundos para comenzar censor
-unsigned long MS_INTERVAL_TO_SENSOR = 1000; // 15 segundos
+static unsigned long MS_INTERVAL_TO_SENSOR = 1000; // 15 segundos
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
 File filePointer;
-bool toIrrigate = false;
 unsigned long currentMillis = millis(); // grab current time
 unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 int temperatura1 = 0;
@@ -34,9 +33,6 @@ static const float PER_LUZ = 0.2;
 static const int MAX_TEMP = 40;
 static const int MAX_HUMEDAD = 100;
 static const int MAX_LUZ = 100;
-
-boolean newdata = false;
-char recvchars[32];
 
 void setup() {
   serialSlave.begin(9600);
@@ -61,18 +57,19 @@ void loop() {
   leerEsclavo();
   //guardarEnArchivo();
 
-  //verificarRiego();
 }
 
 void leerEsclavo() {
-    static boolean recvinprogress = false;
-    static byte ndx = 0;
+    static boolean recvinprogress = false; // se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cardena
+    static byte charIndex = 0; // es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo
     static const char START_MARKER = '<';
     static const char COMMA = ',';
     static const char END_MARKER = '>';
     static char charLeido;
-    static char input[4];
-    int index = 0;
+    static char input[4]; // el dato que este entre comas no puede ser mayor a 4
+    static int fieldIndex = 0;
+    static int instructionCode = 0;
+    static int errorCode = 0;
     if (serialSlave.available() <= 0) {
       return;  
     } else {
@@ -86,45 +83,71 @@ void leerEsclavo() {
         recvinprogress = false;
       }
       
-      if(recvinprogress == true && charLeido != START_MARKER && charLeido != END_MARKER) {
+      if(recvinprogress == true && charLeido != START_MARKER) {
         if (charLeido != COMMA) {
-          input[ndx] = charLeido;
-          String a = "";
-          a = a + "c " + charLeido + " index " + index + " ";
+          input[charIndex] = charLeido;
+          String a = "c " + charLeido + " fieldIndex " + fieldIndex + " ";
           Serial.println(a);
-          ndx++;  
+          charIndex++;  
         } else {
-          input[ndx] = '\0';
-          ndx = 0;
-          if (index == 0) { // cambiar por un switch
-            temperatura1 = atoi(input);
-          } else if (index == 1) {
-            humedadAmbiente1 = atoi(input);
-          } else if (index == 2) {
-            humedadSuelo1 = atoi(input);
-          } else if (index == 3) {
-            luz1 = atoi(input);
-          } else if (index == 4) {
-            temperatura2 = atoi(input);
-          } else if (index == 5) {
-            humedadAmbiente2 = atoi(input);
-          } else if (index == 6) {
-            humedadSuelo2 = atoi(input);
-          } else if (index == 7) {
-            luz2 = atoi(input);
+          input[charIndex] = '\0';
+          charIndex = 0;
+          switch (fieldIndex) {
+            case 0:
+              instructionCode = atoi(input);
+              break;
+            case 1:
+              errorCode = atoi(input);
+              break;
+            case 2:
+              temperatura1 = atoi(input);
+              break;
+            case 3:
+              humedadAmbiente1 = atoi(input);
+              break;
+            case 4:
+              humedadSuelo1 = atoi(input);
+              break;
+            case 5:
+              luz1 = atoi(input);
+              break;
+            case 6:
+              temperatura2 = atoi(input);
+              break;
+            case 7:
+              humedadAmbiente2 = atoi(input);
+              break;
+            case 8:
+              humedadSuelo2 = atoi(input);
+              break;
+            case 9:
+              luz2 = atoi(input);
+              break;
           }
-          index++;
+          fieldIndex++;
         }
       }
   }
-  // el ultimo no tiene coma
-  input[ndx] = '\0';
-  ndx = 0;
-  luz2 = atoi(input);
 
-  String ret = "temp1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1 " + humedadSuelo1 + ", luz1 " + luz1 + ", efectividad1 " + calcularEfectividad1() + 
-              ", temp2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2 " + humedadSuelo2 + ", luz2 " + luz2 + ", efectividad2 " + calcularEfectividad2();
-  Serial.println(ret);
+  if (charLeido == END_MARKER) {
+    recvinprogress = false;
+    // el ultimo no tiene coma
+    input[charIndex] = '\0';
+    luz2 = atoi(input);
+
+    if (errorCode > 0) {
+      Serial.println("Recibo un error");
+    }
+
+    String ret = "temp1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1 " + humedadSuelo1 + ", luz1 " + luz1 + ", efectividad1 " + calcularEfectividad1() + 
+                ", temp2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2 " + humedadSuelo2 + ", luz2 " + luz2 + ", efectividad2 " + calcularEfectividad2();
+    Serial.println(ret);
+
+    errorCode = -1;
+    instructionCode = -1;
+    charIndex = 0;
+    fieldIndex = 0;
+  }
 }
 
 void leerArchivo() {
@@ -177,14 +200,6 @@ void guardarEnArchivo() {
     filePointer.close(); //cerramos el archivo
   } else {
     Serial.println("Error al abrir el archivo");
-  }
-}
-
-void verificarRiego() {
-  if (toIrrigate) {
-    // TODO: Verificar que si envio regar haya un tiempo de diferencia con el censo para que no se pisen
-    serialSlave.write(INST_IRRIGATE);
-    toIrrigate = false;
   }
 }
 
