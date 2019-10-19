@@ -26,6 +26,7 @@ const int PUERTO_TX_MASTER = 3;
 
 // INTERVALO PARA ACCION EN MS
 const unsigned long INTERVAL_TO_DOING = 6000; 
+const unsigned long TIEMPO_RES_RIEGO = 3000;
 
 SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
 
@@ -35,6 +36,7 @@ DHT sensorDHT2 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
 
 unsigned long tiempoActual = millis();
 unsigned long tiempoPrevioRiegoZona1 = 0;
+unsigned long tiempoDespuesRiegoZona1 = 0;
 
 void setup() {
   serialMaster.begin(9600); //Velocidad comunicacion maestro
@@ -89,9 +91,19 @@ void loop() {
   }
   
   tiempoActual = millis();
-  
   if ((unsigned long)(tiempoActual - tiempoPrevioRiegoZona1) >= tiempoRiegoZona1) {
-    tiempoPrevioRiegoZona1 = millis();
+    String ret = "";
+    ret = ret + "<" + INST_RIEGO_Z1 + ",0,0,0,0,0>";
+    serialMaster.write(ret);
+    tiempoDespuesRiegoZona1 = millis();
+  }
+
+  tiempoActual = millis();
+  if ((unsigned long)(tiempoActual - tiempoDespuesRiegoZona1) >= TIEMPO_RES_RIEGO) {
+    String ret = "";
+    ret = ret + "<" + INST_RES_RIEGO_Z1 + ",0,0,0,0,0>";
+    serialMaster.write(ret);
+    tiempoDespuesRiegoZona1 = millis();
   }
 
   // ENVIAR QUE TERMINE DE REGAR ZONA 1
