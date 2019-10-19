@@ -6,7 +6,9 @@
 #define RUTINA_CON_ERROR 1
 
 const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO
-const int INST_MANTENIMIENTO = 2; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO
+const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1
+const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2
+const int INST_MANTENIMIENTO = 4; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO
 
 const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE1 = 4;
 const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE2 = 12;
@@ -43,9 +45,9 @@ void loop() {
   if (serialMaster.available() > 0 ) {
     int instruccionRecibida = 0;
     // Recibiendo informacion del maestro
-    Serial.println("Se recibio una instruccion del maestro");
+    Serial.println("Se recibio una instruccion del maestro. x`");
     instruccionRecibida = (int)serialMaster.read();
-    Serial.print("Valor: ");
+    Serial.print("VALOR: ");
     Serial.println(instruccionRecibida);
     
     switch (instruccionRecibida) {
@@ -61,6 +63,14 @@ void loop() {
       case INST_MANTENIMIENTO: {
         Serial.println("COMIENZA RUTINA DE MANTENIMIENTO.");
         mantenimiento();
+        break;
+      }
+
+      case INST_RIEGO_Z1: {
+        break;
+      }
+
+      case INST_RIEGO_Z2: {
         break;
       }
 

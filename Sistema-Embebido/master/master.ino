@@ -9,8 +9,8 @@ const int PIN_CS_SD = 10;
 
 
 const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO
-const int INST_IRRIGATE_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1
-const int INST_IRRIGATE_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2
+const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1
+const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2
 const int INST_MANTENIMIENTO = 4; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO
 
 //COMO MANDAR VOLUMEN O TIEMPO DE RIEGO???
@@ -47,6 +47,7 @@ void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
   Serial.print("Arduino Maestro iniciado...");
+
   /*if (!SD.begin(PIN_CS_SD)) {
     Serial.println("No se pudo inicializar la SD");
     return;
@@ -55,6 +56,7 @@ void setup() {
 
 void loop() {
   currentMillis = millis();
+  
   if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_CENSO) {
     Serial.println("Envio instruccion de censo a el esclavo.");
     serialSlave.write(INST_CENSO);
