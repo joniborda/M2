@@ -1,23 +1,30 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 
-// puerto hacia el esclavo
+// PUERTOS DE CONEXION CON ESCLAVO
 const int PUERTO_RX_SLAVE = 2;
 const int PUERTO_TX_SLAVE = 3;
+
 const int PIN_CS_SD = 10;
 
-// instrucciones que envio al esclavo
-const int INST_SENSOR = 1; // instruccion para censar
-const int INST_IRRIGATE = 2; // instruccion para regar
 
-// milisegundos para comenzar censor
-static unsigned long MS_INTERVAL_TO_SENSOR = 1000; // 15 segundos
+const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO
+const int INST_IRRIGATE_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1
+const int INST_IRRIGATE_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2
+const int INST_MANTENIMIENTO = 4; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO
+
+//COMO MANDAR VOLUMEN O TIEMPO DE RIEGO???
+
+// INTERVALO DE RUTINA DE CENSO EN MS
+static unsigned long MS_INTERVAL_TO_CENSO = 1000; // 15 seg.
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
 File filePointer;
 unsigned long currentMillis = millis(); // grab current time
 unsigned long previousMillis = 0;  // millis() returns an unsigned long.
+
+//Deberia usarlas en un entorno local a la funcion
 int temperatura1 = 0;
 int temperatura2 = 0;
 int humedadAmbiente1 = 0;
@@ -26,6 +33,8 @@ int humedadSuelo1 = 0;
 int humedadSuelo2 = 0;
 int luz1 = 0;
 int luz2 = 0;
+
+//Podriamos poner directamente los valores para no comer espacio, revisar si es necesario
 static const float PER_TEMP = 0.2;
 static const float PER_HUM_AMB = 0.2;
 static const float PER_HUM_SUE = 0.4;
@@ -37,8 +46,7 @@ static const int MAX_LUZ = 100;
 void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
-  Serial.print("iniciado");
-
+  Serial.print("Arduino Maestro iniciado...");
   /*if (!SD.begin(PIN_CS_SD)) {
     Serial.println("No se pudo inicializar la SD");
     return;
@@ -47,11 +55,11 @@ void setup() {
 
 void loop() {
   currentMillis = millis();
-  if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_SENSOR) {
-    Serial.println("envio orden a esclavo");
-    serialSlave.write(INST_SENSOR);
+  if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_CENSO) {
+    Serial.println("Envio instruccion de censo a el esclavo.");
+    serialSlave.write(INST_CENSO);
     previousMillis = millis();
-    MS_INTERVAL_TO_SENSOR = 3000;
+    MS_INTERVAL_TO_CENSO = 3000;
   }
 
   leerEsclavo();
