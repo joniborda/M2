@@ -56,21 +56,29 @@ void loop() {
     valorRecibido = (int)serialMaster.read();
     Serial.print("valor = ");
     Serial.println(valorRecibido);
-
+    
     switch (valorRecibido) {
-      case INST_SENSOR: 
-        Serial.println("comienza censo");
-        censo1();
-        censo2();
-        enviarCenso();
-        break;
-      case INST_MANTENIMIENTO:
+      case INST_MANTENIMIENTO: {
+        Serial.println("comienza cens1o");
+        int censoPrueba = 1;
         mantenimiento();
         break;
+      }
+      case INST_SENSOR: {
+        Serial.println("comienza cens1o");
+        int valoresCenso[] = {1, 0, -1, -1, -1, -1, -1, -1, -1, -1};
+        //Serial.println(censoPrueba);
+        Serial.println("comienza censo");
+        censo1(valoresCenso);
+        censo2();
+        enviarCenso(valoresCenso);
+        break;
+      }
       default:
         Serial.println("orden enviada fuera de rango");
     }
   }
+  
 /*
   currentMillis = millis();
   if ((unsigned long)(currentMillis - previousMillis) >= INTERVAL_TO_DOING) {
@@ -82,7 +90,7 @@ void loop() {
   }*/
 }
 
-void enviarCenso() {
+void enviarCenso(int *arrayCenso) {
   /*
   * Formato de envio:
   *
@@ -92,18 +100,19 @@ void enviarCenso() {
   * La respuesta es el codigo de respuesta. Si es 0 es que está todo bien. Si es 1 o mas es porque hay errores
   */
   String ret = "";
-  ret += ret + "<1,0," + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + sensorLuz1 + "," + temperatura2 + "," + humedadAmbiente2 + "," + humedadSuelo2 + "," + sensorLuz2 + ">";
+  ret = ret + "<1,0," + arrayCenso[2] + "," + arrayCenso[3] + "," + arrayCenso[4] + "," + arrayCenso[5] + "," + temperatura2 + "," + humedadAmbiente2 + "," + humedadSuelo2 + "," + sensorLuz2 + ">";
   serialMaster.print(ret);
   Serial.println(ret);
 }
 
-void censo1() {
-  temperatura1 = sensorDHT1.readTemperature();
-  humedadAmbiente1 = sensorDHT1.readHumidity();
-  humedadSuelo1 = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
-  censarLuz1();
+void censo1(int *arrayCenso) {
+  Serial.print("arrayCenso[0]=");
+  arrayCenso[2] = sensorDHT1.readTemperature();
+  arrayCenso[3] = sensorDHT1.readHumidity();
+  arrayCenso[4] = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
+  arrayCenso[5] = analogRead(PIN_SENSOR_LUZ1);
   String ret = "";
-  ret = ret + "temperatura1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1  " + humedadSuelo1 + ", sensorLuz1" + sensorLuz1;
+  ret = ret + "temperatura1 " + arrayCenso[2] + ", humedadAmbiente1 " + arrayCenso[3] + ", humedadSuelo1  " + arrayCenso[4] + ", sensorLuz1" + arrayCenso[5];
   Serial.println(ret);
 }
 
@@ -118,7 +127,7 @@ void censo2() {
 }
 
 void mantenimiento() {
-  censo1();
+  //censo1();
   censo2();
   if (abs(temperatura1 - temperatura2) > 10) {
     Serial.println("sensor de temperatura fallando");
@@ -135,7 +144,7 @@ void mantenimiento() {
   if (abs(sensorLuz1 - sensorLuz2) > 10) {
     Serial.println("hay diferencia entre los sensores de luz");
     int prev_luz = sensorLuz1;
-    encenderLuz1(); 
+    encenderLuz1();
     censarLuz1(); //censarlo inmediatamente no se si prueba que anda
 
     if (prev_luz >= sensorLuz1) {
