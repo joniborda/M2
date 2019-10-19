@@ -76,8 +76,7 @@ void loop() {
       }
       case INST_RIEGO_Z1: {
         Serial.println("COMIENZA RIEGO ZONA 1.");
-        
-        serialMaster.print("");// <inst, ....>
+        digitalWrite(PIN_BOMBA1, HIGH);
         tiempoPrevioRiegoZona1 = millis();
         // leer el tiempo que tengo que regar y guardarlo en una variable
         tiempoRiegoZona1 = 3000;
@@ -85,8 +84,7 @@ void loop() {
       }
       case INST_RIEGO_Z2: {
         Serial.println("COMIENZA RIEGO ZONA 2.");
-        digitalWrite(PIN_BOMBA1, HIGH);
-        
+        digitalWrite(PIN_BOMBA2, HIGH);
         tiempoPrevioRiegoZona2 = millis();
         // leer el tiempo que tengo que regar y guardarlo en una variable
         tiempoRiegoZona2 = 3000;
@@ -102,11 +100,20 @@ void loop() {
   tiempoActual = millis();
   if (tiempoPrevioRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoPrevioRiegoZona1) >= tiempoRiegoZona1) {
     // aviso que termino de regar la zona 1
+    digitalWrite(PIN_BOMBA1, LOW);
     String ret = "";
     ret = ret + "<" + INST_RIEGO_Z1 + ",0>";
     serialMaster.print(ret);// <inst, ....>
     tiempoDespuesRiegoZona1 = millis();
     tiempoPrevioRiegoZona1 = 0;
+  }
+
+  if (tiempoPrevioRiegoZona1 > 0) {
+    if (tiempoActual % 100 < 60) { // si tengo dejarlo prendido un 60% el tiempo lo divido por 100 y el resto tiene que ser menor a 60
+      digitalWrite(PIN_BOMBA1, HIGH);
+    } else {
+      digitalWrite(PIN_BOMBA1, LOW);
+    }
   }
 
   tiempoActual = millis();
@@ -117,10 +124,11 @@ void loop() {
     serialMaster.print(ret);
     tiempoDespuesRiegoZona1 = 0;
   }
-
+  
   tiempoActual = millis();
   if (tiempoPrevioRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoPrevioRiegoZona2) >= tiempoRiegoZona2) {
     // aviso que termino de regar la zona 2
+    digitalWrite(PIN_BOMBA2, LOW);
     String ret = "";
     ret = ret + "<" + INST_RIEGO_Z2 + ",0>";
     serialMaster.print(ret);// <inst, ....>
@@ -128,6 +136,14 @@ void loop() {
     tiempoPrevioRiegoZona2 = 0;
   }
 
+  tiempoActual = millis();
+  if (tiempoPrevioRiegoZona2 > 0) {
+    if (tiempoActual % 100 < 60) { // si tengo dejarlo prendido un 60% el tiempo lo divido por 100 y el resto tiene que ser menor a 60
+      digitalWrite(PIN_BOMBA2, HIGH);
+    } else {
+      digitalWrite(PIN_BOMBA2, LOW);
+    }
+  }
   tiempoActual = millis();
   if (tiempoDespuesRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona2) >= TIEMPO_RES_RIEGO) {
     // aviso que como esta la humedad del suelo luego de cierto tiemp de regar la zona 2
