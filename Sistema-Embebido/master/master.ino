@@ -1,19 +1,18 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 
+#define TAM_MAX 9
+
 // PUERTOS DE CONEXION CON ESCLAVO
 const int PUERTO_RX_SLAVE = 2;
 const int PUERTO_TX_SLAVE = 3;
 
 const int PIN_CS_SD = 10;
 
-
 const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO
 const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1
 const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2
 const int INST_MANTENIMIENTO = 4; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO
-
-//COMO MANDAR VOLUMEN O TIEMPO DE RIEGO???
 
 // INTERVALO DE RUTINA DE CENSO EN MS
 static unsigned long MS_INTERVAL_TO_CENSO = 1000; // 15 seg.
@@ -43,6 +42,8 @@ static const int MAX_TEMP = 40;
 static const int MAX_HUMEDAD = 100;
 static const int MAX_LUZ = 100;
 
+int[30][9] censos;
+
 void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
@@ -63,14 +64,43 @@ void loop() {
     previousMillis = millis();
     MS_INTERVAL_TO_CENSO = 3000;
   }
+  int[TAM_MAX] valoresRecibidos = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+  leerEsclavo(valoresRecibidos);
+  if(valoresRecibidos[0] != -1) {
+    switch(valoresRecibidos[0]){
+      case INST_CENSO: {
+        int perEfectividadZ1 = calcularEfectividad(valoresRecibidos[1], valoresRecibidos[2], valoresRecibidos[3], valoresRecibidos[4]);
+        int perEfectividadZ2 = calcularEfectividad(valoresRecibidos[5], valoresRecibidos[6], valoresRecibidos[7], valoresRecibidos[8]);      
+        guardarEnArchivo(valoresRecibidos,perEfectividadZ1,perEfectividadZ2);      
+        if(determinarRiegoEnZona1()){
+          int vol1 = obtenerVolumenRiegoZona1();
+          serialSlave.write(INST_RIEGO_Z1); //CAMBIAR POR <INST, 0000>
+          serialSlave.write(vol1);
+        }
 
-  leerEsclavo();
-  //guardarEnArchivo();
-
+        if(determinarRiegoEnZona2()){
+          int vol2 = obtenerVolumenRiegoZona2();
+          serialSlave.write(INST_RIEGO_Z2); //CAMBIAR POR <INST, 0000>
+          serialSlave.write(vol2);
+        }
+        break;
+      }
+      case INST_MANTENIMIENTO: {
+        //ANALIZAR ERRORES E INFORMAR
+        break;
+      }
+      case INST_RIEGO_Z1: {
+        break;
+      }
+      case INST_RIEGO_Z2: {
+        break;
+      }
+    }
+  }
 }
 
-void leerEsclavo() {
-    static boolean recvinprogress = false; // se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cardena
+void leerEsclavo(int* vec) {
+    static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena
     static byte charIndex = 0; // es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo
     static const char START_MARKER = '<';
     static const char COMMA = ',';
@@ -79,7 +109,6 @@ void leerEsclavo() {
     static char input[4]; // el dato que este entre comas no puede ser mayor a 4
     static int fieldIndex = 0;
     static int instructionCode = 0;
-    static int errorCode = 0;
     if (serialSlave.available() <= 0) {
       return;  
     } else {
@@ -96,45 +125,11 @@ void leerEsclavo() {
       if(recvinprogress == true && charLeido != START_MARKER) {
         if (charLeido != COMMA) {
           input[charIndex] = charLeido;
-          String a = "";
-          a = a +"c " + charLeido + " fieldIndex " + fieldIndex + " ";
-          Serial.println(a);
           charIndex++;  
         } else {
           input[charIndex] = '\0';
           charIndex = 0;
-          switch (fieldIndex) {
-            case 0:
-              instructionCode = atoi(input);
-              break;
-            case 1:
-              errorCode = atoi(input);
-              break;
-            case 2:
-              temperatura1 = atoi(input);
-              break;
-            case 3:
-              humedadAmbiente1 = atoi(input);
-              break;
-            case 4:
-              humedadSuelo1 = atoi(input);
-              break;
-            case 5:
-              luz1 = atoi(input);
-              break;
-            case 6:
-              temperatura2 = atoi(input);
-              break;
-            case 7:
-              humedadAmbiente2 = atoi(input);
-              break;
-            case 8:
-              humedadSuelo2 = atoi(input);
-              break;
-            case 9:
-              luz2 = atoi(input);
-              break;
-          }
+          vec[fieldIndex] = atoi(input);
           fieldIndex++;
         }
       }
@@ -144,18 +139,13 @@ void leerEsclavo() {
     recvinprogress = false;
     // el ultimo no tiene coma
     input[charIndex] = '\0';
-    luz2 = atoi(input);
-
-    if (errorCode > 0) {
-      Serial.println("Recibo un error");
-    }
+    vec[fieldIndex] = atoi(input);
 
     String ret = "";
     ret = ret + "temp1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1 " + humedadSuelo1 + ", luz1 " + luz1 + ", efectividad1 " + calcularEfectividad1() + 
                 ", temp2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2 " + humedadSuelo2 + ", luz2 " + luz2 + ", efectividad2 " + calcularEfectividad2();
     Serial.println(ret);
 
-    errorCode = -1;
     instructionCode = -1;
     charIndex = 0;
     fieldIndex = 0;
@@ -200,17 +190,17 @@ void leerArchivo() {
   input[0] = '\0';
 }
 
-void guardarEnArchivo() {
-  filePointer = SD.open("archivo.txt", FILE_WRITE);
+void guardarEnArchivo(int *vec) {
+  //filePointer = SD.open("archivo.txt", FILE_WRITE);
   if (filePointer) {
     String ret = "";
-    ret = ret + temperatura1 + "," + humedadAmbiente1 + "," + humedadSuelo1 + "," + luz1 + "," + calcularEfectividad1() + "," +
-                 temperatura2 + "," + humedadAmbiente2 + humedadSuelo2 + "," + "," + luz2 + "," + calcularEfectividad2();
+    ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + calcularEfectividad1() + "," +
+                vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + calcularEfectividad2();
     Serial.print("archivo.txt: ");
     
-    filePointer.print(ret);
+    //filePointer.print(ret);
     
-    filePointer.close(); //cerramos el archivo
+    //filePointer.close(); //cerramos el archivo
   } else {
     Serial.println("Error al abrir el archivo");
   }
