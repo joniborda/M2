@@ -2,10 +2,12 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
-const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO
-const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1
-const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2
-const int INST_MANTENIMIENTO = 4; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO
+const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
+const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
+const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
+const int INST_MANTENIMIENTO = 4; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO (INICIO/FIN)
+const int INST_RES_RIEGO_Z1 = 12; //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
+const int INST_RES_RIEGO_Z2 = 13; //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
 
 const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE1 = 4;
 const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE2 = 12;
@@ -29,6 +31,10 @@ SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
 
 DHT sensorDHT1 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE1, DHT11);
 DHT sensorDHT2 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
+
+
+unsigned long tiempoActual = millis();
+unsigned long tiempoPrevioRiegoZona1 = 0;
 
 void setup() {
   serialMaster.begin(9600); //Velocidad comunicacion maestro
@@ -57,27 +63,41 @@ void loop() {
         enviarResultadoCensoAMaestro(valorSensores);
         break;
       }
-
       case INST_MANTENIMIENTO: {
         Serial.println("COMIENZA RUTINA DE MANTENIMIENTO.");
         mantenimiento();
         break;
       }
-
       case INST_RIEGO_Z1: {
+        Serial.println("COMIENZA RIEGO ZONA 1.");
+        
+        serialMaster.write();// <inst, ....>
+        tiempoPrevioRiegoZona1 = millis();
+        // leer el tiempo que tengo que regar y guardarlo en una variable
+        tiempoRiegoZona1 = 3000;
         break;
       }
-
       case INST_RIEGO_Z2: {
-        break;
+        Serial.println("COMIENZA RIEGO ZONA 2.");
+         break;
       }
-
       default:{
         Serial.println("No se encontro rutina para ese valor.");
         break;
       }
     }
   }
+  
+  tiempoActual = millis();
+  
+  if ((unsigned long)(tiempoActual - tiempoPrevioRiegoZona1) >= tiempoRiegoZona1) {
+    tiempoPrevioRiegoZona1 = millis();
+  }
+
+  // ENVIAR QUE TERMINE DE REGAR ZONA 1
+  // ENVIAR QUE TERMINE DE REGAR ZONA 2
+  // ENVIAR RESPUESTA DE RESULTADO DE RIEGO ZONA 1 DESPUES DE UN TIEMPO
+  // ENVIAR RESPUESTA DE RESULTADO DE RIEGO ZONA 2 DESPUES DE UN TIEMPO
 }
 
 void sensarZona1(int* vec) {
@@ -141,6 +161,6 @@ void enviarResultadoCensoAMaestro(int* vec) {
   Serial.println(ret);
 }
 
-void enviarResultadoMantenimientoAMaestro(){
+void enviarResultadoMantenimientoAMaestro() {
 
 }
