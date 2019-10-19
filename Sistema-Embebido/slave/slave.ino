@@ -2,9 +2,6 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
-#define RUTINA_SIN_ERROR 0
-#define RUTINA_CON_ERROR 1
-
 const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO
 const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1
 const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2
@@ -45,15 +42,16 @@ void loop() {
   if (serialMaster.available() > 0 ) {
     int instruccionRecibida = 0;
     // Recibiendo informacion del maestro
-    Serial.println("Se recibio una instruccion del maestro. x`");
+    Serial.println("Se recibio una instruccion del maestro.");
     instruccionRecibida = (int)serialMaster.read();
+    serialMaster.flush();
     Serial.print("VALOR: ");
     Serial.println(instruccionRecibida);
     
     switch (instruccionRecibida) {
       case INST_CENSO: {
         Serial.println("COMIENZA RUTINA DE CENSO.");
-        int valorSensores[] = {INST_CENSO, RUTINA_SIN_ERROR, -1, -1, -1, -1, -1, -1, -1, -1};
+        int valorSensores[] = {INST_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
         sensarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
         sensarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
         enviarResultadoCensoAMaestro(valorSensores);
@@ -88,7 +86,7 @@ void sensarZona1(int* vec) {
   vec[4] = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
   vec[5] = analogRead(PIN_SENSOR_LUZ1);
   String ret = "";
-  ret = ret + "Temperatura1: " + vec[2] + ", HumedadAmbiente1: " + vec[3] + ", HumedadSuelo1: " + vec[4] + ", SensorLuz1: " + vec[5];
+  ret = ret + "Temperatura1: " + vec[1] + ", HumedadAmbiente1: " + vec[2] + ", HumedadSuelo1: " + vec[3] + ", SensorLuz1: " + vec[4];
   Serial.println(ret);
 }
 
@@ -98,26 +96,29 @@ void sensarZona2(int* vec) {
   vec[8] = analogRead(PIN_SENSOR_HUMEDAD_SUELO2);
   vec[9] = analogRead(PIN_SENSOR_LUZ2);
   String ret = "";
-  ret = ret + "Temperatura2: " + vec[6] + ", HumedadAmbiente2: " + vec[7] + ", HumedadSuelo2: " + vec[8] + ", SensorLuz2: " + vec[9];
+  ret = ret + "Temperatura2: " + vec[5] + ", HumedadAmbiente2: " + vec[6] + ", HumedadSuelo2: " + vec[7] + ", SensorLuz2: " + vec[8];
   Serial.println(ret);
 }
 
 void mantenimiento() {
-  int valorSensores[] = {INST_MANTENIMIENTO, RUTINA_SIN_ERROR, -1, -1, -1, -1, -1, -1, -1, -1};
-  
+  int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
+  //
+  /*Para el envio del mantenimiento, se envia con el siguiente formato:
+  *
+  * */
   sensarZona1(valorSensores);
   sensarZona2(valorSensores);
 
-  if (abs(valorSensores[2] - valorSensores[6]) > 10) {
+  if (abs(valorSensores[1] - valorSensores[5]) > 10) {
     Serial.println("Sensor de temperatura con fallas.");
   }
 
-  if (abs(valorSensores[3] - valorSensores[7]) > 10) {
+  if (abs(valorSensores[2] - valorSensores[6]) > 10) {
     Serial.println("Sensor de humedad atmosferica con fallas.");
   }
 
   //DEBERIA SER DE NOCHE PORQUE SI NO NUNCA LO VA A DETECTAR
-  int valorLuzAnteriorZona1 = valorSensores[5];
+  int valorLuzAnteriorZona1 = valorSensores[4];
   digitalWrite(PIN_LED1, HIGH);
   delay(10);
   int valorLuzActualZona1 = analogRead(PIN_SENSOR_LUZ1);
@@ -135,7 +136,7 @@ void enviarResultadoCensoAMaestro(int* vec) {
   * La respuesta es un codigo de respuesta. Si es 0 es que está ok. Si es 1 o mas es porque surgio un error.
   */
   String ret = "";
-  ret = ret + "<" + INST_CENSO + ",0," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + vec[9] + ">";
+  ret = ret + "<" + INST_CENSO + "," + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + ">";
   serialMaster.print(ret);
   Serial.println(ret);
 }
