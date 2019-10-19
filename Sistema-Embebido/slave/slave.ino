@@ -37,6 +37,10 @@ DHT sensorDHT2 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
 unsigned long tiempoActual = millis();
 unsigned long tiempoPrevioRiegoZona1 = 0;
 unsigned long tiempoDespuesRiegoZona1 = 0;
+unsigned long tiempoPrevioRiegoZona2 = 0;
+unsigned long tiempoDespuesRiegoZona2 = 0;
+int tiempoRiegoZona1 = 0;
+int tiempoRiegoZona2 = 0;
 
 void setup() {
   serialMaster.begin(9600); //Velocidad comunicacion maestro
@@ -73,7 +77,7 @@ void loop() {
       case INST_RIEGO_Z1: {
         Serial.println("COMIENZA RIEGO ZONA 1.");
         
-        serialMaster.write();// <inst, ....>
+        serialMaster.print("");// <inst, ....>
         tiempoPrevioRiegoZona1 = millis();
         // leer el tiempo que tengo que regar y guardarlo en una variable
         tiempoRiegoZona1 = 3000;
@@ -81,7 +85,12 @@ void loop() {
       }
       case INST_RIEGO_Z2: {
         Serial.println("COMIENZA RIEGO ZONA 2.");
-         break;
+        digitalWrite(PIN_BOMBA1, HIGH);
+        
+        tiempoPrevioRiegoZona2 = millis();
+        // leer el tiempo que tengo que regar y guardarlo en una variable
+        tiempoRiegoZona2 = 3000;
+        break;
       }
       default:{
         Serial.println("No se encontro rutina para ese valor.");
@@ -91,25 +100,42 @@ void loop() {
   }
   
   tiempoActual = millis();
-  if ((unsigned long)(tiempoActual - tiempoPrevioRiegoZona1) >= tiempoRiegoZona1) {
+  if (tiempoPrevioRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoPrevioRiegoZona1) >= tiempoRiegoZona1) {
+    // aviso que termino de regar la zona 1
     String ret = "";
-    ret = ret + "<" + INST_RIEGO_Z1 + ",0,0,0,0,0>";
-    serialMaster.write(ret);
+    ret = ret + "<" + INST_RIEGO_Z1 + ",0>";
+    serialMaster.print(ret);// <inst, ....>
     tiempoDespuesRiegoZona1 = millis();
+    tiempoPrevioRiegoZona1 = 0;
   }
 
   tiempoActual = millis();
-  if ((unsigned long)(tiempoActual - tiempoDespuesRiegoZona1) >= TIEMPO_RES_RIEGO) {
+  if (tiempoDespuesRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona1) >= TIEMPO_RES_RIEGO) {
+    // aviso que como esta la humedad del suelo luego de cierto tiemp de regar la zona 1
     String ret = "";
-    ret = ret + "<" + INST_RES_RIEGO_Z1 + ",0,0,0,0,0>";
-    serialMaster.write(ret);
-    tiempoDespuesRiegoZona1 = millis();
+    ret = ret + "<" + INST_RES_RIEGO_Z1 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO1) + ",0,0,0,0>";
+    serialMaster.print(ret);
+    tiempoDespuesRiegoZona1 = 0;
   }
 
-  // ENVIAR QUE TERMINE DE REGAR ZONA 1
-  // ENVIAR QUE TERMINE DE REGAR ZONA 2
-  // ENVIAR RESPUESTA DE RESULTADO DE RIEGO ZONA 1 DESPUES DE UN TIEMPO
-  // ENVIAR RESPUESTA DE RESULTADO DE RIEGO ZONA 2 DESPUES DE UN TIEMPO
+  tiempoActual = millis();
+  if (tiempoPrevioRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoPrevioRiegoZona2) >= tiempoRiegoZona2) {
+    // aviso que termino de regar la zona 2
+    String ret = "";
+    ret = ret + "<" + INST_RIEGO_Z2 + ",0>";
+    serialMaster.print(ret);// <inst, ....>
+    tiempoDespuesRiegoZona2 = millis();
+    tiempoPrevioRiegoZona2 = 0;
+  }
+
+  tiempoActual = millis();
+  if (tiempoDespuesRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona2) >= TIEMPO_RES_RIEGO) {
+    // aviso que como esta la humedad del suelo luego de cierto tiemp de regar la zona 2
+    String ret = "";
+    ret = ret + "<" + INST_RES_RIEGO_Z2 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO2) + ",0,0,0,0>";
+    serialMaster.print(ret);
+    tiempoDespuesRiegoZona2 = 0;
+  }
 }
 
 void sensarZona1(int* vec) {
