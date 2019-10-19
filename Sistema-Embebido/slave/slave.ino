@@ -56,7 +56,8 @@ void loop() {
     int instruccionRecibida = 0;
     // Recibiendo informacion del maestro
     Serial.println("Se recibio una instruccion del maestro.");
-    instruccionRecibida = (int)serialMaster.read();
+    serialMaster.readBytesUntil('>', stringRecibido, 30);
+    leerString(vectorRecibido);
     serialMaster.flush();
     Serial.print("VALOR: ");
     Serial.println(instruccionRecibida);
@@ -222,4 +223,54 @@ void enviarResultadoCensoAMaestro(int* vec) {
 
 void enviarResultadoMantenimientoAMaestro() {
 
+}
+
+void leerString(int* vec) {
+    static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena
+    static byte charIndex = 0; // es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo
+    static const char START_MARKER = '<';
+    static const char COMMA = ',';
+    static const char END_MARKER = '>';
+    static char charLeido;
+    static char input[4]; // el dato que este entre comas no puede ser mayor a 4
+    static int fieldIndex = 0;
+    static int instructionCode = 0;
+    int i = 0;
+    while(vec[i] != '>') {
+      i++;
+      charLeido = (char)vec[i];
+      if (charLeido == START_MARKER) {
+        recvinprogress = true;
+      } else if (charLeido == END_MARKER) {
+        recvinprogress = false;
+      }
+      
+      if(recvinprogress == true && charLeido != START_MARKER) {
+        if (charLeido != COMMA) {
+          input[charIndex] = charLeido;
+          charIndex++;  
+        } else {
+          input[charIndex] = '\0';
+          charIndex = 0;
+          vec[fieldIndex] = atoi(input);
+          fieldIndex++;
+        }
+      }
+  }
+  // terminar esta parte
+  if (charLeido == END_MARKER) {
+    recvinprogress = false;
+    // el ultimo no tiene coma
+    input[charIndex] = '\0';
+    vec[fieldIndex] = atoi(input);
+
+    String ret = "";
+    ret = ret + "temp1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1 " + humedadSuelo1 + ", luz1 " + luz1 + ", efectividad1 " + calcularEfectividad1() + 
+                ", temp2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2 " + humedadSuelo2 + ", luz2 " + luz2 + ", efectividad2 " + calcularEfectividad2();
+    Serial.println(ret);
+
+    instructionCode = -1;
+    charIndex = 0;
+    fieldIndex = 0;
+  }
 }
