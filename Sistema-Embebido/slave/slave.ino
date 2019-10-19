@@ -25,7 +25,6 @@ const int PUERTO_RX_MASTER = 2;
 const int PUERTO_TX_MASTER = 3;
 
 // INTERVALO PARA ACCION EN MS
-const unsigned long INTERVAL_TO_DOING = 6000; 
 const unsigned long TIEMPO_RES_RIEGO = 3000;
 
 SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
@@ -41,6 +40,8 @@ unsigned long tiempoPrevioRiegoZona2 = 0;
 unsigned long tiempoDespuesRiegoZona2 = 0;
 int tiempoRiegoZona1 = 0;
 int tiempoRiegoZona2 = 0;
+int intensidadRiegoZona1 = 50;
+int intensidadRiegoZona2 = 50;
 
 void setup() {
   serialMaster.begin(9600); //Velocidad comunicacion maestro
@@ -80,6 +81,8 @@ void loop() {
         tiempoPrevioRiegoZona1 = millis();
         // leer el tiempo que tengo que regar y guardarlo en una variable
         tiempoRiegoZona1 = 3000;
+        // leer la intesidad que manda para regar
+        intensidadRiegoZona1 = 50;
         break;
       }
       case INST_RIEGO_Z2: {
@@ -88,6 +91,8 @@ void loop() {
         tiempoPrevioRiegoZona2 = millis();
         // leer el tiempo que tengo que regar y guardarlo en una variable
         tiempoRiegoZona2 = 3000;
+        // leer la intesidad que manda para regar 
+        intensidadRiegoZona2 = 50;
         break;
       }
       default:{
@@ -109,7 +114,7 @@ void loop() {
   }
 
   if (tiempoPrevioRiegoZona1 > 0) {
-    if (tiempoActual % 100 < 60) { // si tengo dejarlo prendido un 60% el tiempo lo divido por 100 y el resto tiene que ser menor a 60
+    if (tiempoActual % 100 < intensidadRiegoZona1) { // si tengo dejarlo prendido un 60% el tiempo lo divido por 100 y el resto tiene que ser menor a 60
       digitalWrite(PIN_BOMBA1, HIGH);
     } else {
       digitalWrite(PIN_BOMBA1, LOW);
@@ -138,7 +143,7 @@ void loop() {
 
   tiempoActual = millis();
   if (tiempoPrevioRiegoZona2 > 0) {
-    if (tiempoActual % 100 < 60) { // si tengo dejarlo prendido un 60% el tiempo lo divido por 100 y el resto tiene que ser menor a 60
+    if (tiempoActual % 100 < intensidadRiegoZona2) { // si tengo dejarlo prendido un 60% el tiempo lo divido por 100 y el resto tiene que ser menor a 60
       digitalWrite(PIN_BOMBA2, HIGH);
     } else {
       digitalWrite(PIN_BOMBA2, LOW);
