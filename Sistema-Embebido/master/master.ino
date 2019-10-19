@@ -9,10 +9,12 @@ const int PUERTO_TX_SLAVE = 3;
 
 const int PIN_CS_SD = 10;
 
-const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO
-const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1
-const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2
-const int INST_MANTENIMIENTO = 4; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO
+const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
+const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
+const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
+const int INST_MANTENIMIENTO = 4; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO (INICIO/FIN)
+const int INST_RES_RIEGO_Z1 = 12; //INSTRUCCION PARA LEER EL RESULTADO DEL RIEGO EN LA ZONA 1
+const int INST_RES_RIEGO_Z2 = 13; //INSTRUCCION PARA LEER EL RESULTADO DEL RIEGO EN LA ZONA 2
 
 // INTERVALO DE RUTINA DE CENSO EN MS
 static unsigned long MS_INTERVAL_TO_CENSO = 1000; // 15 seg.
@@ -23,16 +25,6 @@ File filePointer;
 unsigned long currentMillis = millis(); // grab current time
 unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 
-//Deberia usarlas en un entorno local a la funcion
-int temperatura1 = 0;
-int temperatura2 = 0;
-int humedadAmbiente1 = 0;
-int humedadAmbiente2 = 0;
-int humedadSuelo1 = 0;
-int humedadSuelo2 = 0;
-int luz1 = 0;
-int luz2 = 0;
-
 //Podriamos poner directamente los valores para no comer espacio, revisar si es necesario
 static const float PER_TEMP = 0.2;
 static const float PER_HUM_AMB = 0.2;
@@ -41,6 +33,9 @@ static const float PER_LUZ = 0.2;
 static const int MAX_TEMP = 40;
 static const int MAX_HUMEDAD = 100;
 static const int MAX_LUZ = 100;
+
+char riegoEnCursoZona1 = 'F';
+char riegoEnCursoZona2 = 'F';
 
 int[30][9] censos;
 
@@ -76,12 +71,14 @@ void loop() {
           int vol1 = obtenerVolumenRiegoZona1();
           serialSlave.write(INST_RIEGO_Z1); //CAMBIAR POR <INST, 0000>
           serialSlave.write(vol1);
+          riegoEnCursoZona1 = 'T';
         }
 
         if(determinarRiegoEnZona2()){
           int vol2 = obtenerVolumenRiegoZona2();
           serialSlave.write(INST_RIEGO_Z2); //CAMBIAR POR <INST, 0000>
           serialSlave.write(vol2);
+          riegoEnCursoZona2 = 'T';
         }
         break;
       }
@@ -90,9 +87,23 @@ void loop() {
         break;
       }
       case INST_RIEGO_Z1: {
+        riegoEnCursoZona1 = 'F';
         break;
       }
       case INST_RIEGO_Z2: {
+        riegoEnCursoZona2 = 'F';
+        break;
+      }
+      case INST_RES_RIEGO_Z1: {
+        //Aca se analiza el resultado del riego
+        //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
+        // el resultado deberia dar mayor a 50% por ejemplo
+        break;
+      }
+      case INST_RES_RIEGO_Z2: {
+        //Aca se analiza el resultado del riego
+        //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
+        // el resultado deberia dar mayor a 50% por ejemplo
         break;
       }
     }
