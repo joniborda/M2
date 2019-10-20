@@ -1,6 +1,9 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 
+#define TAM_MAX_READ 9
+#define TAM_MAX_WRITE 2
+
 // PUERTOS DE CONEXION CON ESCLAVO
 const int PUERTO_RX_SLAVE = 2;
 const int PUERTO_TX_SLAVE = 3;
@@ -142,9 +145,6 @@ void loop() {
 void leerEsclavo(int* vec) {
     static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena.
     static byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
-    static const char START_MARKER = '<';
-    static const char COMMA = ',';
-    static const char END_MARKER = '>';
     static char charLeido;
     static char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
     static int fieldIndex = 0;
@@ -155,14 +155,14 @@ void leerEsclavo(int* vec) {
     }
     while(serialSlave.available() > 0) {
       charLeido = (char)serialSlave.read();
-      if (charLeido == START_MARKER) {
+      if (charLeido == '<') {
         recvinprogress = true;
-      } else if (charLeido == END_MARKER) {
+      } else if (charLeido == '>') {
         recvinprogress = false;
       }
       
-      if(recvinprogress == true && charLeido != START_MARKER) {
-        if (charLeido != COMMA) {
+      if(recvinprogress == true && charLeido != '<') {
+        if (charLeido != ',') {
           input[charIndex] = charLeido;
           charIndex++;  
         } else {
@@ -174,9 +174,9 @@ void leerEsclavo(int* vec) {
       }
   }
 
-  if (charLeido == END_MARKER) {
+  if (charLeido == '>') {
     recvinprogress = false;
-    // el ultimo no tiene coma
+    // El ultimo valor no tiene coma.
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
 
