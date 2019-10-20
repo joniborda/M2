@@ -61,6 +61,7 @@ void loop() {
     previousMillis = millis();
     MS_INTERVAL_TO_CENSO = 3000;
   }
+  
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
   leerEsclavo(valoresRecibidos);
   if(valoresRecibidos[0] != -1) {
@@ -71,7 +72,7 @@ void loop() {
         guardarEnArchivo(valoresRecibidos,perEfectividadZ1,perEfectividadZ2); //Implentar 
         
         if(determinarRiegoEnZona1()){ //Implementar
-          float varZona1 = obtenerVariableRiego("variableRiegoZona1"); //Implementar
+          float varZona1 = obtenerVariableRiego("variableRiegoZona1.txt");
           float vol1 = calcularVolumenRiego(valoresRecibidos[2], varZona1); // Implementar
           serialSlave.write(INST_RIEGO_Z1); //CAMBIAR POR <INST, 0000>
           serialSlave.write(vol1); //PROBAR URGENTE
@@ -79,8 +80,8 @@ void loop() {
         }
 
         if(determinarRiegoEnZona2()){
-          float varZona2 =
-          int vol2 = obtenerVolumenRiegoZona2();
+          float varZona2 = obtenerVariableRiego("variableRiegoZona2.txt");
+          float vol2 = calcularVolumenRiego(valoresRecibidos[6], varZona2);
           serialSlave.write(INST_RIEGO_Z2); //CAMBIAR POR <INST, 0000>
           serialSlave.write(vol2);
           riegoEnCursoZona2 = 'T';
@@ -105,14 +106,14 @@ void loop() {
         int humedadSueloZona1 = valoresRecibidos[2];
         int perHumedadSueloZona1 = humedadSueloZona1 / 1023;
         if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60){
-          var1 = obtenerVariableRiegoZona1();
+          var1 = obtenerVariableRiego("variableRiegoZona1.txt");
           if(perHumedadSueloZona1 <= 40){
             var1 = var1 + (1/perHumedadSueloZona1);
           }
           else if(perHumedadSueloZona1 => 60){
             var1 = var1 - (1/perHumedadSueloZona1);
           }
-          escribirVariableRiegoZona1(var1);
+          escribirVariableRiego(var1, "variableRiegoZona1.txt");
         } else {
           Serial.println("El caudal de agua es correcto para la zona 1.")
         }
@@ -125,14 +126,14 @@ void loop() {
         int humedadSueloZona2 = valoresRecibidos[6];
         int perHumedadSueloZona2 = humedadSueloZona2 / 1023;
         if(perHumedadSueloZona2 < 40 || perHumedadSueloZona2 > 60){
-          var2 = obtenerVariableRiegoZona2();
+          var2 = obtenerVariableRiego("variableRiegoZona2.txt");
           if(perHumedadSueloZona2 <= 40){
             var2 = var2 + (1/perHumedadSueloZona2);
           }
           else if(perHumedadSueloZona2 => 60){
             var2 = var2 - (1/perHumedadSueloZona2);
           }
-          escribirVariableRiegoZona1(var2);
+          escribirVariableRiego(var2, "variableRiegoZona2.txt");
         } else {
           Serial.println("El caudal de agua es correcto para la zona 2.")
         }
@@ -191,42 +192,34 @@ void leerEsclavo(int* vec) {
   }
 }
 
-void leerArchivo() {
-  File fp = SD.open("archivo.txt");
-  static char caracter;
-  static char input[4];
-  static int i = 0;
-  static int finPalabra = 0;
+float obtenerVariableRiego(char* archivo) {
+  File fp = SD.open(archivo);
+  char caracter;
+  float ret = -1;
 
   // if the file is available, write to it:
   if (fp) {
-    while (fp.available()) {
-      caracter = fp.read();
-      if (caracter == -1) { // -1 indica fin de archivo
-        finPalabra = 1;
-      }
-      if (caracter == '\n') {
-        finPalabra = 1;
-      }
-
-      if (finPalabra == 0) {
-          input[i++] = caracter;
-      } else {
-        input[i] = '\0';
-        i = 0;
-        //Serial.print(atoi(input)); // solo imprimo la lectura
-        //Serial.println(" ");
-        finPalabra = 0;
-      }
+    if (fp.available()) {
+      fp.read(input, sizeof(input));
+      ret = atof(input);
     }
-
     fp.close();
   } else {
-    Serial.println("error opening archivo.txt");
+    String ret = "";
+    ret = ret + "Er. " + archivo;
+    Serial.println(ret);
   }
-  i = 0; // es estatico así que tengo que resetearlo
-  finPalabra = 0;
-  input[0] = '\0';
+  return ret;
+}
+
+void escribirVariableRiego(float var, char* archivo) {
+  File fp = SD.open(archivo, FILE_WRITE); //VER SI LO PISA
+  if (fp) {
+    fp.print(var);
+    fp.close();
+  } else {
+    Serial.println("E escribir var riego");
+  }
 }
 
 void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
@@ -256,13 +249,19 @@ int calcularEfectividad(float temp, float amb, float suelo, float luz) {
 }
 
 int determinarRiegoEnZona1() {
-
+  // ser si esta muy seco
+  // si esta muy seco ver si tiene datos anteriores
+  // si tiene datos anteriores deberia ver si la luz esta en aumento
+  // si tiene datos anteriores deberia ver si la humedad ambiente esta en aumento
 }
 
 int determinarRiegoEnZona2() {
 
 }
 
+float calcularVolumenRiego(int riego, float var) {
+  return riego * var;
+}
 /*int calcularEfectividad1() {
   return calcularEfectividad(temperatura1, humedadAmbiente1, humedadSuelo1, luz1);
 }

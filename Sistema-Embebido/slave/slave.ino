@@ -6,27 +6,27 @@
 #define TAM_MAX_WRITE 9
 #define TAM_MAX_READ 2
 
-const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
-const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
-const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
-const int INST_MANTENIMIENTO = 4; // INSTRUCCION PARA RUTINA DE MANTENIMIENTO (INICIO/FIN)
-const int INST_RES_RIEGO_Z1 = 12; //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
-const int INST_RES_RIEGO_Z2 = 13; //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
+#define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
+#define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
+#define INST_RIEGO_Z2 3 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
+#define INST_MANTENIMIENTO 4 // INSTRUCCION PARA RUTINA DE MANTENIMIENTO (INICIO/FIN)
+#define INST_RES_RIEGO_Z1 12 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
+#define INST_RES_RIEGO_Z2 13 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
 
-const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE1 = 4;
-const unsigned int PIN_SENSOR_HUMEDAD_AMBIENTE2 = 12;
-const unsigned int PIN_SENSOR_HUMEDAD_SUELO1 = A2;
-const unsigned int PIN_SENSOR_HUMEDAD_SUELO2 = A3; // No disponible aun
-const unsigned int PIN_SENSOR_LUZ1 = A0;
-const unsigned int PIN_SENSOR_LUZ2 = A1;
-const unsigned int PIN_BOMBA1 = 9;
-const unsigned int PIN_BOMBA2 = 6;
-const unsigned int PIN_LED1 = 7;
-const unsigned int PIN_LED2 = 8;
+#define PIN_SENSOR_HUMEDAD_AMBIENTE1 4
+#define PIN_SENSOR_HUMEDAD_AMBIENTE2 12
+#define PIN_SENSOR_HUMEDAD_SUELO1 A2
+#define PIN_SENSOR_HUMEDAD_SUELO2 A3 // No disponible aun
+#define PIN_SENSOR_LUZ1 A0
+#define PIN_SENSOR_LUZ2 A1
+#define PIN_BOMBA1 9
+#define PIN_BOMBA2 6
+#define PIN_LED1 7
+#define PIN_LED2 8
 
 // PUERTOS DE CONEXION CON MAESTRO
-const int PUERTO_RX_MASTER = 2;
-const int PUERTO_TX_MASTER = 3;
+#define PUERTO_RX_MASTER 2
+#define PUERTO_TX_MASTER 3
 
 // INTERVALO PARA ACCION EN MS
 const unsigned long TIEMPO_RES_RIEGO = 3000;
@@ -144,6 +144,20 @@ void loop() {
     ret = ret + "<" + INST_RES_RIEGO_Z2 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO2) + ">";
     serialMaster.print(ret);
     tiempoDespuesRiegoZona2 = 0;
+  }
+
+  // prender o apagar la luz de zona 1 si es de noche
+  if (analogRead(PIN_SENSOR_LUZ1) > 600) {
+    digitalWrite(PIN_LED1, HIGH);
+  } else {
+    digitalWrite(PIN_LED1, LOW);
+  }
+
+  // prender o apagar la luz de zona 2 si es de noche
+  if (analogRead(PIN_SENSOR_LUZ2) > 600) {
+    digitalWrite(PIN_LED2, HIGH);
+  } else {
+    digitalWrite(PIN_LED2, LOW);
   }
 }
 
