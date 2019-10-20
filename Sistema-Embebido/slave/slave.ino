@@ -58,12 +58,9 @@ void loop() {
     // Recibiendo informacion del maestro
     Serial.println("Se recibio una instruccion del maestro.");
     char *stringRecibido;
-    int[TAM_MAX] valoresRecibidos = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
-    serialMaster.readBytesUntil('>', stringRecibido, 30);
-    leerString(vectorRecibido);
-    serialMaster.flush();
-    Serial.print("VALOR: ");
-    Serial.println(instruccionRecibida);
+    int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+    
+    leerMaestro(valoresRecibidos);
     
     switch (instruccionRecibida) {
       case INST_CENSO: {
@@ -214,28 +211,27 @@ void enviarResultadoMantenimientoAMaestro() {
 
 }
 
-void leerString(int* vec) {
-    static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena
-    static byte charIndex = 0; // es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo
-    static const char START_MARKER = '<';
-    static const char COMMA = ',';
-    static const char END_MARKER = '>';
+void leerMaestro(int* vec) {
+    static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena.
+    static byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
     static char charLeido;
-    static char input[4]; // el dato que este entre comas no puede ser mayor a 4
+    static char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
     static int fieldIndex = 0;
-    static int instructionCode = 0;
-    int i = 0;
-    while(vec[i] != '>') {
-      i++;
-      charLeido = (char)vec[i];
-      if (charLeido == START_MARKER) {
+    if (serialMaster.available() <= 0) {
+      return;  
+    } else {
+      Serial.println("Informacion disponible del maestro.");
+    }
+    while(serialMaster.available() > 0) {
+      charLeido = (char)serialMaster.read();
+      if (charLeido == '<') {
         recvinprogress = true;
-      } else if (charLeido == END_MARKER) {
+      } else if (charLeido == '>') {
         recvinprogress = false;
       }
       
-      if(recvinprogress == true && charLeido != START_MARKER) {
-        if (charLeido != COMMA) {
+      if(recvinprogress == true && charLeido != '<') {
+        if (charLeido != ',') {
           input[charIndex] = charLeido;
           charIndex++;  
         } else {
@@ -246,19 +242,13 @@ void leerString(int* vec) {
         }
       }
   }
-  // terminar esta parte
-  if (charLeido == END_MARKER) {
+
+  if (charLeido == '>') {
     recvinprogress = false;
     // el ultimo no tiene coma
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
 
-    String ret = "";
-    ret = ret + "temp1 " + temperatura1 + ", humedadAmbiente1 " + humedadAmbiente1 + ", humedadSuelo1 " + humedadSuelo1 + ", luz1 " + luz1 + ", efectividad1 " + calcularEfectividad1() + 
-                ", temp2 " + temperatura2 + ", humedadAmbiente2 " + humedadAmbiente2 + ", humedadSuelo2 " + humedadSuelo2 + ", luz2 " + luz2 + ", efectividad2 " + calcularEfectividad2();
-    Serial.println(ret);
-
-    instructionCode = -1;
     charIndex = 0;
     fieldIndex = 0;
   }
