@@ -22,7 +22,7 @@ static unsigned long MS_INTERVAL_TO_CENSO = 1000; // 15 seg.
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
 File filePointer;
-unsigned long currentMillis = millis(); // grab current time
+unsigned long currentMillis = 0; // grab current time
 unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 
 //Podriamos poner directamente los valores para no comer espacio, revisar si es necesario
@@ -37,7 +37,7 @@ static const int MAX_LUZ = 100;
 char riegoEnCursoZona1 = 'F';
 char riegoEnCursoZona2 = 'F';
 
-int[30][9] censos;
+//int[30][9] censos;
 
 void setup() {
   serialSlave.begin(9600);
@@ -55,7 +55,9 @@ void loop() {
   
   if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_CENSO) {
     Serial.println("Envio instruccion de censo a el esclavo.");
-    serialSlave.write(INST_CENSO);
+    String ret = "";
+    ret = ret + '<' + INST_CENSO + '>';
+    serialSlave.write(ret);
     previousMillis = millis();
     MS_INTERVAL_TO_CENSO = 3000;
   }
