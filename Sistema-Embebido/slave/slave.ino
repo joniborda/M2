@@ -34,7 +34,6 @@ SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
 DHT sensorDHT1 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE1, DHT11);
 DHT sensorDHT2 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
 
-
 unsigned long tiempoActual = millis();
 unsigned long tiempoComienzoRiegoZona1 = 0;
 unsigned long tiempoDespuesRiegoZona1 = 0;
@@ -107,7 +106,7 @@ void loop() {
   tiempoActual = millis();
   if (tiempoComienzoRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona1) >= tiempoRiegoZona1) {
     // Aviso que termino de regar la zona 1.
-    digitalWrite(PIN_BOMBA1, LOW);
+    analogWrite(PIN_BOMBA1, 0);
     String ret = "";
     //ret = ret + "<" + INST_RIEGO_Z1 + ",0>"; Entiendo que no es necesario manderle el 0
     ret = ret + "<" + INST_RIEGO_Z1 + ">";
@@ -129,7 +128,7 @@ void loop() {
   tiempoActual = millis();
   if (tiempoComienzoRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona2) >= tiempoRiegoZona2) {
     // Aviso que termino de regar la zona 2.
-    digitalWrite(PIN_BOMBA2, LOW);
+    analogWrite(PIN_BOMBA2, 0);
     String ret = "";
     ret = ret + "<" + INST_RIEGO_Z2 + ">";
     serialMaster.print(ret);// <inst, ....>
@@ -153,7 +152,7 @@ void sensarZona1(int* vec) {
   vec[4] = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
   vec[5] = analogRead(PIN_SENSOR_LUZ1);
   String ret = "";
-  ret = ret + "Temperatura1: " + vec[1] + ", HumedadAmbiente1: " + vec[2] + ", HumedadSuelo1: " + vec[3] + ", SensorLuz1: " + vec[4];
+  ret = ret + "Temp1: " + vec[1] + ", HumAmb1: " + vec[2] + ", HumSu1: " + vec[3] + ", SenLuz1: " + vec[4];
   Serial.println(ret);
 }
 
@@ -163,7 +162,7 @@ void sensarZona2(int* vec) {
   vec[8] = analogRead(PIN_SENSOR_HUMEDAD_SUELO2);
   vec[9] = analogRead(PIN_SENSOR_LUZ2);
   String ret = "";
-  ret = ret + "Temperatura2: " + vec[5] + ", HumedadAmbiente2: " + vec[6] + ", HumedadSuelo2: " + vec[7] + ", SensorLuz2: " + vec[8];
+  ret = ret + "Temp2: " + vec[5] + ", HumAmb2: " + vec[6] + ", HumSu2: " + vec[7] + ", SenLuz2: " + vec[8];
   Serial.println(ret);
 }
 
@@ -205,10 +204,6 @@ void enviarResultadoCensoAMaestro(int* vec) {
   ret = ret + "<" + INST_CENSO + "," + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + ">";
   serialMaster.print(ret);
   Serial.println(ret);
-}
-
-void enviarResultadoMantenimientoAMaestro() {
-
 }
 
 void leerMaestro(int* vec) {
