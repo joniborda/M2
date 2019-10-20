@@ -1,10 +1,8 @@
+#include <SoftwareSerial.h>
 #include <DHT_U.h>
 #include <DHT.h>
 
-#include <SoftwareSerial.h>
-
 #define TAM_MAX_WRITE 9
-#define TAM_MAX_READ 2
 
 #define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
 #define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
@@ -61,10 +59,10 @@ void loop() {
     leerMaestro(&instr_recibida, &intesidadRiego);
     serialMaster.flush();
     Serial.print("INSTRUCCION: ");
-    Serial.println(valoresRecibidos[0]);
+    Serial.println(instr_recibida);
     
-    if(valoresRecibidos[0] != -1) {
-      switch (valoresRecibidos[0]) {
+    if(instr_recibida != -1) {
+      switch (instr_recibida) {
         case INST_CENSO: {
           Serial.println("COMIENZA RUTINA DE CENSO.");
           int valorSensores[] = {INST_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -82,17 +80,14 @@ void loop() {
         case INST_RIEGO_Z1: {
           Serial.println("COMIENZA RIEGO ZONA 1.");
           tiempoComienzoRiegoZona1 = millis();
-          float intesidadRiegoZona1 = valoresRecibidos[1];
+          float intesidadRiegoZona1 = intesidadRiego;
           analogWrite(PIN_BOMBA1, intesidadRiegoZona1 * 255/100);
           break;
         }
         case INST_RIEGO_Z2: {
           Serial.println("COMIENZA RIEGO ZONA 2.");
           tiempoComienzoRiegoZona2 = millis();
-          // leer el tiempo que tengo que regar y guardarlo en una variable
-          tiempoRiegoZona2 = 3000;
-          // leer la intesidad que manda para regar 
-          intensidadRiegoZona2 = 50;
+          float intensidadRiegoZona2 = intesidadRiego;
           analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
           break;
         }
@@ -109,9 +104,8 @@ void loop() {
     // Aviso que termino de regar la zona 1.
     analogWrite(PIN_BOMBA1, 0);
     String ret = "";
-    //ret = ret + "<" + INST_RIEGO_Z1 + ",0>"; Entiendo que no es necesario manderle el 0
     ret = ret + "<" + INST_RIEGO_Z1 + ">";
-    serialMaster.print(ret);// <inst, ....>
+    serialMaster.print(ret);
     tiempoDespuesRiegoZona1 = millis();
     tiempoComienzoRiegoZona1 = 0;
   }
@@ -120,7 +114,6 @@ void loop() {
   if (tiempoDespuesRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona1) >= TIEMPO_RES_RIEGO) {
     // Paso el tiempo establecido posterior al riego, se envia al maestro el valor del sensor de humedad del suelo.
     String ret = "";
-    // ret = ret + "<" + INST_RES_RIEGO_Z1 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO1) + ",0,0,0,0>"; //No es necesario mandarle todos los ceros del fondo, el maestro va a leer hasta que encuentre el endMark
     ret = ret + "<" + INST_RES_RIEGO_Z1 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO1) + ">"; 
     serialMaster.print(ret);
     tiempoDespuesRiegoZona1 = 0;
@@ -132,7 +125,7 @@ void loop() {
     analogWrite(PIN_BOMBA2, 0);
     String ret = "";
     ret = ret + "<" + INST_RIEGO_Z2 + ">";
-    serialMaster.print(ret);// <inst, ....>
+    serialMaster.print(ret);
     tiempoDespuesRiegoZona2 = millis();
     tiempoComienzoRiegoZona2 = 0;
   }
@@ -146,14 +139,14 @@ void loop() {
     tiempoDespuesRiegoZona2 = 0;
   }
 
-  // prender o apagar la luz de zona 1 si es de noche
+  // Enciende o apaga la luz de zona 1 dependiedo la luz
   if (analogRead(PIN_SENSOR_LUZ1) > 600) {
     digitalWrite(PIN_LED1, HIGH);
   } else {
     digitalWrite(PIN_LED1, LOW);
   }
 
-  // prender o apagar la luz de zona 2 si es de noche
+  // Enciende o apaga la luz de zona 2 dependiedo la luz
   if (analogRead(PIN_SENSOR_LUZ2) > 600) {
     digitalWrite(PIN_LED2, HIGH);
   } else {
@@ -221,16 +214,14 @@ void enviarResultadoCensoAMaestro(int* vec) {
   Serial.println(ret);
 }
 
-void enviarResultadoMantenimientoAMaestro() { }
-
 void leerMaestro(int* inst, float* intesidad) {
   static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena.
   static byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
   static char charLeido;
   static char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
   static int fieldIndex = 0;
-  while(serialSlave.available() > 0) {
-    charLeido = (char)serialSlave.read();
+  while(serialMaster.available() > 0) {
+    charLeido = (char)serialMaster.read();
     if (charLeido == '<') {
       recvinprogress = true;
     } else if (charLeido == '>') {
