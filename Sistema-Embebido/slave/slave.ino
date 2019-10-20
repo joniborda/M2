@@ -2,6 +2,7 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
+#define TAM_MAX 9
 const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
 const int INST_RIEGO_Z1 = 2; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
 const int INST_RIEGO_Z2 = 3; // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
@@ -34,9 +35,9 @@ DHT sensorDHT2 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
 
 
 unsigned long tiempoActual = millis();
-unsigned long tiempoPrevioRiegoZona1 = 0;
+unsigned long tiempoComienzoRiegoZona1 = 0;
 unsigned long tiempoDespuesRiegoZona1 = 0;
-unsigned long tiempoPrevioRiegoZona2 = 0;
+unsigned long tiempoComienzoRiegoZona2 = 0;
 unsigned long tiempoDespuesRiegoZona2 = 0;
 int tiempoRiegoZona1 = 0; //A que corresponde este tiempo??? No deberia ser fijo para ambas zonas
 int tiempoRiegoZona2 = 0;
@@ -56,6 +57,8 @@ void loop() {
     int instruccionRecibida = 0;
     // Recibiendo informacion del maestro
     Serial.println("Se recibio una instruccion del maestro.");
+    char *stringRecibido;
+    int[TAM_MAX] valoresRecibidos = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
     serialMaster.readBytesUntil('>', stringRecibido, 30);
     leerString(vectorRecibido);
     serialMaster.flush();
@@ -79,22 +82,22 @@ void loop() {
       }
       case INST_RIEGO_Z1: {
         Serial.println("COMIENZA RIEGO ZONA 1.");
-        digitalWrite(PIN_BOMBA1, HIGH);
-        tiempoPrevioRiegoZona1 = millis();
+        tiempoComienzoRiegoZona1 = millis();
         // leer el tiempo que tengo que regar y guardarlo en una variable
         tiempoRiegoZona1 = 3000;
         // leer la intesidad que manda para regar
         intensidadRiegoZona1 = 50;
+        analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
         break;
       }
       case INST_RIEGO_Z2: {
         Serial.println("COMIENZA RIEGO ZONA 2.");
-        digitalWrite(PIN_BOMBA2, HIGH);
-        tiempoPrevioRiegoZona2 = millis();
+        tiempoComienzoRiegoZona2 = millis();
         // leer el tiempo que tengo que regar y guardarlo en una variable
         tiempoRiegoZona2 = 3000;
         // leer la intesidad que manda para regar 
         intensidadRiegoZona2 = 50;
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
         break;
       }
       default:{
@@ -105,7 +108,7 @@ void loop() {
   }
   
   tiempoActual = millis();
-  if (tiempoPrevioRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoPrevioRiegoZona1) >= tiempoRiegoZona1) {
+  if (tiempoComienzoRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona1) >= tiempoRiegoZona1) {
     // Aviso que termino de regar la zona 1.
     digitalWrite(PIN_BOMBA1, LOW);
     String ret = "";
@@ -113,15 +116,7 @@ void loop() {
     ret = ret + "<" + INST_RIEGO_Z1 + ">";
     serialMaster.print(ret);// <inst, ....>
     tiempoDespuesRiegoZona1 = millis();
-    tiempoPrevioRiegoZona1 = 0;
-  }
-
-  if (tiempoPrevioRiegoZona1 > 0) {
-    if (tiempoActual % 100 < intensidadRiegoZona1) { // si tengo dejarlo prendido un 60% el tiempo lo divido por 100 y el resto tiene que ser menor a 60
-      digitalWrite(PIN_BOMBA1, HIGH);
-    } else {
-      digitalWrite(PIN_BOMBA1, LOW);
-    }
+    tiempoComienzoRiegoZona1 = 0;
   }
 
   tiempoActual = millis();
@@ -135,24 +130,16 @@ void loop() {
   }
   
   tiempoActual = millis();
-  if (tiempoPrevioRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoPrevioRiegoZona2) >= tiempoRiegoZona2) {
+  if (tiempoComienzoRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona2) >= tiempoRiegoZona2) {
     // Aviso que termino de regar la zona 2.
     digitalWrite(PIN_BOMBA2, LOW);
     String ret = "";
     ret = ret + "<" + INST_RIEGO_Z2 + ">";
     serialMaster.print(ret);// <inst, ....>
     tiempoDespuesRiegoZona2 = millis();
-    tiempoPrevioRiegoZona2 = 0;
+    tiempoComienzoRiegoZona2 = 0;
   }
 
-  tiempoActual = millis();
-  if (tiempoPrevioRiegoZona2 > 0) {
-    if (tiempoActual % 100 < intensidadRiegoZona2) { // si tengo dejarlo prendido un 60% el tiempo lo divido por 100 y el resto tiene que ser menor a 60
-      digitalWrite(PIN_BOMBA2, HIGH);
-    } else {
-      digitalWrite(PIN_BOMBA2, LOW);
-    }
-  }
   tiempoActual = millis();
   if (tiempoDespuesRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona2) >= TIEMPO_RES_RIEGO) {
     // Paso el tiempo establecido posterior al riego, se envia al maestro el valor del sensor de humedad del suelo.
