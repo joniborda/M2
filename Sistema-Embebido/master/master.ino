@@ -1,8 +1,6 @@
 #include <SoftwareSerial.h>
 #include <SD.h>
 
-#define TAM_MAX 9
-
 // PUERTOS DE CONEXION CON ESCLAVO
 const int PUERTO_RX_SLAVE = 2;
 const int PUERTO_TX_SLAVE = 3;
@@ -21,7 +19,6 @@ static unsigned long MS_INTERVAL_TO_CENSO = 1000; // 15 seg.
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
-File filePointer;
 unsigned long currentMillis = 0; // grab current time
 unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 
@@ -44,10 +41,10 @@ void setup() {
   Serial.begin(9600);
   Serial.print("Arduino Maestro iniciado...");
 
-  /*if (!SD.begin(PIN_CS_SD)) {
+  if (!SD.begin(PIN_CS_SD)) {
     Serial.println("No se pudo inicializar la SD");
     return;
-  }*/
+  }
 }
 
 void loop() {
@@ -61,7 +58,7 @@ void loop() {
     previousMillis = millis();
     MS_INTERVAL_TO_CENSO = 3000;
   }
-  int[TAM_MAX] valoresRecibidos = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+  int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
   leerEsclavo(valoresRecibidos);
   if(valoresRecibidos[0] != -1) {
     switch(valoresRecibidos[0]){
@@ -194,16 +191,16 @@ void leerEsclavo(int* vec) {
 }
 
 void leerArchivo() {
-  filePointer = SD.open("archivo.txt");
+  File fp = SD.open("archivo.txt");
   static char caracter;
   static char input[4];
   static int i = 0;
   static int finPalabra = 0;
 
   // if the file is available, write to it:
-  if (filePointer) {
-    while (filePointer.available()) {
-      caracter = filePointer.read();
+  if (fp) {
+    while (fp.available()) {
+      caracter = fp.read();
       if (caracter == -1) { // -1 indica fin de archivo
         finPalabra = 1;
       }
@@ -222,7 +219,7 @@ void leerArchivo() {
       }
     }
 
-    filePointer.close();
+    fp.close();
   } else {
     Serial.println("error opening archivo.txt");
   }
@@ -231,17 +228,17 @@ void leerArchivo() {
   input[0] = '\0';
 }
 
-void guardarEnArchivo(int *vec) {
-  //filePointer = SD.open("archivo.txt", FILE_WRITE);
-  if (filePointer) {
+void guardarEnArchivo(int *vec, int perEfectividadZ1, int perEfectividadZ2) {
+  File fp = SD.open("archivo.txt", FILE_WRITE);
+  if (fp) {
     String ret = "";
-    ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + calcularEfectividad1() + "," +
-                vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + calcularEfectividad2();
+    ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1 + "," +
+                vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;
     Serial.print("archivo.txt: ");
     
-    //filePointer.print(ret);
+    fp.print(ret);
     
-    //filePointer.close(); //cerramos el archivo
+    fp.close(); //cerramos el archivo
   } else {
     Serial.println("Error al abrir el archivo");
   }
