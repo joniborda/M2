@@ -1,6 +1,7 @@
-#include <SoftwareSerial.h>
-#include <DHT.h>
 #include <DHT_U.h>
+#include <DHT.h>
+
+#include <SoftwareSerial.h>
 
 #define TAM_MAX 9
 const int INST_CENSO = 1; // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
@@ -54,7 +55,6 @@ void setup() {
 
 void loop() {
   if (serialMaster.available() > 0 ) {
-    int instruccionRecibida = 0;
     // Recibiendo informacion del maestro
     Serial.println("Se recibio una instruccion del maestro.");
     char *stringRecibido;
@@ -62,7 +62,7 @@ void loop() {
     
     leerMaestro(valoresRecibidos);
     
-    switch (instruccionRecibida) {
+    switch (valoresRecibidos[0]) {
       case INST_CENSO: {
         Serial.println("COMIENZA RUTINA DE CENSO.");
         int valorSensores[] = {INST_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -248,7 +248,6 @@ void leerMaestro(int* vec) {
     // el ultimo no tiene coma
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
-
     charIndex = 0;
     fieldIndex = 0;
   }

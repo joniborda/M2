@@ -3,6 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
+                "C:\\Program Files (x86)\\Arduino\\libraries\\SD\\src",
+                "C:\\Users\\joni\\Documents\\Arduino\\libraries\\DHT_sensor_library",
                 "C:\\Users\\joni\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\**",
                 "C:\\Users\\joni\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.6.23\\**"
             ],
