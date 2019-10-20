@@ -108,7 +108,8 @@ void loop() {
     // Aviso que termino de regar la zona 1.
     digitalWrite(PIN_BOMBA1, LOW);
     String ret = "";
-    ret = ret + "<" + INST_RIEGO_Z1 + ",0>";
+    //ret = ret + "<" + INST_RIEGO_Z1 + ",0>"; Entiendo que no es necesario manderle el 0
+    ret = ret + "<" + INST_RIEGO_Z1 + ">";
     serialMaster.print(ret);// <inst, ....>
     tiempoDespuesRiegoZona1 = millis();
     tiempoPrevioRiegoZona1 = 0;
@@ -134,10 +135,10 @@ void loop() {
   
   tiempoActual = millis();
   if (tiempoPrevioRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoPrevioRiegoZona2) >= tiempoRiegoZona2) {
-    // aviso que termino de regar la zona 2
+    // Aviso que termino de regar la zona 2.
     digitalWrite(PIN_BOMBA2, LOW);
     String ret = "";
-    ret = ret + "<" + INST_RIEGO_Z2 + ",0>";
+    ret = ret + "<" + INST_RIEGO_Z2 + ">";
     serialMaster.print(ret);// <inst, ....>
     tiempoDespuesRiegoZona2 = millis();
     tiempoPrevioRiegoZona2 = 0;
@@ -153,9 +154,9 @@ void loop() {
   }
   tiempoActual = millis();
   if (tiempoDespuesRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona2) >= TIEMPO_RES_RIEGO) {
-    // aviso que como esta la humedad del suelo luego de cierto tiemp de regar la zona 2
+    // Paso el tiempo establecido posterior al riego, se envia al maestro el valor del sensor de humedad del suelo.
     String ret = "";
-    ret = ret + "<" + INST_RES_RIEGO_Z2 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO2) + ",0,0,0,0>";
+    ret = ret + "<" + INST_RES_RIEGO_Z2 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO2) + ">";
     serialMaster.print(ret);
     tiempoDespuesRiegoZona2 = 0;
   }
