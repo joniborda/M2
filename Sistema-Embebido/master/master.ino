@@ -61,6 +61,7 @@ void loop() {
     previousMillis = millis();
     MS_INTERVAL_TO_CENSO = 3000;
   }
+  
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
   leerEsclavo(valoresRecibidos);
   if(valoresRecibidos[0] != -1) {
@@ -248,7 +249,10 @@ int calcularEfectividad(float temp, float amb, float suelo, float luz) {
 }
 
 int determinarRiegoEnZona1() {
-
+  // ser si esta muy seco
+  // si esta muy seco ver si tiene datos anteriores
+  // si tiene datos anteriores deberia ver si la luz esta en aumento
+  // si tiene datos anteriores deberia ver si la humedad ambiente esta en aumento
 }
 
 int determinarRiegoEnZona2() {
