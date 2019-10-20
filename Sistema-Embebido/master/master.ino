@@ -1,5 +1,6 @@
-#include <SoftwareSerial.h>
 #include <SD.h>
+
+#include <SoftwareSerial.h>
 
 #define TAM_MAX_READ 9
 #define TAM_MAX_WRITE 2
@@ -18,7 +19,7 @@
 #define INST_RES_RIEGO_Z2 13 //INSTRUCCION PARA LEER EL RESULTADO DEL RIEGO EN LA ZONA 2
 
 // INTERVALO DE RUTINA DE CENSO EN MS
-static unsigned long MS_INTERVAL_TO_CENSO = 1000; // 15 seg.
+static unsigned long MS_INTERVAL_TO_CENSO = 10000; // 15 seg.
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
@@ -59,7 +60,7 @@ void loop() {
     ret = ret + '<' + INST_CENSO + '>';
     serialSlave.print(ret);
     previousMillis = millis();
-    MS_INTERVAL_TO_CENSO = 3000;
+    MS_INTERVAL_TO_CENSO = 10000;
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -183,10 +184,9 @@ void leerEsclavo(int* vec) {
     // El ultimo valor no tiene coma.
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
-
     String ret = "";
-    ret = ret + "Temperatura1: " + vec[1] + ", HumedadAmbiente1: " + vec[2] + ", HumedadSuelo1: " + vec[3] + ", Luz1: " + vec[4] +
-                ", Temperatura2: " + vec[5] + ", HumedadAmbiente2: " + vec[6] + ", HumedadSuelo2: " + vec[7] + ", Luz2: " + vec[8];
+    ret = ret + "Temp1: " + vec[2] + ", HumAmb1: " + vec[2] + ", HumSue1: " + vec[3] + ", Luz1: " + vec[4] +
+                ", Temp2: " + vec[5] + ", HumAmb2: " + vec[6] + ", HumSue2: " + vec[7] + ", Luz2: " + vec[8];
     Serial.println(ret);
 
     charIndex = 0;
@@ -260,6 +260,7 @@ int determinarRiegoEnZona1() {
   // si esta muy seco ver si tiene datos anteriores
   // si tiene datos anteriores deberia ver si la luz esta en aumento
   // si tiene datos anteriores deberia ver si la humedad ambiente esta en aumento
+  return 0;
 }
 
 int determinarRiegoEnZona2() {
