@@ -191,42 +191,24 @@ void leerEsclavo(int* vec) {
   }
 }
 
-void leerArchivo() {
-  File fp = SD.open("archivo.txt");
-  static char caracter;
-  static char input[4];
-  static int i = 0;
-  static int finPalabra = 0;
+float obtenerVariableRiego(char* archivo) {
+  File fp = SD.open(archivo);
+  char caracter;
+  float ret = -1;
 
   // if the file is available, write to it:
   if (fp) {
-    while (fp.available()) {
-      caracter = fp.read();
-      if (caracter == -1) { // -1 indica fin de archivo
-        finPalabra = 1;
-      }
-      if (caracter == '\n') {
-        finPalabra = 1;
-      }
-
-      if (finPalabra == 0) {
-          input[i++] = caracter;
-      } else {
-        input[i] = '\0';
-        i = 0;
-        //Serial.print(atoi(input)); // solo imprimo la lectura
-        //Serial.println(" ");
-        finPalabra = 0;
-      }
+    if (fp.available()) {
+      fp.read(input, sizeof(input));
+      ret = atof(input);
     }
-
     fp.close();
   } else {
-    Serial.println("error opening archivo.txt");
+    String ret = "";
+    ret = ret + "Er. " + archivo;
+    Serial.println(ret);
   }
-  i = 0; // es estatico así que tengo que resetearlo
-  finPalabra = 0;
-  input[0] = '\0';
+  return ret;
 }
 
 void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
