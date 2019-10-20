@@ -71,14 +71,15 @@ void loop() {
         guardarEnArchivo(valoresRecibidos,perEfectividadZ1,perEfectividadZ2); //Implentar 
         
         if(determinarRiegoEnZona1()){ //Implementar
-          int varZona1 = obtenerVariableRiegoZona1(); //Implementar
-          int vol1 = calcularVolumenRiego(valoresRecibidos[2]); // Implementar
+          float varZona1 = obtenerVariableRiego("variableRiegoZona1"); //Implementar
+          float vol1 = calcularVolumenRiego(valoresRecibidos[2], varZona1); // Implementar
           serialSlave.write(INST_RIEGO_Z1); //CAMBIAR POR <INST, 0000>
           serialSlave.write(vol1); //PROBAR URGENTE
           riegoEnCursoZona1 = 'T';
         }
 
         if(determinarRiegoEnZona2()){
+          float varZona2 =
           int vol2 = obtenerVolumenRiegoZona2();
           serialSlave.write(INST_RIEGO_Z2); //CAMBIAR POR <INST, 0000>
           serialSlave.write(vol2);
@@ -228,19 +229,25 @@ void leerArchivo() {
   input[0] = '\0';
 }
 
-void guardarEnArchivo(int *vec, int perEfectividadZ1, int perEfectividadZ2) {
-  File fp = SD.open("archivo.txt", FILE_WRITE);
+void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
+  File fp = SD.open("diarioZona1.txt", FILE_WRITE); //VER SI LO PISA
   if (fp) {
     String ret = "";
-    ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1 + "," +
-                vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;
-    Serial.print("archivo.txt: ");
-    
+    ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1;    
     fp.print(ret);
-    
-    fp.close(); //cerramos el archivo
+    fp.close(); //Cerramos el archivo
   } else {
-    Serial.println("Error al abrir el archivo");
+    Serial.println("Error al abrir el archivo de zona 1.");
+  }
+
+  fp = SD.open("diarioZona2.txt", FILE_WRITE); //VER SI LO PISA
+  if (fp) {
+    String ret = "";
+    ret = ret + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;    
+    fp.print(ret);
+    fp.close(); //Cerramos el archivo
+  } else {
+    Serial.println("Error al abrir el archivo de zona 2.");
   }
 }
 

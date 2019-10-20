@@ -56,14 +56,15 @@ void loop() {
   if (serialMaster.available() > 0 ) {
     // Recibiendo informacion del maestro.
     Serial.println("Se recibio una instruccion del maestro.");
-    int[TAM_MAX_READ] valoresRecibidos = {-1, -1};
-    leerMaestro(valoresRecibidos);
+    int instr_recibida = -1;
+    float intesidadRiego = -1;
+    leerMaestro(&instr_recibida, &intesidadRiego);
     serialMaster.flush();
     Serial.print("INSTRUCCION: ");
     Serial.println(valoresRecibidos[0]);
     
     if(valoresRecibidos[0] != -1) {
-      switch (instruccionRecibida) {
+      switch (valoresRecibidos[0]) {
         case INST_CENSO: {
           Serial.println("COMIENZA RUTINA DE CENSO.");
           int valorSensores[] = {INST_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -222,7 +223,7 @@ void enviarResultadoCensoAMaestro(int* vec) {
 
 void enviarResultadoMantenimientoAMaestro() { }
 
-void leerMaestro(int* vec) {
+void leerMaestro(int* inst, float* intesidad) {
   static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena.
   static byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
   static char charLeido;
@@ -243,7 +244,7 @@ void leerMaestro(int* vec) {
       } else {
         input[charIndex] = '\0';
         charIndex = 0;
-        vec[fieldIndex] = atoi(input);
+        *inst = atoi(input);
         fieldIndex++;
       }
     }
@@ -252,7 +253,11 @@ void leerMaestro(int* vec) {
     recvinprogress = false;
     // El ultimo valor no tiene coma.
     input[charIndex] = '\0';
-    vec[fieldIndex] = atoi(input);
+    if(fieldIndex == 0){
+      *inst = atoi(input);
+    } else if(fieldIndex == 1) {
+      *intesidad = atof(input);
+    }
     charIndex = 0;
     fieldIndex = 0;
   }
