@@ -38,7 +38,7 @@ unsigned long tiempoPrevioRiegoZona1 = 0;
 unsigned long tiempoDespuesRiegoZona1 = 0;
 unsigned long tiempoPrevioRiegoZona2 = 0;
 unsigned long tiempoDespuesRiegoZona2 = 0;
-int tiempoRiegoZona1 = 0;
+int tiempoRiegoZona1 = 0; //A que corresponde este tiempo??? No deberia ser fijo para ambas zonas
 int tiempoRiegoZona2 = 0;
 int intensidadRiegoZona1 = 50;
 int intensidadRiegoZona2 = 50;
@@ -73,6 +73,7 @@ void loop() {
       case INST_MANTENIMIENTO: {
         Serial.println("COMIENZA RUTINA DE MANTENIMIENTO.");
         mantenimiento();
+        //Faltaria cargar el vector con los valores y enviarlo al maestro. Determinar si usamos la funcion enviarResultadoCensoAMaestro o una nueva.
         break;
       }
       case INST_RIEGO_Z1: {
@@ -104,7 +105,7 @@ void loop() {
   
   tiempoActual = millis();
   if (tiempoPrevioRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoPrevioRiegoZona1) >= tiempoRiegoZona1) {
-    // aviso que termino de regar la zona 1
+    // Aviso que termino de regar la zona 1.
     digitalWrite(PIN_BOMBA1, LOW);
     String ret = "";
     ret = ret + "<" + INST_RIEGO_Z1 + ",0>";
@@ -123,9 +124,10 @@ void loop() {
 
   tiempoActual = millis();
   if (tiempoDespuesRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona1) >= TIEMPO_RES_RIEGO) {
-    // aviso que como esta la humedad del suelo luego de cierto tiemp de regar la zona 1
+    // Paso el tiempo establecido posterior al riego, se envia al maestro el valor del sensor de humedad del suelo.
     String ret = "";
-    ret = ret + "<" + INST_RES_RIEGO_Z1 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO1) + ",0,0,0,0>";
+    // ret = ret + "<" + INST_RES_RIEGO_Z1 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO1) + ",0,0,0,0>"; //No es necesario mandarle todos los ceros del fondo, el maestro va a leer hasta que encuentre el endMark
+    ret = ret + "<" + INST_RES_RIEGO_Z1 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO1) + ">"; 
     serialMaster.print(ret);
     tiempoDespuesRiegoZona1 = 0;
   }
@@ -210,9 +212,8 @@ void mantenimiento() {
 void enviarResultadoCensoAMaestro(int* vec) {
   /*
   * Formato de envio:
-  * <instruccion, respuesta, temperatura1, humedadAmbiente1, humedadSuelo1, sensorLuz1, temperatura2, humedadAmbiente2, humedadSuelo2, sensorLuz2>
+  * <instruccion, temperatura1, humedadAmbiente1, humedadSuelo1, sensorLuz1, temperatura2, humedadAmbiente2, humedadSuelo2, sensorLuz2>
   * La instruccion es la que inicio la rutina
-  * La respuesta es un codigo de respuesta. Si es 0 es que está ok. Si es 1 o mas es porque surgio un error.
   */
   String ret = "";
   ret = ret + "<" + INST_CENSO + "," + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + ">";

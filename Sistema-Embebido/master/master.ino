@@ -67,10 +67,12 @@ void loop() {
         int perEfectividadZ1 = calcularEfectividad(valoresRecibidos[1], valoresRecibidos[2], valoresRecibidos[3], valoresRecibidos[4]);
         int perEfectividadZ2 = calcularEfectividad(valoresRecibidos[5], valoresRecibidos[6], valoresRecibidos[7], valoresRecibidos[8]);      
         guardarEnArchivo(valoresRecibidos,perEfectividadZ1,perEfectividadZ2);      
+        
         if(determinarRiegoEnZona1()){
-          int vol1 = obtenerVolumenRiegoZona1();
+          int varZona1 = obtenerVariableRiegoZona1();
+          int vol1 = calcularVolumenRiego(valoresRecibidos[2]);
           serialSlave.write(INST_RIEGO_Z1); //CAMBIAR POR <INST, 0000>
-          serialSlave.write(vol1);
+          serialSlave.write(vol1); //PROBAR URGENTE
           riegoEnCursoZona1 = 'T';
         }
 
@@ -95,10 +97,22 @@ void loop() {
         break;
       }
       case INST_RES_RIEGO_Z1: {
-        //Aca se analiza el resultado del riego
-        //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
-        // el resultado deberia dar mayor a 50% por ejemplo
+        //Aca se analiza el resultado del riego de la zona 1.
+        int var1 = 0;
+        int humedadSueloZona1 = valoresRecibidos[1];
+        int perHumedadSueloZona1 = humedadSueloZona1 / 1023;
+        if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60){
+          var1 = obtenerVariableRiegoZona1();
+          if(perHumedadSueloZona1 <= 40){
+            var1 = var1 + (1/perHumedadSueloZona1);
+          }
+          else if(perHumedadSueloZona1 => 60){
+            var1 = var1 - (1/perHumedadSueloZona1);
+          }
+          escribirVariableRiegoZona1(var1);
+        }
         break;
+        //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
       }
       case INST_RES_RIEGO_Z2: {
         //Aca se analiza el resultado del riego
@@ -111,19 +125,19 @@ void loop() {
 }
 
 void leerEsclavo(int* vec) {
-    static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena
-    static byte charIndex = 0; // es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo
+    static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena.
+    static byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
     static const char START_MARKER = '<';
     static const char COMMA = ',';
     static const char END_MARKER = '>';
     static char charLeido;
-    static char input[4]; // el dato que este entre comas no puede ser mayor a 4
+    static char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
     static int fieldIndex = 0;
     static int instructionCode = 0;
     if (serialSlave.available() <= 0) {
       return;  
     } else {
-      Serial.println("leyendo");
+      Serial.println("Informacion disponible del esclavo.");
     }
     while(serialSlave.available() > 0) {
       charLeido = (char)serialSlave.read();
