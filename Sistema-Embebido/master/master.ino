@@ -54,14 +54,14 @@ void setup() {
 void loop() {
   currentMillis = millis();
   //Serial.println((unsigned long)(currentMillis - previousMillis));
-  if ((unsigned long)(currentMillis - previousMillis) >= 10000) {
+  if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_CENSO) {
     
     Serial.println("Envio instruccion de censo a el esclavo.");
     String ret = "";
     ret = ret + '<' + INST_CENSO + '>';
     serialSlave.print(ret);
     previousMillis = millis();
-    MS_INTERVAL_TO_CENSO = 10000;
+    MS_INTERVAL_TO_CENSO = (unsigned long)10000;
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -72,7 +72,7 @@ void loop() {
         int perEfectividadZ1 = calcularEfectividad(valoresRecibidos[1], valoresRecibidos[2], valoresRecibidos[3], valoresRecibidos[4]);
         int perEfectividadZ2 = calcularEfectividad(valoresRecibidos[5], valoresRecibidos[6], valoresRecibidos[7], valoresRecibidos[8]);      
         guardarEnArchivo(valoresRecibidos,perEfectividadZ1,perEfectividadZ2);
-        Serial.println("despues de guardar en archivo");
+        
         if(determinarRiegoEnZona1()){ //Implementar
           Serial.println("entra en zona");
           float varZona1 = obtenerVariableRiego("var1.txt");
@@ -164,7 +164,6 @@ void leerEsclavo(int* vec) {
     Serial.println("fin entrada");
     int i = 0;
     while(entrada[i] != '\0') {
-      Serial.println(i);
       if (entrada[i] == '<') {
         i++;
         continue;
@@ -229,7 +228,7 @@ void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
   if (fp) {
     String ret = "";
     ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1;    
-    fp.print(ret);
+    fp.println(ret);
     fp.close();
   } else {
     Serial.println("Error al abrir el archivo de zona 1.");
@@ -239,7 +238,7 @@ void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
   if (fp) {
     String ret = "";
     ret = ret + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;    
-    fp.print(ret);
+    fp.println(ret);
     fp.close();
   } else {
     Serial.println("Error al abrir el archivo de zona 2.");
