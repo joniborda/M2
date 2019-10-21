@@ -53,6 +53,8 @@ void setup() {
   pinMode(PIN_LED2, OUTPUT);
   pinMode(PIN_BOMBA1, OUTPUT);
   pinMode(PIN_BOMBA2, OUTPUT);
+  pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // si no censa la humedad es porque hay que sacar esto
+  pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // si no censa la humedad es porque hay que sacar esto
   Serial.print("Arduino Esclavo inciado, esperando instrucciones...");
 }
 
