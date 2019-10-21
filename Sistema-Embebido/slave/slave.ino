@@ -70,7 +70,7 @@ void loop() {
     if(instr_recibida != -1) {
       switch (instr_recibida) {
         case INST_CENSO: {
-          Serial.println("COMIENZA RUTINA DE CENSO.");
+          Serial.println("RUTINA DE CENSO.");
           int valorSensores[] = {INST_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
           sensarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
           sensarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
@@ -78,23 +78,36 @@ void loop() {
           break;
         }
         case INST_MANTENIMIENTO: {
-          Serial.println("COMIENZA RUTINA DE MANTENIMIENTO.");
+          Serial.println("RUTINA DE MANTENIMIENTO.");
           mantenimiento();
           //Faltaria cargar el vector con los valores y enviarlo al maestro. Determinar si usamos la funcion enviarResultadoCensoAMaestro o una nueva.
           break;
         }
         case INST_RIEGO_Z1: {
-          Serial.println("COMIENZA RIEGO ZONA 1.");
+          Serial.println("RIEGO ZONA 1.");
           tiempoComienzoRiegoZona1 = millis();
           float intesidadRiegoZona1 = intesidadRiego;
           analogWrite(PIN_BOMBA1, intesidadRiegoZona1 * 255/100);
           break;
         }
         case INST_RIEGO_Z2: {
-          Serial.println("COMIENZA RIEGO ZONA 2.");
+          Serial.println("RIEGO ZONA 2.");
           tiempoComienzoRiegoZona2 = millis();
           float intensidadRiegoZona2 = intesidadRiego;
           analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
+          break;
+        }
+        case INST_DETENER_RIEGO_Z1: {
+          // PENSAR QUE PASARIA SI SE DETIENE EL RIEGO CON RESPECTO A LA RESPUESTA
+          Serial.println("STOP ZONA 1.");
+          tiempoComienzoRiegoZona1 = 0;
+          analogWrite(PIN_BOMBA1, 0);
+          break;
+        }
+        case INST_DETENER_RIEGO_Z2: {
+          Serial.println("STOP ZONA 2.");
+          tiempoComienzoRiegoZona2 = 0;
+          analogWrite(PIN_BOMBA2, 0);
           break;
         }
         default:{
