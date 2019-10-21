@@ -3,6 +3,7 @@
 #include <DHT.h>
 
 #define TAM_MAX_WRITE 9
+#define VALOR_LIMITE_LUZ 500
 
 #define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
 #define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
@@ -10,6 +11,12 @@
 #define INST_MANTENIMIENTO 4 // INSTRUCCION PARA RUTINA DE MANTENIMIENTO (INICIO/FIN)
 #define INST_DETENER_RIEGO_Z1 5 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
 #define INST_DETENER_RIEGO_Z2 6 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
+#define INST_ENCENDER_LUZ_1_MANUAL 7 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_ENCENDER_LUZ_2_MANUAL 8 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_APAGAR_LUZ_1_MANUAL 9 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_APAGAR_LUZ_2_MANUAL 10 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_AUTO_LUZ_1 11 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_AUTO_LUZ_2 15 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
 #define INST_RES_RIEGO_Z1 12 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
 #define INST_RES_RIEGO_Z2 13 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
 
@@ -43,6 +50,8 @@ unsigned long tiempoComienzoRiegoZona2 = 0;
 unsigned long tiempoDespuesRiegoZona2 = 0;
 
 const unsigned long TIEMPO_RIEGO = 3000;
+int prenderLuz1 = 0; // 0 es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
+int prenderLuz2 = 0; // 0 es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 
 void setup() {
   serialMaster.begin(9600); //Velocidad comunicacion maestro
@@ -112,6 +121,36 @@ void loop() {
           analogWrite(PIN_BOMBA2, 0);
           break;
         }
+        case INST_ENCENDER_LUZ_1_MANUAL: {
+          Serial.println("PRENDER LUZ 1 MANUAL.");
+          prenderLuz1 = 1;
+          break;
+        }
+        case INST_ENCENDER_LUZ_2_MANUAL: {
+          Serial.println("PRENDER LUZ 1 MANUAL.");
+          prenderLuz2 = 1;
+          break;
+        }
+        case INST_APAGAR_LUZ_1_MANUAL: {
+          Serial.println("APAGAR LUZ 1 MANUAL.");
+          prenderLuz1 = 2;
+          break;
+        }
+        case INST_APAGAR_LUZ_2_MANUAL: {
+          Serial.println("APAGAR LUZ 2 MANUAL.");
+          prenderLuz2 = 2;
+          break;
+        }
+        case INST_AUTO_LUZ_1: {
+          Serial.println("AUTO LUZ 1.");
+          prenderLuz1 = 0;
+          break;
+        }
+        case INST_AUTO_LUZ_2: {
+          Serial.println("AUTO LUZ 2.");
+          prenderLuz2 = 0;
+          break;
+        }
         default:{
           Serial.println("No se encontro rutina para ese valor.");
           break;
@@ -160,19 +199,21 @@ void loop() {
     tiempoDespuesRiegoZona2 = 0;
   }
 
-  // Enciende o apaga la luz de zona 1 dependiedo la luz
-  if (analogRead(PIN_SENSOR_LUZ1) > 600) {
+  // 0 para prender luz de forma automaticamente
+  // 1 para prender luz de forma manual
+  // 2 para apagar luz de forma manual (cualquier valor distinto de 1 o 0)
+  if (prenderLuz1 == 1 || (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) > VALOR_LIMITE_LUZ)) {
     digitalWrite(PIN_LED1, HIGH);
   } else {
     digitalWrite(PIN_LED1, LOW);
   }
 
-  // Enciende o apaga la luz de zona 2 dependiedo la luz
-  if (analogRead(PIN_SENSOR_LUZ2) > 600) {
+  if (prenderLuz2 == 1 || (prenderLuz2 == 0 && analogRead(PIN_SENSOR_LUZ2) > VALOR_LIMITE_LUZ)) {
     digitalWrite(PIN_LED2, HIGH);
   } else {
     digitalWrite(PIN_LED2, LOW);
   }
+
 }
 
 void sensarZona1(int* vec) {
