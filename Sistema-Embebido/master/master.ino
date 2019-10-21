@@ -161,7 +161,6 @@ void leerEsclavo(int* vec) {
   if (serialSlave.available() > 0) {
     serialSlave.readBytesUntil('>', entrada, 59);
     Serial.println(entrada);
-    Serial.println("fin entrada");
     int i = 0;
     while(entrada[i] != '\0') {
       if (entrada[i] == '<') {
