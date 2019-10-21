@@ -49,6 +49,10 @@ void setup() {
   Serial.begin(9600); //Velocidad comunicacion monitor serial
   sensorDHT1.begin();
   sensorDHT2.begin();
+  pinMode(PIN_LED1, OUTPUT);
+  pinMode(PIN_LED2, OUTPUT);
+  pinMode(PIN_BOMBA1, OUTPUT);
+  pinMode(PIN_BOMBA2, OUTPUT);
   Serial.print("Arduino Esclavo inciado, esperando instrucciones...");
 }
 
