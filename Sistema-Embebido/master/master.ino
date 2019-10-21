@@ -191,7 +191,7 @@ void leerEsclavo(int* vec) {
   }
 }
 
-float obtenerVariableRiego(char* archivo) {
+float obtenerVariableRiego(const char* archivo) {
   File fp = SD.open(archivo);
   char caracter;
   float ret = -1;
@@ -211,7 +211,7 @@ float obtenerVariableRiego(char* archivo) {
   return ret;
 }
 
-void escribirVariableRiego(float var, char* archivo) {
+void escribirVariableRiego(float var, const char* archivo) {
   SD.remove(archivo);
   File fp = SD.open(archivo, FILE_WRITE);
   if (fp) {
