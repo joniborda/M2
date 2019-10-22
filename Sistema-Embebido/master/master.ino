@@ -80,7 +80,7 @@ void loop() {
           String ret = "";
           ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ">";
           Serial.println(ret);
-          serialSlave.println(ret);
+          serialSlave.print(ret);
           riegoEnCursoZona1 = 'T';
         }
 
@@ -91,7 +91,7 @@ void loop() {
           String ret = "";
           ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ">";
           Serial.println(ret);
-          serialSlave.println(ret);
+          serialSlave.print(ret);
           riegoEnCursoZona2 = 'T';
         }
         break;
@@ -153,7 +153,7 @@ void loop() {
 }
 
 void leerEsclavo(int* vec) {
-  byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
+  byte charIndex = 0;
   char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
   int fieldIndex = 0;
   char entrada[60];
@@ -185,7 +185,7 @@ void leerEsclavo(int* vec) {
     String ret = "";
     ret = ret + "t1: " + vec[1] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", l1: " + vec[4];
                 
-    Serial.print(ret);
+    Serial.println(ret);
     ret = "";
     ret = ret + ", t2: " + vec[5] + ", ha2: " + vec[6] + ", hs2: " + vec[7] + ", l2: " + vec[8];
     Serial.println(ret);
@@ -260,7 +260,7 @@ int determinarRiegoEnZona1(int humSuelo) {
   if (humSuelo < 10) {
     // esta muy seco
     return 1;
-  } else if (humSuel < 40) {
+  } else if (humSuelo < 40) {
     // seco pero no tanto
     File fp = SD.open("ZONA1.TXT", FILE_READ);
     if (fp) {
@@ -284,11 +284,19 @@ int determinarRiegoEnZona1(int humSuelo) {
           } else {
             input[charIndex] = '\0';
             charIndex = 0;
+            Serial.print("envio ");
+            Serial.println(input);
             vec[fieldIndex] = atoi(input);
             fieldIndex++;
           }
           i++;
         }
+
+        input[charIndex] = '\0'; // finalizo el ultimo porque no tiene coma
+        charIndex = 0;
+        Serial.print("envio1 ");
+        Serial.println(input);
+        vec[fieldIndex] = atoi(input);
       } else {
         Serial.println("no habilitado para leer");
       }

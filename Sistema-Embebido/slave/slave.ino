@@ -76,7 +76,6 @@ void loop() {
     int instr_recibida = -1;
     float intesidadRiego = -1;
     leerMaestro(&instr_recibida, &intesidadRiego);
-    serialMaster.flush();
     Serial.print("INSTRUCCION: ");
     Serial.println(instr_recibida);
     switch (instr_recibida) {
@@ -302,7 +301,14 @@ void leerMaestro(int* inst, float* intesidad) {
         input[charIndex] = '\0';
         charIndex = 0;
         if (fieldIndex == 0) {
+          Serial.print(" fieldIndex ");
+          Serial.print(input);
+          Serial.print(" ");
+          Serial.print(atoi(input));
+          Serial.print(" ");
+          
           *inst = atoi(input);
+          Serial.println(*inst);
         } else if (fieldIndex == 1) {
           *intesidad = atof(input);
         }
