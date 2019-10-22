@@ -75,7 +75,7 @@ void loop() {
         
         if(determinarRiegoEnZona1()){ //Implementar
           Serial.println("entra en zona");
-          float varZona1 = obtenerVariableRiego("var1.txt");
+          float varZona1 = obtenerVariableRiego("VAR1.TXT");
           float vol1 = calcularVolumenRiego(valoresRecibidos[2], varZona1);
           String ret = "";
           ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ">";
@@ -85,7 +85,7 @@ void loop() {
 
         if(determinarRiegoEnZona2()){ //Implementar
           Serial.println("entra en as");
-          float varZona2 = obtenerVariableRiego("var2.txt");
+          float varZona2 = obtenerVariableRiego("VAR2.TXT");
           float vol2 = calcularVolumenRiego(valoresRecibidos[6], varZona2);
           String ret = "";
           ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ">";
@@ -201,6 +201,8 @@ float obtenerVariableRiego(const char* archivo) {
     if (fp.available()) {
       fp.read(input, sizeof(input));
       ret = atof(input);
+    } else {
+      Serial.println("no habilitado para leer");
     }
     fp.close();
   } else {
@@ -223,7 +225,7 @@ void escribirVariableRiego(float var, const char* archivo) {
 }
 
 void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
-  File fp = SD.open("zona1.txt", FILE_WRITE); //VER SI LO ESCRIBE AL FINAL O AL PRINCIPIO
+  File fp = SD.open("ZONA1.TXT", FILE_WRITE); //VER SI LO ESCRIBE AL FINAL O AL PRINCIPIO
   if (fp) {
     String ret = "";
     ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1;    
@@ -233,7 +235,7 @@ void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
     Serial.println("Error al abrir el archivo de zona 1.");
   }
 
-  fp = SD.open("zona2.txt", FILE_WRITE);
+  fp = SD.open("ZONA2.TXT", FILE_WRITE);
   if (fp) {
     String ret = "";
     ret = ret + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;    
