@@ -7,6 +7,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.widget.Toast;
 
 import com.example.smartgarden.logic.BTHandler;
 import com.google.android.material.tabs.TabLayout;
@@ -26,9 +27,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor sensorProx;
 
     ///Variables para Shake
-    private float acelVal;
-    private float acelLast;
-    private float shake;
+    private float acelVal; // valor actual de la aceleracion y gravedad
+    private float acelLast; // ultimo valor de la aceleracion y gravedad
+    private float shake; // diferencia de valor entre aceleracion y gravedad
     private Vibrator v;
 
     public static BTHandler btHandler = null;
@@ -59,6 +60,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //Asigno listeners a sensores
         sensorManager.registerListener(this, sensorShake, SensorManager.SENSOR_DELAY_GAME);
         sensorManager.registerListener(this, sensorProx, SensorManager.SENSOR_DELAY_GAME);
+
+        acelVal = SensorManager.GRAVITY_EARTH;
+        acelLast = SensorManager.GRAVITY_EARTH;
+        shake = 0.00f;
+
     }
 
     private void populateviewPager() {
@@ -70,7 +76,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        switch(event.sensor.getType()){
+            case Sensor.TYPE_PROXIMITY:
+                eventAProx(event);
+                break;
+            case Sensor.TYPE_ACCELEROMETER:
+                eventShake(event)
+                ;break;
+        }
+    }
 
+    private void eventShake(SensorEvent event) {
+        float x = event.values[0];
+        float y = event.values[1];
+        float z = event.values[2];
+
+        acelLast=acelVal;
+        acelVal= (float) Math.sqrt((double) (x*x + y*y + z*z));
+        float delta = acelVal-acelLast;
+        shake = shake * 0.9f + delta;
+
+        if(shake>12) {
+            Toast.makeText(this, "Shake event", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void eventAProx(SensorEvent event) {
+        if(event.values[0] == event.sensor.getMaximumRange())
+            Toast.makeText(this, "Proximity sensor changed", Toast.LENGTH_LONG).show();
     }
 
     @Override

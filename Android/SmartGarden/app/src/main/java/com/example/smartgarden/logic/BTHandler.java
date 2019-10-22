@@ -47,15 +47,14 @@ public class BTHandler {
         //btConeccted la uso para saber si estoy conectado al arduino
         isBtConnected = true;
         //Le mando un 1 al arduino para que sepa que me conecto por bluetooth
-        MyConexionBT.write("<16,1>");
+        //MyConexionBT.write("<16,1>");
         return isBtConnected;
 
     }
 
     public void Desconnect() {
         //le mando 0 para que sepa que no desconecto y cierro el socket
-
-        MyConexionBT.write("<16,0>");
+        //MyConexionBT.write("<16,0>");
 
         try {
             btSocket.close();
