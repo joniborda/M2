@@ -79,84 +79,81 @@ void loop() {
     serialMaster.flush();
     Serial.print("INSTRUCCION: ");
     Serial.println(instr_recibida);
-    
-    if(instr_recibida != -1) {
-      switch (instr_recibida) {
-        case INST_CENSO: {
-          Serial.println("RUTINA DE CENSO.");
-          int valorSensores[] = {INST_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
-          sensarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
-          sensarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
-          enviarResultadoCensoAMaestro(valorSensores);
-          break;
-        }
-        case INST_MANTENIMIENTO: {
-          Serial.println("RUTINA DE MANTENIMIENTO.");
-          mantenimiento();
-          //Faltaria cargar el vector con los valores y enviarlo al maestro. Determinar si usamos la funcion enviarResultadoCensoAMaestro o una nueva.
-          break;
-        }
-        case INST_RIEGO_Z1: {
-          Serial.println("RIEGO ZONA 1.");
-          tiempoComienzoRiegoZona1 = millis();
-          float intesidadRiegoZona1 = intesidadRiego;
-          analogWrite(PIN_BOMBA1, intesidadRiegoZona1 * 255/100);
-          break;
-        }
-        case INST_RIEGO_Z2: {
-          Serial.println("RIEGO ZONA 2.");
-          tiempoComienzoRiegoZona2 = millis();
-          float intensidadRiegoZona2 = intesidadRiego;
-          analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
-          break;
-        }
-        case INST_DETENER_RIEGO_Z1: {
-          // PENSAR QUE PASARIA SI SE DETIENE EL RIEGO CON RESPECTO A LA RESPUESTA
-          Serial.println("STOP ZONA 1.");
-          tiempoComienzoRiegoZona1 = 0;
-          analogWrite(PIN_BOMBA1, 0);
-          break;
-        }
-        case INST_DETENER_RIEGO_Z2: {
-          Serial.println("STOP ZONA 2.");
-          tiempoComienzoRiegoZona2 = 0;
-          analogWrite(PIN_BOMBA2, 0);
-          break;
-        }
-        case INST_ENCENDER_LUZ_1_MANUAL: {
-          Serial.println("PRENDER LUZ 1 MANUAL.");
-          prenderLuz1 = 1;
-          break;
-        }
-        case INST_ENCENDER_LUZ_2_MANUAL: {
-          Serial.println("PRENDER LUZ 1 MANUAL.");
-          prenderLuz2 = 1;
-          break;
-        }
-        case INST_APAGAR_LUZ_1_MANUAL: {
-          Serial.println("APAGAR LUZ 1 MANUAL.");
-          prenderLuz1 = 2;
-          break;
-        }
-        case INST_APAGAR_LUZ_2_MANUAL: {
-          Serial.println("APAGAR LUZ 2 MANUAL.");
-          prenderLuz2 = 2;
-          break;
-        }
-        case INST_AUTO_LUZ_1: {
-          Serial.println("AUTO LUZ 1.");
-          prenderLuz1 = 0;
-          break;
-        }
-        case INST_AUTO_LUZ_2: {
-          Serial.println("AUTO LUZ 2.");
-          prenderLuz2 = 0;
-          break;
-        }
-        default:{
-          Serial.println("No se encontro rutina para ese valor.");
-          break;
-        }
+    switch (instr_recibida) {
+      case INST_CENSO: {
+        Serial.println("RUTINA DE CENSO.");
+        int valorSensores[] = {INST_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
+        sensarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
+        sensarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
+        enviarResultadoCensoAMaestro(valorSensores);
+        break;
+      }
+      case INST_MANTENIMIENTO: {
+        Serial.println("RUTINA DE MANTENIMIENTO.");
+        mantenimiento();
+        //Faltaria cargar el vector con los valores y enviarlo al maestro. Determinar si usamos la funcion enviarResultadoCensoAMaestro o una nueva.
+        break;
+      }
+      case INST_RIEGO_Z1: {
+        Serial.println("RIEGO ZONA 1.");
+        tiempoComienzoRiegoZona1 = millis();
+        float intesidadRiegoZona1 = intesidadRiego;
+        analogWrite(PIN_BOMBA1, intesidadRiegoZona1 * 255/100);
+        break;
+      }
+      case INST_RIEGO_Z2: {
+        Serial.println("RIEGO ZONA 2.");
+        tiempoComienzoRiegoZona2 = millis();
+        float intensidadRiegoZona2 = intesidadRiego;
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
+        break;
+      }
+      case INST_DETENER_RIEGO_Z1: {
+        // PENSAR QUE PASARIA SI SE DETIENE EL RIEGO CON RESPECTO A LA RESPUESTA
+        Serial.println("STOP ZONA 1.");
+        tiempoComienzoRiegoZona1 = 0;
+        analogWrite(PIN_BOMBA1, 0);
+        break;
+      }
+      case INST_DETENER_RIEGO_Z2: {
+        Serial.println("STOP ZONA 2.");
+        tiempoComienzoRiegoZona2 = 0;
+        analogWrite(PIN_BOMBA2, 0);
+        break;
+      }
+      case INST_ENCENDER_LUZ_1_MANUAL: {
+        Serial.println("PRENDER LUZ 1 MANUAL.");
+        prenderLuz1 = 1;
+        break;
+      }
+      case INST_ENCENDER_LUZ_2_MANUAL: {
+        Serial.println("PRENDER LUZ 1 MANUAL.");
+        prenderLuz2 = 1;
+        break;
+      }
+      case INST_APAGAR_LUZ_1_MANUAL: {
+        Serial.println("APAGAR LUZ 1 MANUAL.");
+        prenderLuz1 = 2;
+        break;
+      }
+      case INST_APAGAR_LUZ_2_MANUAL: {
+        Serial.println("APAGAR LUZ 2 MANUAL.");
+        prenderLuz2 = 2;
+        break;
+      }
+      case INST_AUTO_LUZ_1: {
+        Serial.println("AUTO LUZ 1.");
+        prenderLuz1 = 0;
+        break;
+      }
+      case INST_AUTO_LUZ_2: {
+        Serial.println("AUTO LUZ 2.");
+        prenderLuz2 = 0;
+        break;
+      }
+      default:{
+        Serial.println("No se encontro rutina para ese valor.");
+        break;
       }
     }
   }
@@ -279,41 +276,49 @@ void enviarResultadoCensoAMaestro(int* vec) {
 }
 
 void leerMaestro(int* inst, float* intesidad) {
-  static boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena.
-  static byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
-  static char charLeido;
-  static char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
-  static int fieldIndex = 0;
-  while(serialMaster.available() > 0) {
-    charLeido = (char)serialMaster.read();
-    if (charLeido == '<') {
-      recvinprogress = true;
-    } else if (charLeido == '>') {
-      recvinprogress = false;
-    }
-    
-    if(recvinprogress == true && charLeido != '<') {
-      if (charLeido != ',') {
-        input[charIndex] = charLeido;
+  boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena.
+  byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
+  char charLeido;
+  char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
+  int fieldIndex = 0;
+  for (int i = 0; i < 60; i++) {
+    entrada[i] = '\0';
+  }
+
+  if (serialMaster.available() > 0) {
+    serialMaster.readBytesUntil('>', entrada, 59);
+    Serial.println(entrada);
+    int i = 0;
+    while(entrada[i] != '\0') {
+      if (entrada[i] == '<') {
+        i++;
+        continue;
+      }
+      if (entrada[i] != ',') {
+        input[charIndex] = entrada[i];
         charIndex++;  
       } else {
         input[charIndex] = '\0';
         charIndex = 0;
-        *inst = atoi(input);
+        if (fieldIndex == 0) {
+          *inst = atoi(input);
+        } else if (fieldIndex == 1) {
+          *intesidad = atof(input);
+        }
         fieldIndex++;
       }
+      i++;
     }
-  }
-  if (charLeido == '>') {
-    recvinprogress = false;
-    // El ultimo valor no tiene coma.
+
     input[charIndex] = '\0';
     if(fieldIndex == 0){
       *inst = atoi(input);
     } else if(fieldIndex == 1) {
       *intesidad = atof(input);
     }
-    charIndex = 0;
-    fieldIndex = 0;
+
+    String ret = "";
+    ret = ret + "inst: " + inst + ", val: " + intesidad;
+                
+    Serial.println(ret);
   }
-}
