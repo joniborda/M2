@@ -276,11 +276,12 @@ void enviarResultadoCensoAMaestro(int* vec) {
 }
 
 void leerMaestro(int* inst, float* intesidad) {
-  boolean recvinprogress = false; // Se mantiene estatico porque si no llego al caracter de corte tiene que seguir leyendo la cadena.
   byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
   char charLeido;
   char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
   int fieldIndex = 0;
+  char entrada[60];
+  
   for (int i = 0; i < 60; i++) {
     entrada[i] = '\0';
   }
@@ -318,7 +319,8 @@ void leerMaestro(int* inst, float* intesidad) {
     }
 
     String ret = "";
-    ret = ret + "inst: " + inst + ", val: " + intesidad;
+    ret = ret + "inst: " + *inst + ", val: " + *intesidad;
                 
     Serial.println(ret);
   }
+}
