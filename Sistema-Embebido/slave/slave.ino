@@ -64,6 +64,8 @@ void setup() {
   pinMode(PIN_BOMBA2, OUTPUT);
   pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // si no censa la humedad es porque hay que sacar esto
   pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // si no censa la humedad es porque hay que sacar esto
+  pinMode(PIN_SENSOR_LUZ1, INPUT);
+  pinMode(PIN_SENSOR_LUZ2, INPUT);
   Serial.print("Arduino Esclavo inciado, esperando instrucciones...");
 }
 
@@ -217,20 +219,20 @@ void loop() {
 }
 
 void sensarZona1(int* vec) {
-  vec[2] = sensorDHT1.readTemperature();
-  vec[3] = sensorDHT1.readHumidity();
-  vec[4] = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
-  vec[5] = analogRead(PIN_SENSOR_LUZ1);
+  vec[1] = sensorDHT1.readTemperature();
+  vec[2] = sensorDHT1.readHumidity();
+  vec[3] = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
+  vec[4] = analogRead(PIN_SENSOR_LUZ1);
   String ret = "";
   ret = ret + "Temp1: " + vec[1] + ", HumAmb1: " + vec[2] + ", HumSu1: " + vec[3] + ", SenLuz1: " + vec[4];
   Serial.println(ret);
 }
 
 void sensarZona2(int* vec) {
-  vec[6] = sensorDHT2.readTemperature();
-  vec[7] = sensorDHT2.readHumidity();
-  vec[8] = analogRead(PIN_SENSOR_HUMEDAD_SUELO2);
-  vec[9] = analogRead(PIN_SENSOR_LUZ2);
+  vec[5] = sensorDHT2.readTemperature();
+  vec[6] = sensorDHT2.readHumidity();
+  vec[7] = analogRead(PIN_SENSOR_HUMEDAD_SUELO2);
+  vec[8] = analogRead(PIN_SENSOR_LUZ2);
   String ret = "";
   ret = ret + "Temp2: " + vec[5] + ", HumAmb2: " + vec[6] + ", HumSu2: " + vec[7] + ", SenLuz2: " + vec[8];
   Serial.println(ret);

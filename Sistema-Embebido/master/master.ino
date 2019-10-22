@@ -181,7 +181,7 @@ void leerEsclavo(int* vec) {
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
     String ret = "";
-    ret = ret + "t1: " + vec[2] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", l1: " + vec[4];
+    ret = ret + "t1: " + vec[1] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", l1: " + vec[4];
                 
     Serial.print(ret);
     ret = "";
