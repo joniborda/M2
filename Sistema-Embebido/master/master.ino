@@ -73,23 +73,25 @@ void loop() {
         int perEfectividadZ2 = calcularEfectividad(valoresRecibidos[5], valoresRecibidos[6], valoresRecibidos[7], valoresRecibidos[8]);      
         guardarEnArchivo(valoresRecibidos,perEfectividadZ1,perEfectividadZ2);
         
-        if(determinarRiegoEnZona1()){ //Implementar
-          Serial.println("entra en zona");
+        if(determinarRiegoEnZona1(valoresRecibidos[3])){ //Implementar
+          Serial.println("entra en zona1");
           float varZona1 = obtenerVariableRiego("VAR1.TXT");
-          float vol1 = calcularVolumenRiego(valoresRecibidos[2], varZona1);
+          float vol1 = calcularVolumenRiego(valoresRecibidos[3], varZona1);
           String ret = "";
           ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ">";
-          serialSlave.print(ret);
+          Serial.println(ret);
+          serialSlave.println(ret);
           riegoEnCursoZona1 = 'T';
         }
 
         if(determinarRiegoEnZona2()){ //Implementar
-          Serial.println("entra en as");
+          Serial.println("entra en zona2");
           float varZona2 = obtenerVariableRiego("VAR2.TXT");
-          float vol2 = calcularVolumenRiego(valoresRecibidos[6], varZona2);
+          float vol2 = calcularVolumenRiego(valoresRecibidos[7], varZona2);
           String ret = "";
           ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ">";
-          serialSlave.print(ret);
+          Serial.println(ret);
+          serialSlave.println(ret);
           riegoEnCursoZona2 = 'T';
         }
         break;
@@ -254,16 +256,56 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
   return PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (MAX_HUMEDAD - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (MAX_HUMEDAD - perHumedadSuelo) - PRIORIDAD_LUZ * (MAX_LUZ - perLuz);
 }
 
-int determinarRiegoEnZona1() {
+int determinarRiegoEnZona1(int humSuelo) {
+  if (humSuelo < 10) {
+    // esta muy seco
+    return 1;
+  } else if (humSuel < 40) {
+    // seco pero no tanto
+    File fp = SD.open("ZONA1.TXT", FILE_READ);
+    if (fp) {
+      char entrada[60];
+
+      for (int i = 0; i < 60; i++) {
+        entrada[i] = '\0';
+      }
+      if (fp.available() > 0) {
+        fp.readBytesUntil('\n', entrada, 59);
+        Serial.println(entrada);
+        char input[5];
+        int charIndex = 0;
+        int fieldIndex = 0;
+        int vec[9];
+        int i = 0;
+        while(entrada[i] != '\0') {
+          if (entrada[i] != ',') {
+            input[charIndex] = entrada[i];
+            charIndex++;  
+          } else {
+            input[charIndex] = '\0';
+            charIndex = 0;
+            vec[fieldIndex] = atoi(input);
+            fieldIndex++;
+          }
+          i++;
+        }
+      } else {
+        Serial.println("no habilitado para leer");
+      }
+      fp.close();
+    } else {
+      Serial.println("error al leer archio zona1");
+    }
+  }
   // ser si esta muy seco
   // si esta muy seco ver si tiene datos anteriores
   // si tiene datos anteriores deberia ver si la luz esta en aumento
   // si tiene datos anteriores deberia ver si la humedad ambiente esta en aumento
-  return 0;
+  return millis()%2;
 }
 
 int determinarRiegoEnZona2() {
-  return 0;
+  return millis()%2;
 }
 
 float calcularVolumenRiego(int riego, float var) {
@@ -272,21 +314,21 @@ float calcularVolumenRiego(int riego, float var) {
 
 void inicializarArchivosDeCensos() {
   File fp;
-  if(SD.exists("zona1.txt")) {
-    SD.remove("zona1.txt");  
+  if(SD.exists("ZONA1.TXT")) {
+    SD.remove("ZONA1.TXT");  
   }
 
-  if(SD.exists("zona2.txt")) {
-    SD.remove("zona2.txt");  
+  if(SD.exists("ZONA2.TXT")) {
+    SD.remove("ZONA2.TXT");  
   }
-  fp = SD.open("zona1.txt", FILE_WRITE);
+  fp = SD.open("ZONA1.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("no pudo crear zona1.txt");
+    Serial.println("no pudo crear ZONA1.TXT");
   }
   fp.close();
-  fp = SD.open("zona2.txt", FILE_WRITE);
+  fp = SD.open("ZONA2.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("no pudo crear zona2.txt");
+    Serial.println("no pudo crear ZONA2.TXT");
   }
   fp.close();
 }
