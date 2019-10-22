@@ -26,7 +26,7 @@
 
     <style name="nameAppLogoStyle">
         <item name="android:fontFamily">casual</item>
-        <item name="android:textSize">@dimen/name_app_logo</item>
+        <item name="android:textSize">@dimen/name_app_logo_size</item>
         <item name="android:textStyle">bold</item>
     </style>
 

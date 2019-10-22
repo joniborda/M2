@@ -5,7 +5,8 @@
     <dimen name="appbar_padding">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="appbar_padding_top">8dp</dimen>
-    <dimen name="name_app_logo">60sp</dimen>
+    <dimen name="name_app_logo_size">50sp</dimen>
     <dimen name="name_app_logo_top">497dp</dimen>
     <dimen name="image_logo_top">100dp</dimen>
+    <dimen name="name_app_logo_start">50dp</dimen>
 </resources>
