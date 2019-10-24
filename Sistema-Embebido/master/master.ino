@@ -69,109 +69,23 @@ void loop() {
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
-  leerEsclavo(valoresRecibidos);
-  leerBluetooth(valoresRecibidos);
   
-  switch(valoresRecibidos[0]){
-    case INST_CENSO: {
-      int perEfectividadZ1 = calcularEfectividad(valoresRecibidos[1], valoresRecibidos[2], valoresRecibidos[3], valoresRecibidos[4]);
-      int perEfectividadZ2 = calcularEfectividad(valoresRecibidos[5], valoresRecibidos[6], valoresRecibidos[7], valoresRecibidos[8]);      
-      guardarEnArchivo(valoresRecibidos,perEfectividadZ1,perEfectividadZ2);
-      
-      if(determinarRiegoEnZona1(valoresRecibidos[3])){ //Implementar
-        Serial.println("entra en zona1");
-        float varZona1 = obtenerVariableRiego("VAR1.TXT");
-        float vol1 = calcularVolumenRiego(valoresRecibidos[3], varZona1);
-        String ret = "";
-        ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ">";
-        Serial.println(ret);
-        serialSlave.print(ret);
-        riegoEnCursoZona1 = 'T';
-      }
-      if(determinarRiegoEnZona2()){ //Implementar
-        Serial.println("entra en zona2");
-        float varZona2 = obtenerVariableRiego("VAR2.TXT");
-        float vol2 = calcularVolumenRiego(valoresRecibidos[7], varZona2);
-        String ret = "";
-        ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ">";
-        Serial.println(ret);
-        serialSlave.print(ret);
-        riegoEnCursoZona2 = 'T';
-      }
-      break;
-    }
-    case INST_MANTENIMIENTO: {
-      //ANALIZAR ERRORES E INFORMAR
-      break;
-    }
-    case INST_RIEGO_Z1: {
-      riegoEnCursoZona1 = 'F';
-      break;
-    }
-    case INST_RIEGO_Z2: {
-      riegoEnCursoZona2 = 'F';
-      break;
-    }
-    case INST_RES_RIEGO_Z1: {
-      //Aca se analiza el resultado del riego de la zona 1.
-      int var1 = 0;
-      int humedadSueloZona1 = valoresRecibidos[2];
-      int perHumedadSueloZona1 = humedadSueloZona1 / 1023;
-      if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60){
-        Serial.println("hum z1 entre");
-        var1 = obtenerVariableRiego("VAR1.TXT");
-        if(perHumedadSueloZona1 <= 40){
-          var1 = var1 + (1/perHumedadSueloZona1);
-        }
-        else if(perHumedadSueloZona1 >= 60){
-          var1 = var1 - (1/perHumedadSueloZona1);
-        }
-        if (var1 <= 0) {
-          // ver porque pasa a negativo
-          var1 = 1;
-        }
-        escribirVariableRiego(var1, "VAR1.TXT");
-      } else {
-        Serial.println("No rego Z1.");
-      }
-      break;
-      //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
-    }
-    case INST_RES_RIEGO_Z2: {
-      //Aca se analiza el resultado del riego de la zona 2.
-      int var2 = 0;
-      // TODO ESTO PUEDE SER UNA FUNCION ----
-      int humedadSueloZona2 = valoresRecibidos[1];
-      int perHumedadSueloZona2 = humedadSueloZona2 / 1023;
-      if(perHumedadSueloZona2 < 40 || perHumedadSueloZona2 > 60){
-        Serial.println("hum z1 entre");
-        var2 = obtenerVariableRiego("VAR2.TXT");
-        if(perHumedadSueloZona2 <= 40){
-          var2 = var2 + (1/perHumedadSueloZona2);
-        }
-        else if(perHumedadSueloZona2 >= 60){
-          var2 = var2 - (1/perHumedadSueloZona2);
-        }
-        if (var2 <= 0) {
-          // ver porque pasa a negativo
-          var2 = 1;
-        }
-        // HASTA ACA ----
-        escribirVariableRiego(var2, "VAR2.TXT");
-      } else {
-        Serial.println("No rego Z2.");
-      }
-      break;
-      //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
-    }
+  leerInstruccion(valoresRecibidos, &Serial, &serialSlave, 1);
+  evaluarInstruccion(valoresRecibidos);
+  
+  for (int i = 0; i < 9; i++) {
+    valoresRecibidos[i] = -1;  
   }
+  
+  leerInstruccion(valoresRecibidos, &Serial, &serialSlave, 0);
+  evaluarInstruccion(valoresRecibidos);
 
   while (Serial.available() > 0 ) {
     Serial.println((char)Serial.read()); 
   }
 }
 
-void leerEsclavo(int* vec) {
+void leerInstruccion(int* vec, HardwareSerial *hs, SoftwareSerial *ss, int type) {
   byte charIndex = 0;
   char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
   int fieldIndex = 0;
@@ -180,50 +94,14 @@ void leerEsclavo(int* vec) {
     entrada[i] = '\0';
   }
   
-  if (serialSlave.available() > 0) {
+  if ((type == 1 && hs->available() > 0) || (type == 0 && ss->available() > 0)) {
     Serial.println("entra..");
-    serialSlave.readBytesUntil('>', entrada, 59);
-    Serial.println(entrada);
-    int i = 0;
-    while(entrada[i] != '\0') {
-      if (entrada[i] == '<') {
-        i++;
-        continue;
-      }
-      if (entrada[i] != ',') {
-        input[charIndex] = entrada[i];
-        charIndex++;  
-      } else {
-        input[charIndex] = '\0';
-        charIndex = 0;
-        vec[fieldIndex] = atoi(input);
-        fieldIndex++;
-      }
-      i++;
+    if (type == 1) {
+      hs->readBytesUntil('>', entrada, 59);
+    } else {
+      ss->readBytesUntil('>', entrada, 59);
     }
-    input[charIndex] = '\0';
-    vec[fieldIndex] = atoi(input);
-    String ret = "";
-    ret = ret + "t1: " + vec[1] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", L1: " + vec[4];          
-    Serial.println(ret);
-    ret = "";
-    ret = ret + ", t2: " + vec[5] + ", ha2: " + vec[6] + ", hs2: " + vec[7] + ", L2: " + vec[8];
-    Serial.println(ret);
-  }
-}
-// ES LA MISMA QUE LEER ESCLAVO, VER FORMA DE PASARLE LA FUNCION AVAILABLE Y READBYTEUNTIL
-void leerBluetooth(int* vec) {
-  byte charIndex = 0;
-  char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
-  int fieldIndex = 0;
-  char entrada[60];
-  for (int i = 0; i < 60; i++) {
-    entrada[i] = '\0';
-  }
-  
-  if (Serial.available() > 0) {
-    Serial.println("entra..");
-    Serial.readBytesUntil('>', entrada, 59);
+    
     Serial.println(entrada);
     int i = 0;
     while(entrada[i] != '\0') {
@@ -401,4 +279,100 @@ void inicializarArchivosDeCensos() {
     Serial.println("no pudo crear ZONA2.TXT");
   }
   fp.close();
+}
+
+void evaluarInstruccion(int valores[]) {
+  switch(valores[0]){
+    case INST_CENSO: {
+      int perEfectividadZ1 = calcularEfectividad(valores[1], valores[2], valores[3], valores[4]);
+      int perEfectividadZ2 = calcularEfectividad(valores[5], valores[6], valores[7], valores[8]);      
+      guardarEnArchivo(valores,perEfectividadZ1,perEfectividadZ2);
+      
+      if(determinarRiegoEnZona1(valores[3])){ //Implementar
+        Serial.println("entra en zona1");
+        float varZona1 = obtenerVariableRiego("VAR1.TXT");
+        float vol1 = calcularVolumenRiego(valores[3], varZona1);
+        String ret = "";
+        ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ">";
+        Serial.println(ret);
+        serialSlave.print(ret);
+        riegoEnCursoZona1 = 'T';
+      }
+      if(determinarRiegoEnZona2()){ //Implementar
+        Serial.println("entra en zona2");
+        float varZona2 = obtenerVariableRiego("VAR2.TXT");
+        float vol2 = calcularVolumenRiego(valores[7], varZona2);
+        String ret = "";
+        ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ">";
+        Serial.println(ret);
+        serialSlave.print(ret);
+        riegoEnCursoZona2 = 'T';
+      }
+      break;
+    }
+    case INST_MANTENIMIENTO: {
+      //ANALIZAR ERRORES E INFORMAR
+      break;
+    }
+    case INST_RIEGO_Z1: {
+      riegoEnCursoZona1 = 'F';
+      break;
+    }
+    case INST_RIEGO_Z2: {
+      riegoEnCursoZona2 = 'F';
+      break;
+    }
+    case INST_RES_RIEGO_Z1: {
+      //Aca se analiza el resultado del riego de la zona 1.
+      int var1 = 0;
+      int humedadSueloZona1 = valores[2];
+      int perHumedadSueloZona1 = humedadSueloZona1 / 1023;
+      if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60){
+        Serial.println("hum z1 entre");
+        var1 = obtenerVariableRiego("VAR1.TXT");
+        if(perHumedadSueloZona1 <= 40){
+          var1 = var1 + (1/perHumedadSueloZona1);
+        }
+        else if(perHumedadSueloZona1 >= 60){
+          var1 = var1 - (1/perHumedadSueloZona1);
+        }
+        if (var1 <= 0) {
+          // ver porque pasa a negativo
+          var1 = 1;
+        }
+        escribirVariableRiego(var1, "VAR1.TXT");
+      } else {
+        Serial.println("No rego Z1.");
+      }
+      break;
+      //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
+    }
+    case INST_RES_RIEGO_Z2: {
+      //Aca se analiza el resultado del riego de la zona 2.
+      int var2 = 0;
+      // TODO ESTO PUEDE SER UNA FUNCION ----
+      int humedadSueloZona2 = valores[1];
+      int perHumedadSueloZona2 = humedadSueloZona2 / 1023;
+      if(perHumedadSueloZona2 < 40 || perHumedadSueloZona2 > 60){
+        Serial.println("hum z1 entre");
+        var2 = obtenerVariableRiego("VAR2.TXT");
+        if(perHumedadSueloZona2 <= 40){
+          var2 = var2 + (1/perHumedadSueloZona2);
+        }
+        else if(perHumedadSueloZona2 >= 60){
+          var2 = var2 - (1/perHumedadSueloZona2);
+        }
+        if (var2 <= 0) {
+          // ver porque pasa a negativo
+          var2 = 1;
+        }
+        // HASTA ACA ----
+        escribirVariableRiego(var2, "VAR2.TXT");
+      } else {
+        Serial.println("No rego Z2.");
+      }
+      break;
+      //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
+    }
+  }
 }
