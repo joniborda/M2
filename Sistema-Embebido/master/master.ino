@@ -70,22 +70,18 @@ void loop() {
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
   
-  leerInstruccion(valoresRecibidos, &Serial, &serialSlave, 1);
+  leerInstruccion(valoresRecibidos);
   evaluarInstruccion(valoresRecibidos);
   
   for (int i = 0; i < 9; i++) {
     valoresRecibidos[i] = -1;  
   }
   
-  leerInstruccion(valoresRecibidos, &Serial, &serialSlave, 0);
+  leerBluetooth(valoresRecibidos);
   evaluarInstruccion(valoresRecibidos);
-
-  while (Serial.available() > 0 ) {
-    Serial.println((char)Serial.read()); 
-  }
 }
 
-void leerInstruccion(int* vec, HardwareSerial *hs, SoftwareSerial *ss, int type) {
+void leerInstruccion(int* vec) {
   byte charIndex = 0;
   char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
   int fieldIndex = 0;
@@ -94,13 +90,50 @@ void leerInstruccion(int* vec, HardwareSerial *hs, SoftwareSerial *ss, int type)
     entrada[i] = '\0';
   }
   
-  if ((type == 1 && hs->available() > 0) || (type == 0 && ss->available() > 0)) {
-    Serial.println("entra..");
-    if (type == 1) {
-      hs->readBytesUntil('>', entrada, 59);
-    } else {
-      ss->readBytesUntil('>', entrada, 59);
+  if (serialSlave.available() > 0) {
+    serialSlave.readBytesUntil('>', entrada, 59);
+    
+    Serial.println(entrada);
+    int i = 0;
+    while(entrada[i] != '\0') {
+      if (entrada[i] == '<') {
+        i++;
+        continue;
+      }
+      if (entrada[i] != ',') {
+        input[charIndex] = entrada[i];
+        charIndex++;  
+      } else {
+        input[charIndex] = '\0';
+        charIndex = 0;
+        vec[fieldIndex] = atoi(input);
+        fieldIndex++;
+      }
+      i++;
     }
+    input[charIndex] = '\0';
+    vec[fieldIndex] = atoi(input);
+    String ret = "";
+    ret = ret + "t1: " + vec[1] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", L1: " + vec[4];          
+    Serial.println(ret);
+    ret = "";
+    ret = ret + ", t2: " + vec[5] + ", ha2: " + vec[6] + ", hs2: " + vec[7] + ", L2: " + vec[8];
+    Serial.println(ret);
+  }
+}
+
+void leerBluetooth(int* vec) {
+  byte charIndex = 0;
+  char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
+  int fieldIndex = 0;
+  char entrada[60];
+  for (int i = 0; i < 60; i++) {
+    entrada[i] = '\0';
+  }
+  
+  if (Serial.available() > 0) {
+    Serial.println("blu");
+    Serial.readBytesUntil('>', entrada, 59);
     
     Serial.println(entrada);
     int i = 0;
