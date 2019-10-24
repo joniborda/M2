@@ -10,8 +10,8 @@
 #define PUERTO_TX_SLAVE 3
 
 #define PIN_CS_SD 4
-#define PIN_RX_BLUETOOTH 8
-#define PIN_TX_BLUETOOTH 9
+#define PIN_RX_BLUETOOTH 0
+#define PIN_TX_BLUETOOTH 1
 
 #define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
 #define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
@@ -24,7 +24,6 @@
 static unsigned long MS_INTERVAL_TO_CENSO = 10000; // 15 seg.
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
-SoftwareSerial bluetooth(PIN_RX_BLUETOOTH, PIN_TX_BLUETOOTH);
 
 unsigned long currentMillis = 0; // grab current time
 unsigned long previousMillis = 0;  // millis() returns an unsigned long.
@@ -43,9 +42,8 @@ char riegoEnCursoZona2 = 'F';
 
 void setup() {
   serialSlave.begin(9600);
-  bluetooth.begin(9600);
   Serial.begin(9600);
-  Serial.println("Arduino Maestro iniciado...");
+  Serial.println("Arduino Maestro iniciado");
 
   if (!SD.begin(4)) {
     Serial.println("No se pudo inicializar la SD");
@@ -56,26 +54,23 @@ void setup() {
 }
 
 void loop() {
-  if (bluetooth.available()) {
-    Serial.write(bluetooth.read()); 
-  }
-  if (Serial.available()) {
-    bluetooth.write(Serial.read()); 
-  }
+  
   currentMillis = millis();
   //Serial.println((unsigned long)(currentMillis - previousMillis));
   if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_CENSO) {
     
-    Serial.println("Envio instruccion de censo a el esclavo.");
+    Serial.println("Envio inst censo.");
     String ret = "";
     ret = ret + '<' + INST_CENSO + '>';
     serialSlave.print(ret);
+    Serial.println(ret);
     previousMillis = millis();
     MS_INTERVAL_TO_CENSO = (unsigned long)10000;
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
   leerEsclavo(valoresRecibidos);
+  leerBluetooth(valoresRecibidos);
   
   switch(valoresRecibidos[0]){
     case INST_CENSO: {
@@ -93,7 +88,6 @@ void loop() {
         serialSlave.print(ret);
         riegoEnCursoZona1 = 'T';
       }
-
       if(determinarRiegoEnZona2()){ //Implementar
         Serial.println("entra en zona2");
         float varZona2 = obtenerVariableRiego("VAR2.TXT");
@@ -125,7 +119,7 @@ void loop() {
       int perHumedadSueloZona1 = humedadSueloZona1 / 1023;
       if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60){
         Serial.println("hum z1 entre");
-        var1 = obtenerVariableRiego("var1.txt");
+        var1 = obtenerVariableRiego("VAR1.TXT");
         if(perHumedadSueloZona1 <= 40){
           var1 = var1 + (1/perHumedadSueloZona1);
         }
@@ -136,9 +130,9 @@ void loop() {
           // ver porque pasa a negativo
           var1 = 1;
         }
-        escribirVariableRiego(var1, "var1.txt");
+        escribirVariableRiego(var1, "VAR1.TXT");
       } else {
-        Serial.println("El caudal de agua es correcto para la z 1.");
+        Serial.println("No rego Z1.");
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
@@ -151,7 +145,7 @@ void loop() {
       int perHumedadSueloZona2 = humedadSueloZona2 / 1023;
       if(perHumedadSueloZona2 < 40 || perHumedadSueloZona2 > 60){
         Serial.println("hum z1 entre");
-        var2 = obtenerVariableRiego("var2.txt");
+        var2 = obtenerVariableRiego("VAR2.TXT");
         if(perHumedadSueloZona2 <= 40){
           var2 = var2 + (1/perHumedadSueloZona2);
         }
@@ -163,13 +157,17 @@ void loop() {
           var2 = 1;
         }
         // HASTA ACA ----
-        escribirVariableRiego(var2, "var2.txt");
+        escribirVariableRiego(var2, "VAR2.TXT");
       } else {
-        Serial.println("El caudal de agua es correcto para la z 2.");
+        Serial.println("No rego Z2.");
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
     }
+  }
+
+  while (Serial.available() > 0 ) {
+    Serial.println((char)Serial.read()); 
   }
 }
 
@@ -181,7 +179,9 @@ void leerEsclavo(int* vec) {
   for (int i = 0; i < 60; i++) {
     entrada[i] = '\0';
   }
+  
   if (serialSlave.available() > 0) {
+    Serial.println("entra..");
     serialSlave.readBytesUntil('>', entrada, 59);
     Serial.println(entrada);
     int i = 0;
@@ -204,13 +204,52 @@ void leerEsclavo(int* vec) {
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
     String ret = "";
-    ret = ret + "t1: " + vec[1] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", l1: " + vec[4];
-                
+    ret = ret + "t1: " + vec[1] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", L1: " + vec[4];          
     Serial.println(ret);
     ret = "";
-    ret = ret + ", t2: " + vec[5] + ", ha2: " + vec[6] + ", hs2: " + vec[7] + ", l2: " + vec[8];
+    ret = ret + ", t2: " + vec[5] + ", ha2: " + vec[6] + ", hs2: " + vec[7] + ", L2: " + vec[8];
     Serial.println(ret);
-    
+  }
+}
+// ES LA MISMA QUE LEER ESCLAVO, VER FORMA DE PASARLE LA FUNCION AVAILABLE Y READBYTEUNTIL
+void leerBluetooth(int* vec) {
+  byte charIndex = 0;
+  char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
+  int fieldIndex = 0;
+  char entrada[60];
+  for (int i = 0; i < 60; i++) {
+    entrada[i] = '\0';
+  }
+  
+  if (Serial.available() > 0) {
+    Serial.println("entra..");
+    Serial.readBytesUntil('>', entrada, 59);
+    Serial.println(entrada);
+    int i = 0;
+    while(entrada[i] != '\0') {
+      if (entrada[i] == '<') {
+        i++;
+        continue;
+      }
+      if (entrada[i] != ',') {
+        input[charIndex] = entrada[i];
+        charIndex++;  
+      } else {
+        input[charIndex] = '\0';
+        charIndex = 0;
+        vec[fieldIndex] = atoi(input);
+        fieldIndex++;
+      }
+      i++;
+    }
+    input[charIndex] = '\0';
+    vec[fieldIndex] = atoi(input);
+    String ret = "";
+    ret = ret + "t1: " + vec[1] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", L1: " + vec[4];          
+    Serial.println(ret);
+    ret = "";
+    ret = ret + ", t2: " + vec[5] + ", ha2: " + vec[6] + ", hs2: " + vec[7] + ", L2: " + vec[8];
+    Serial.println(ret);
   }
 }
 
@@ -278,10 +317,12 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
 }
 
 int determinarRiegoEnZona1(int humSuelo) {
-  if (humSuelo < 10) {
+  Serial.print("hum suelo");
+  Serial.println(humSuelo);
+  if (humSuelo > 1000) {
     // esta muy seco
     return 1;
-  } else if (humSuelo < 40) {
+  } else if (humSuelo > 500) {
     // seco pero no tanto
     File fp = SD.open("ZONA1.TXT", FILE_READ);
     if (fp) {
