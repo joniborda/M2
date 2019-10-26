@@ -1,5 +1,4 @@
 #include <SD.h>
-
 #include <SoftwareSerial.h>
 
 #define TAM_MAX_READ 9
@@ -33,8 +32,8 @@ unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 #define PRIORIDAD_HUM_SUELO 0.3
 #define PRIORIDAD_LUZ 0.4
 #define MAX_TEMP 50
-#define MAX_HUMEDAD_SUELO 1023
-#define MAX_LUZ 100
+#define MAX_HUMEDAD_SUELO 1 //1 Completamente humedo - 1023 Completamente seco
+#define MAX_LUZ 1023 //1 Completamente oscuro - 1023 Completamente iluminado
 #define MAX_HUMEDAD 100
 
 char riegoEnCursoZona1 = 'F';
@@ -45,7 +44,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Arduino Maestro iniciado");
 
-  if (!SD.begin(4)) {
+  if (!SD.begin(PIN_CS_SD)) {
     Serial.println("No se pudo inicializar la SD");
     return;
   }
@@ -175,7 +174,7 @@ float obtenerVariableRiego(const char* archivo) {
       fp.read(input, sizeof(input));
       ret = atof(input);
     } else {
-      Serial.println("no habilitado para leer");
+      Serial.println("No habilitado para leer.");
     }
     fp.close();
   } else {
@@ -304,12 +303,12 @@ void inicializarArchivosDeCensos() {
   }
   fp = SD.open("ZONA1.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("no pudo crear ZONA1.TXT");
+    Serial.println("No pudo crear ZONA1.TXT");
   }
   fp.close();
   fp = SD.open("ZONA2.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("no pudo crear ZONA2.TXT");
+    Serial.println("No pudo crear ZONA2.TXT");
   }
   fp.close();
 }
@@ -322,7 +321,7 @@ void evaluarInstruccion(int valores[]) {
       guardarEnArchivo(valores,perEfectividadZ1,perEfectividadZ2);
       
       if(determinarRiegoEnZona1(valores[3])){ //Implementar
-        Serial.println("entra en zona1");
+        Serial.println("Entra en para regar ZONA 1");
         float varZona1 = obtenerVariableRiego("VAR1.TXT");
         float vol1 = calcularVolumenRiego(valores[3], varZona1);
         String ret = "";
@@ -332,7 +331,7 @@ void evaluarInstruccion(int valores[]) {
         riegoEnCursoZona1 = 'T';
       }
       if(determinarRiegoEnZona2()){ //Implementar
-        Serial.println("entra en zona2");
+        Serial.println("Entra en para regar ZONA 2");
         float varZona2 = obtenerVariableRiego("VAR2.TXT");
         float vol2 = calcularVolumenRiego(valores[7], varZona2);
         String ret = "";
@@ -359,9 +358,9 @@ void evaluarInstruccion(int valores[]) {
       //Aca se analiza el resultado del riego de la zona 1.
       int var1 = 0;
       int humedadSueloZona1 = valores[2];
-      int perHumedadSueloZona1 = humedadSueloZona1 / 1023;
+      int perHumedadSueloZona1 = (1 - humedadSueloZona1 / 1023);
       if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60){
-        Serial.println("hum z1 entre");
+        Serial.println("Menor a 40 o mayor a 60");
         var1 = obtenerVariableRiego("VAR1.TXT");
         if(perHumedadSueloZona1 <= 40){
           var1 = var1 + (1/perHumedadSueloZona1);
@@ -375,7 +374,7 @@ void evaluarInstruccion(int valores[]) {
         }
         escribirVariableRiego(var1, "VAR1.TXT");
       } else {
-        Serial.println("No rego Z1.");
+        Serial.println("La zona 1 rego correctamente.");
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
@@ -383,11 +382,11 @@ void evaluarInstruccion(int valores[]) {
     case INST_RES_RIEGO_Z2: {
       //Aca se analiza el resultado del riego de la zona 2.
       int var2 = 0;
-      // TODO ESTO PUEDE SER UNA FUNCION ----
+      // TODO ESTO PUEDE SER UNA FUNCION
       int humedadSueloZona2 = valores[1];
       int perHumedadSueloZona2 = humedadSueloZona2 / 1023;
       if(perHumedadSueloZona2 < 40 || perHumedadSueloZona2 > 60){
-        Serial.println("hum z1 entre");
+        Serial.println("hum z2 entre");
         var2 = obtenerVariableRiego("VAR2.TXT");
         if(perHumedadSueloZona2 <= 40){
           var2 = var2 + (1/perHumedadSueloZona2);
@@ -402,7 +401,7 @@ void evaluarInstruccion(int valores[]) {
         // HASTA ACA ----
         escribirVariableRiego(var2, "VAR2.TXT");
       } else {
-        Serial.println("No rego Z2.");
+        Serial.println("La zona 2 rego correctamente.");
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
