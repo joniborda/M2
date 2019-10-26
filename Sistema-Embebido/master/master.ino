@@ -42,14 +42,17 @@ char riegoEnCursoZona2 = 'F';
 void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
+  
   Serial.println("Arduino Maestro iniciado");
 
   if (!SD.begin(PIN_CS_SD)) {
     Serial.println("No se pudo inicializar la SD");
     return;
+  }else{
+    inicializarArchivosDeCensos();
+    Serial.println("Inicializar la SD");
   }
-
-  inicializarArchivosDeCensos();
+  
 }
 
 void loop() {
@@ -166,13 +169,13 @@ void leerBluetooth(int* vec) {
 float obtenerVariableRiego(const char* archivo) {
   File fp = SD.open(archivo);
   char caracter;
-  float ret = -1;
+  float varRiego = -1;
   char input[5];
 
   if (fp) {
     if (fp.available()) {
       fp.read(input, sizeof(input));
-      ret = atof(input);
+      varRiego = atof(input);
     } else {
       Serial.println("No habilitado para leer.");
     }
@@ -181,8 +184,9 @@ float obtenerVariableRiego(const char* archivo) {
     String ret = "";
     ret = ret + "Error al obtener variable de archivo:  " + archivo;
     Serial.println(ret);
+    varRiego = 33.33; //Si falla la apertura de la SD, se envia una variable fija de manera que el arduino pueda seguir regando.
   }
-  return ret;
+  return varRiego;
 }
 
 void escribirVariableRiego(float var, const char* archivo) {
@@ -309,14 +313,34 @@ void inicializarArchivosDeCensos() {
   }
   fp = SD.open("ZONA1.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("No pudo crear ZONA1.TXT");
+    Serial.println("No se pudo crear ZONA1.TXT");
   }
   fp.close();
   fp = SD.open("ZONA2.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("No pudo crear ZONA2.TXT");
+    Serial.println("No se pudo crear ZONA2.TXT");
   }
   fp.close();
+
+  if(!SD.exists("VAR1.txt")){
+    fp = SD.open("VAR1.txt",FILE_WRITE);
+    if(fp){
+      fp.write(33.33);
+      fp.close();
+    } else {
+      Serial.print("No se pudo inicializar variable de riego 1.");
+    }
+  }
+
+  if(!SD.exists("VAR2.txt")){
+    fp = SD.open("VAR2.txt",FILE_WRITE);
+    if(fp){
+      fp.write(33.33);
+      fp.close();
+    } else {
+      Serial.print("No se pudo inicializar variable de riego 2.");
+    }
+  }
 }
 
 void evaluarInstruccion(int valores[]) {
@@ -364,21 +388,16 @@ void evaluarInstruccion(int valores[]) {
       //Aca se analiza el resultado del riego de la zona 1.
       int var1 = 0;
       int humedadSueloZona1 = valores[2];
-      int perHumedadSueloZona1 = (1 - humedadSueloZona1 / 1023);
+      int perHumedadSueloZona1 = ((1 - (humedadSueloZona1 / 1023)) * 100);
       if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60){
-        Serial.println("Menor a 40 o mayor a 60");
-        var1 = obtenerVariableRiego("VAR1.TXT");
-        if(perHumedadSueloZona1 <= 40){
-          var1 = var1 + (1/perHumedadSueloZona1);
-        }
-        else if(perHumedadSueloZona1 >= 60){
-          var1 = var1 - (1/perHumedadSueloZona1);
-        }
-        if (var1 <= 0) {
-          // ver porque pasa a negativo
-          var1 = 1;
-        }
-        escribirVariableRiego(var1, "VAR1.TXT");
+          Serial.println("Menor a 40 o mayor a 60");
+          var1 = obtenerVariableRiego("VAR1.TXT");
+          Serial.print("var1 = ");
+          Serial.println(var1);
+          var1 = (var1 * 50) /perHumedadSueloZona1;
+          Serial.print("Nuevo var1 = ");
+          Serial.println(var1);
+          escribirVariableRiego(var1, "VAR1.TXT");
       } else {
         Serial.println("La zona 1 rego correctamente.");
       }
