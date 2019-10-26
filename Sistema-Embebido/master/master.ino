@@ -227,6 +227,12 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
 }
 
 int determinarRiegoEnZona1(int humSuelo) {
+  /*
+  La logica seria: evaluar el porcentaje de efectividad, si es mayor a 30
+  entonces deberia compararse con el censo anterior.
+  De manera de obtener el incremento porcentual de la luz y la humedad y encontrar el momento en que la 
+  luz y la humedad se mantienen estables o estan en baja para poder regar
+  */
   Serial.print("hum suelo");
   Serial.println(humSuelo);
   if (humSuelo > 1000) {
