@@ -30,7 +30,7 @@ unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 #define PRIORIDAD_HUM_SUELO 0.3
 #define PRIORIDAD_LUZ 0.4
 #define MAX_TEMP 50
-#define MAX_HUMEDAD_SUELO 1 //1 Completamente humedo - 1023 Completamente seco
+#define MAX_HUMEDAD_SUELO 1023 //1 Completamente humedo - 1023 Completamente seco
 #define MAX_LUZ 1023 //1 Completamente oscuro - 1023 Completamente iluminado
 #define MAX_HUMEDAD 100
 
@@ -40,7 +40,6 @@ char riegoEnCursoZona2 = 'F';
 void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
-  
   Serial.println("M.");
 
   if (!SD.begin(PIN_CS_SD)) {
@@ -211,9 +210,9 @@ void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
 float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int luz) {
   float perTemperatura = temp / MAX_TEMP;
   float perHumedadAmbiente = humedadAmbiente / MAX_HUMEDAD;
-  float perHumedadSuelo = humedadSuelo / MAX_HUMEDAD_SUELO;
+  float perHumedadSuelo = (float)humedadSuelo / MAX_HUMEDAD_SUELO;
   float perLuz = luz / MAX_LUZ;
-  return PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (MAX_HUMEDAD - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (MAX_HUMEDAD - perHumedadSuelo) - PRIORIDAD_LUZ * (MAX_LUZ - perLuz);
+  return PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (1 - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (1 - perHumedadSuelo) - PRIORIDAD_LUZ * (1 - perLuz);
 }
 
 int determinarRiegoEnZona1(int humSuelo) {
