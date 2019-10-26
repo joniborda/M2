@@ -66,7 +66,7 @@ void setup() {
   pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // si no censa la humedad es porque hay que sacar esto
   pinMode(PIN_SENSOR_LUZ1, INPUT);
   pinMode(PIN_SENSOR_LUZ2, INPUT);
-  Serial.print("Arduino Esclavo inciado, esperando instrucciones...");
+  Serial.println("Arduino Esclavo inciado, esperando instrucciones...");
 }
 
 void loop() {
@@ -184,6 +184,7 @@ void loop() {
     String ret = "";
     ret = ret + "<" + INST_RIEGO_Z2 + ">";
     serialMaster.print(ret);
+    Serial.println(ret);
     tiempoDespuesRiegoZona2 = millis();
     tiempoComienzoRiegoZona2 = 0;
   }
@@ -194,6 +195,7 @@ void loop() {
     String ret = "";
     ret = ret + "<" + INST_RES_RIEGO_Z2 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO2) + ">";
     serialMaster.print(ret);
+    Serial.println(ret);
     tiempoDespuesRiegoZona2 = 0;
   }
 
@@ -301,12 +303,6 @@ void leerMaestro(int* inst, float* intesidad) {
         input[charIndex] = '\0';
         charIndex = 0;
         if (fieldIndex == 0) {
-          Serial.print(" fieldIndex ");
-          Serial.print(input);
-          Serial.print(" ");
-          Serial.print(atoi(input));
-          Serial.print(" ");
-          
           *inst = atoi(input);
           Serial.println(*inst);
         } else if (fieldIndex == 1) {
