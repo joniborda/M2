@@ -9,8 +9,6 @@
 #define PUERTO_TX_SLAVE 3
 
 #define PIN_CS_SD 4
-#define PIN_RX_BLUETOOTH 0
-#define PIN_TX_BLUETOOTH 1
 
 #define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
 #define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
@@ -43,7 +41,7 @@ void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
   
-  Serial.println("Arduino Maestro.");
+  Serial.println("M.");
 
   if (!SD.begin(PIN_CS_SD)) {
     Serial.println("E. ini la SD");
@@ -60,7 +58,7 @@ void loop() {
   //Serial.println((unsigned long)(currentMillis - previousMillis));
   if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_CENSO) {
     
-    Serial.println("Envio inst censo.");
+    Serial.println("sendCenso");
     String ret = "";
     ret = ret + '<' + INST_CENSO + '>';
     serialSlave.print(ret);
@@ -73,13 +71,14 @@ void loop() {
   
   leerInstruccion(valoresRecibidos);
   evaluarInstruccion(valoresRecibidos);
-  
+  /*
   for (int i = 0; i < 9; i++) {
     valoresRecibidos[i] = -1;  
   }
   
   leerBluetooth(valoresRecibidos);
   evaluarInstruccion(valoresRecibidos);
+  */
 }
 
 void leerInstruccion(int* vec) {
@@ -150,12 +149,6 @@ void leerBluetooth(int* vec) {
     }
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
-    String ret = "";
-    ret = ret + "t1: " + vec[1] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", L1: " + vec[4];          
-    Serial.println(ret);
-    ret = "";
-    ret = ret + ", t2: " + vec[5] + ", ha2: " + vec[6] + ", hs2: " + vec[7] + ", L2: " + vec[8];
-    Serial.println(ret);
   }
 }
 
@@ -170,15 +163,15 @@ float obtenerVariableRiego(const char* archivo) {
       fp.read(input, sizeof(input));
       varRiego = atof(input);
     } else {
-      Serial.println("No habilitado para leer.");
+      Serial.println("No leo.");
     }
-    fp.close();
   } else {
     String ret = "";
-    ret = ret + "Error al obtener variable de archivo:  " + archivo;
+    ret = ret + "E varRiego:  " + archivo;
     Serial.println(ret);
     varRiego = 33.33; //Si falla la apertura de la SD, se envia una variable fija de manera que el arduino pueda seguir regando.
   }
+  fp.close();
   return varRiego;
 }
 
@@ -187,10 +180,10 @@ void escribirVariableRiego(float var, const char* archivo) {
   File fp = SD.open(archivo, FILE_WRITE);
   if (fp) {
     fp.print(var);
-    fp.close();
   } else {
-    Serial.println("E al escribir variable de riego.");
+    Serial.println("E write varRiego.");
   }
+  fp.close();
 }
 
 void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
@@ -200,7 +193,7 @@ void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
     ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1;    
     fp.println(ret);
   } else {
-    Serial.println("E al abrir de z1.");
+    Serial.println("E abrir de z1.");
   }
   fp.close();
   
@@ -210,7 +203,7 @@ void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
     ret = ret + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;    
     fp.println(ret);
   } else {
-    Serial.println("Er al abrir de z2.");
+    Serial.println("Er abrir de z2.");
   }
   fp.close();
 }
@@ -259,7 +252,7 @@ int determinarRiegoEnZona1(int humSuelo) {
           } else {
             input[charIndex] = '\0';
             charIndex = 0;
-            Serial.print("envio ");
+            Serial.print("send ");
             Serial.println(input);
             vec[fieldIndex] = atoi(input);
             fieldIndex++;
@@ -275,10 +268,10 @@ int determinarRiegoEnZona1(int humSuelo) {
       } else {
         Serial.println("no leo");
       }
-      fp.close();
     } else {
-      Serial.println("E al leer archio z1");
+      Serial.println("E leer z1");
     }
+    fp.close();
   }
   // ser si esta muy seco
   // si esta muy seco ver si tiene datos anteriores
@@ -305,7 +298,7 @@ void inicializarArchivosDeCensos() {
     SD.remove("ZONA2.TXT");  
   }
   fp = SD.open("ZONA1.TXT", FILE_WRITE);
-  if (!fp) {
+  if (!fp) {  
     Serial.println("No creo ZONA1.TXT");
   }
   fp.close();
@@ -317,22 +310,24 @@ void inicializarArchivosDeCensos() {
 
   if(!SD.exists("VAR1.txt")){
     fp = SD.open("VAR1.txt",FILE_WRITE);
+    Serial.println("n ex var1");
     if(fp){
       fp.write("33.33");
-      fp.close();
     } else {
-      Serial.println("Err. ini var r 1.");
+      Serial.println("Err. ini var r1.");
     }
+    fp.close();
   }
 
   if(!SD.exists("VAR2.txt")){
+    Serial.println("n ex var2");
     fp = SD.open("VAR2.txt",FILE_WRITE);
     if(fp){
       fp.write(33.33);
-      fp.close();
     } else {
-      Serial.println("Err. ini var r 2.");
+      Serial.println("Err. ini var r2.");
     }
+    fp.close();
   }
 }
 
@@ -389,10 +384,10 @@ void evaluarInstruccion(int valores[]) {
           Serial.println(perHumedadSueloZona1);
           Serial.println("< a 40 o > a 60");
           var1 = obtenerVariableRiego("VAR1.TXT");
-          Serial.print("var1 = ");
+          Serial.print("v1= ");
           Serial.println(var1);
           var1 = (var1 * 50) / perHumedadSueloZona1;
-          Serial.print("Nuevo var1 = ");
+          Serial.print("new v1 = ");
           Serial.println(var1);
           escribirVariableRiego(var1, "VAR1.TXT");
       } else {
@@ -423,7 +418,7 @@ void evaluarInstruccion(int valores[]) {
         // HASTA ACA ----
         escribirVariableRiego(var2, "VAR2.TXT");
       } else {
-        Serial.println("La z2 rego correcta.");
+        Serial.println("La z2 ok.");
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
