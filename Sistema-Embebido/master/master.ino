@@ -43,14 +43,13 @@ void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
   
-  Serial.println("Arduino Maestro iniciado");
+  Serial.println("Arduino Maestro.");
 
   if (!SD.begin(PIN_CS_SD)) {
-    Serial.println("No se pudo inicializar la SD");
-    return;
+    Serial.println("E. ini la SD");
   }else{
     inicializarArchivosDeCensos();
-    Serial.println("Inicializar la SD");
+    Serial.println("SD ok");
   }
   
 }
@@ -115,12 +114,6 @@ void leerInstruccion(int* vec) {
     }
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
-    String ret = "";
-    ret = ret + "t1: " + vec[1] + ", ha1: " + vec[2] + ", hs1: " + vec[3] + ", L1: " + vec[4];          
-    Serial.println(ret);
-    ret = "";
-    ret = ret + ", t2: " + vec[5] + ", ha2: " + vec[6] + ", hs2: " + vec[7] + ", L2: " + vec[8];
-    Serial.println(ret);
   }
 }
 
@@ -196,30 +189,30 @@ void escribirVariableRiego(float var, const char* archivo) {
     fp.print(var);
     fp.close();
   } else {
-    Serial.println("Error al escribir variable de riego.");
+    Serial.println("E al escribir variable de riego.");
   }
 }
 
 void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
-  File fp = SD.open("ZONA1.TXT", FILE_WRITE); //VER SI LO ESCRIBE AL FINAL O AL PRINCIPIO
+  File fp = SD.open("ZONA1.TXT", FILE_WRITE);
   if (fp) {
     String ret = "";
     ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1;    
     fp.println(ret);
-    fp.close();
   } else {
-    Serial.println("Error al abrir el archivo de zona 1.");
+    Serial.println("E al abrir de z1.");
   }
-
+  fp.close();
+  
   fp = SD.open("ZONA2.TXT", FILE_WRITE);
   if (fp) {
     String ret = "";
     ret = ret + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;    
     fp.println(ret);
-    fp.close();
   } else {
-    Serial.println("Error al abrir el archivo de zona 2.");
+    Serial.println("Er al abrir de z2.");
   }
+  fp.close();
 }
 
 float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int luz) {
@@ -280,11 +273,11 @@ int determinarRiegoEnZona1(int humSuelo) {
         Serial.println(input);
         vec[fieldIndex] = atoi(input);
       } else {
-        Serial.println("no habilitado para leer");
+        Serial.println("no leo");
       }
       fp.close();
     } else {
-      Serial.println("error al leer archio zona1");
+      Serial.println("E al leer archio z1");
     }
   }
   // ser si esta muy seco
@@ -313,22 +306,22 @@ void inicializarArchivosDeCensos() {
   }
   fp = SD.open("ZONA1.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("No se pudo crear ZONA1.TXT");
+    Serial.println("No creo ZONA1.TXT");
   }
   fp.close();
   fp = SD.open("ZONA2.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("No se pudo crear ZONA2.TXT");
+    Serial.println("No creo ZONA2.TXT");
   }
   fp.close();
 
   if(!SD.exists("VAR1.txt")){
     fp = SD.open("VAR1.txt",FILE_WRITE);
     if(fp){
-      fp.write(33.33);
+      fp.write("33.33");
       fp.close();
     } else {
-      Serial.print("No se pudo inicializar variable de riego 1.");
+      Serial.println("Err. ini var r 1.");
     }
   }
 
@@ -338,7 +331,7 @@ void inicializarArchivosDeCensos() {
       fp.write(33.33);
       fp.close();
     } else {
-      Serial.print("No se pudo inicializar variable de riego 2.");
+      Serial.println("Err. ini var r 2.");
     }
   }
 }
@@ -351,7 +344,7 @@ void evaluarInstruccion(int valores[]) {
       guardarEnArchivo(valores,perEfectividadZ1,perEfectividadZ2);
       
       if(determinarRiegoEnZona1(valores[3])){ //Implementar
-        Serial.println("Entra en para regar ZONA 1");
+        Serial.println("r ZONA 1");
         float varZona1 = obtenerVariableRiego("VAR1.TXT");
         float vol1 = calcularVolumenRiego(valores[3], varZona1);
         String ret = "";
@@ -361,7 +354,7 @@ void evaluarInstruccion(int valores[]) {
         riegoEnCursoZona1 = 'T';
       }
       if(determinarRiegoEnZona2()){ //Implementar
-        Serial.println("Entra en para regar ZONA 2");
+        Serial.println("r ZONA 2");
         float varZona2 = obtenerVariableRiego("VAR2.TXT");
         float vol2 = calcularVolumenRiego(valores[7], varZona2);
         String ret = "";
@@ -386,20 +379,24 @@ void evaluarInstruccion(int valores[]) {
     }
     case INST_RES_RIEGO_Z1: {
       //Aca se analiza el resultado del riego de la zona 1.
-      int var1 = 0;
-      int humedadSueloZona1 = valores[2];
-      int perHumedadSueloZona1 = ((1 - (humedadSueloZona1 / 1023)) * 100);
+      float var1 = 0.0;
+      float humedadSueloZona1 = valores[1];
+      Serial.print("h ");
+      Serial.println(humedadSueloZona1);
+      float perHumedadSueloZona1 = (100 - (humedadSueloZona1 * 100) / 1023);
       if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60){
-          Serial.println("Menor a 40 o mayor a 60");
+          Serial.print("ph ");
+          Serial.println(perHumedadSueloZona1);
+          Serial.println("< a 40 o > a 60");
           var1 = obtenerVariableRiego("VAR1.TXT");
           Serial.print("var1 = ");
           Serial.println(var1);
-          var1 = (var1 * 50) /perHumedadSueloZona1;
+          var1 = (var1 * 50) / perHumedadSueloZona1;
           Serial.print("Nuevo var1 = ");
           Serial.println(var1);
           escribirVariableRiego(var1, "VAR1.TXT");
       } else {
-        Serial.println("La zona 1 rego correctamente.");
+        Serial.println("La z1 correcta.");
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
@@ -426,7 +423,7 @@ void evaluarInstruccion(int valores[]) {
         // HASTA ACA ----
         escribirVariableRiego(var2, "VAR2.TXT");
       } else {
-        Serial.println("La zona 2 rego correctamente.");
+        Serial.println("La z2 rego correcta.");
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
