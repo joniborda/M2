@@ -66,7 +66,7 @@ void loop() {
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
-  int valoreCensoAnterior[] = {-1, -1};
+  int valoreCensoAnterior[] = {-1, -1}; 
   leerInstruccion(valoresRecibidos);
   evaluarInstruccion(valoresRecibidos);
   
@@ -218,7 +218,7 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
   Serial.println(perTemperatura);
   Serial.print("%HA: ");
   Serial.println(perHumedadAmbiente);
-  Serial.print("%HS: ");
+  Serial.print("%SS: ");
   Serial.println(perHumedadSuelo);
   Serial.print("%NL: ");
   Serial.println(perLuz);
@@ -229,7 +229,7 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
   Serial.println(perTemperatura * PRIORIDAD_TEMP);
   Serial.print("%%HA: ");
   Serial.println(perHumedadAmbiente * PRIORIDAD_HUM_AMB);
-  Serial.print("%%HS: ");
+  Serial.print("%%SS: ");
   Serial.println(perHumedadSuelo * PRIORIDAD_HUM_SUELO);
   Serial.print("%%NL: ");
   Serial.println(perLuz * PRIORIDAD_LUZ);
@@ -244,58 +244,6 @@ int determinarRiegoEnZona1(float perEfectividadZ1) {
   De manera de obtener el incremento porcentual de la luz y la humedad y encontrar el momento en que la 
   luz y la humedad se mantienen estables o estan en baja para poder regar
   */
-  if (humSuelo > 1000) {
-    // esta muy seco
-    return 1;
-  } else if (humSuelo > 500) {
-    // seco pero no tanto
-    File fp = SD.open("ZONA1.TXT", FILE_READ);
-    if (fp) {
-      char entrada[60];
-
-      for (int i = 0; i < 60; i++) {
-        entrada[i] = '\0';
-      }
-      if (fp.available() > 0) {
-        fp.readBytesUntil('\n', entrada, 59);
-        Serial.println(entrada);
-        char input[5];
-        int charIndex = 0;
-        int fieldIndex = 0;
-        int vec[9];
-        int i = 0;
-        while(entrada[i] != '\0') {
-          if (entrada[i] != ',') {
-            input[charIndex] = entrada[i];
-            charIndex++;  
-          } else {
-            input[charIndex] = '\0';
-            charIndex = 0;
-            Serial.print("send ");
-            Serial.println(input);
-            vec[fieldIndex] = atoi(input);
-            fieldIndex++;
-          }
-          i++;
-        }
-
-        input[charIndex] = '\0'; // finalizo el ultimo porque no tiene coma
-        charIndex = 0;
-        Serial.print("envio1 ");
-        Serial.println(input);
-        vec[fieldIndex] = atoi(input);
-      } else {
-        Serial.println("no leo");
-      }
-    } else {
-      Serial.println("E leer z1");
-    }
-    fp.close();
-  }
-  // ser si esta muy seco
-  // si esta muy seco ver si tiene datos anteriores
-  // si tiene datos anteriores deberia ver si la luz esta en aumento
-  // si tiene datos anteriores deberia ver si la humedad ambiente esta en aumento
   return millis()%2;
 }
 
@@ -356,6 +304,7 @@ void inicializarArchivosDeCensos() {
 void analizarResultadoRiego(int zona, int humedadSuelo, char* archivo) {
   float var = 0.0;
   float humedadSueloZona = humedadSuelo;
+  String
   Serial.println("I_R_" + zona); //Se va a analizar el resultado del riego de la ZONA N
   Serial.println(humedadSueloZona);
   float perHumedadSueloZona = (100 - (humedadSueloZona * 100) / 1023);
