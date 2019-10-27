@@ -25,9 +25,9 @@ SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 unsigned long currentMillis = 0; // grab current time
 unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 
-#define PRIORIDAD_TEMP 0.1
-#define PRIORIDAD_HUM_AMB 0.2
-#define PRIORIDAD_HUM_SUELO 0.3
+#define PRIORIDAD_TEMP 0.05
+#define PRIORIDAD_HUM_AMB 0.05
+#define PRIORIDAD_HUM_SUELO 0.4
 #define PRIORIDAD_LUZ 0.4
 #define MAX_TEMP 50
 #define MAX_HUMEDAD_SUELO 1023 //1 Completamente humedo - 1023 Completamente seco
@@ -93,7 +93,6 @@ void leerInstruccion(int* vec) {
   if (serialSlave.available() > 0) {
     serialSlave.readBytesUntil('>', entrada, 59);
     Serial.println("L_E"); //Leyendo del esclavo
-    Serial.println(entrada);
     int i = 0;
     while(entrada[i] != '\0') {
       if (entrada[i] == '<') {
@@ -113,6 +112,8 @@ void leerInstruccion(int* vec) {
     }
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
+    entrada[0] = '@'; //Indica que el dato leido proviene del esclavo
+    Serial.println(entrada);
   }
 }
 
@@ -209,11 +210,31 @@ void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
 }
 
 float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int luz) {
-  float perTemperatura = temp / MAX_TEMP;
-  float perHumedadAmbiente = humedadAmbiente / MAX_HUMEDAD;
+  float perTemperatura = (float)temp / MAX_TEMP;
+  float perHumedadAmbiente = (float)humedadAmbiente / MAX_HUMEDAD;
   float perHumedadSuelo = (float)humedadSuelo / MAX_HUMEDAD_SUELO;
-  float perLuz = luz / MAX_LUZ;
-  return PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (1 - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (perHumedadSuelo) + PRIORIDAD_LUZ * (perLuz);
+  float perLuz = (float)luz / MAX_LUZ;
+  Serial.print("%T: ");
+  Serial.println(perTemperatura);
+  Serial.print("%HA: ");
+  Serial.println(perHumedadAmbiente);
+  Serial.print("%HS: ");
+  Serial.println(perHumedadSuelo);
+  Serial.print("%NL: ");
+  Serial.println(perLuz);
+  Serial.println("");
+  Serial.println("V_PRIORIZADOS");
+
+  Serial.print("%%T: ");
+  Serial.println(perTemperatura * PRIORIDAD_TEMP);
+  Serial.print("%%HA: ");
+  Serial.println(perHumedadAmbiente * PRIORIDAD_HUM_AMB);
+  Serial.print("%%HS: ");
+  Serial.println(perHumedadSuelo * PRIORIDAD_HUM_SUELO);
+  Serial.print("%%NL: ");
+  Serial.println(perLuz * PRIORIDAD_LUZ);
+  Serial.println("");
+  return (PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (1 - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (perHumedadSuelo) + PRIORIDAD_LUZ * (perLuz)) * 100;
 }
 
 int determinarRiegoEnZona1(int humSuelo) {
@@ -223,8 +244,6 @@ int determinarRiegoEnZona1(int humSuelo) {
   De manera de obtener el incremento porcentual de la luz y la humedad y encontrar el momento en que la 
   luz y la humedad se mantienen estables o estan en baja para poder regar
   */
-  Serial.print("hum suelo");
-  Serial.println(humSuelo);
   if (humSuelo > 1000) {
     // esta muy seco
     return 1;
@@ -285,7 +304,7 @@ int determinarRiegoEnZona2() {
 }
 
 float calcularVolumenRiego(int riego, float var) {
-  return riego * var;
+  return (riego * var) / 1023;
 }
 
 void inicializarArchivosDeCensos() {
@@ -337,8 +356,12 @@ void inicializarArchivosDeCensos() {
 void evaluarInstruccion(int valores[]) {
   switch(valores[0]){
     case INST_CENSO: {
-      int perEfectividadZ1 = calcularEfectividad(valores[1], valores[2], valores[3], valores[4]);
-      int perEfectividadZ2 = calcularEfectividad(valores[5], valores[6], valores[7], valores[8]);      
+      float perEfectividadZ1 = calcularEfectividad(valores[1], valores[2], valores[3], valores[4]);
+      float perEfectividadZ2 = calcularEfectividad(valores[5], valores[6], valores[7], valores[8]); 
+      Serial.print("%EF1 ");
+      Serial.println(perEfectividadZ1);
+      Serial.print("%EF2 ");
+      Serial.println(perEfectividadZ2); 
       guardarEnArchivo(valores,perEfectividadZ1,perEfectividadZ2);
       
       if(determinarRiegoEnZona1(valores[3])) {
