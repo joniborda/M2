@@ -12,10 +12,18 @@
 
 #define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
 #define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
-#define INST_RIEGO_Z2 3 //INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
+#define INST_RIEGO_Z2 3 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
 #define INST_MANTENIMIENTO 4 // INSTRUCCION PARA RUTINA DE MANTENIMIENTO (INICIO/FIN)
-#define INST_RES_RIEGO_Z1 12 //INSTRUCCION PARA LEER EL RESULTADO DEL RIEGO EN LA ZONA 1
-#define INST_RES_RIEGO_Z2 13 //INSTRUCCION PARA LEER EL RESULTADO DEL RIEGO EN LA ZONA 2
+#define INST_DETENER_RIEGO_Z1 5 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
+#define INST_DETENER_RIEGO_Z2 6 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
+#define INST_ENCENDER_LUZ_1_MANUAL 7 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_ENCENDER_LUZ_2_MANUAL 8 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_APAGAR_LUZ_1_MANUAL 9 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_APAGAR_LUZ_2_MANUAL 10 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_AUTO_LUZ_1 11 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_AUTO_LUZ_2 15 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_RES_RIEGO_Z1 12 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
+#define INST_RES_RIEGO_Z2 13 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
 
 // INTERVALO DE RUTINA DE CENSO EN MS
 static unsigned long MS_INTERVAL_TO_CENSO = 10000; // 15 seg.
@@ -434,6 +442,51 @@ void evaluarInstruccion(int valores[]) {
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
+    }
+    case INST_DETENER_RIEGO_Z1: {
+      // El bluetooth envia detener el riego en zona 1
+      // verificar que estè regando
+      // enviar orden al esclavo
+      //String ret = "";
+      //ret = ret + "<"
+      //serialSlave.print('<')
+      break;
+    }
+    case INST_DETENER_RIEGO_Z2: {
+      // El bluetooth envia detener el riego en zona 1
+      // verificar que estè regando
+      // enviar orden al esclavo
+      break;
+    }
+    case INST_ENCENDER_LUZ_1_MANUAL: {
+      // El bluetooth envia encender luz 1 manualmente
+      // enviar orden al esclavo
+      break;
+    }
+    case INST_ENCENDER_LUZ_2_MANUAL: {
+      // El bluetooth envia encender luz 2 manualmente
+      // enviar orden al esclavo
+      break;
+    }
+    case INST_APAGAR_LUZ_1_MANUAL: {
+      // El bluetooth envia apagar luz 1 manualmente
+      // enviar orden al esclavo
+      break;
+    }
+    case INST_APAGAR_LUZ_2_MANUAL: {
+      // El bluetooth envia apagar luz 2 manualmente
+      // enviar orden al esclavo
+      break;
+    }
+    case INST_AUTO_LUZ_1: {
+      // El bluetooth envia orden de dejar en automatica la luz 1
+      // enviar orden al esclavo
+      break;
+    }
+    case INST_AUTO_LUZ_2: {
+      // El bluetooth envia orden de dejar en automatica la luz 2
+      // enviar orden al esclavo
+      break;
     }
   }
 }
