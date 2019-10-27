@@ -66,7 +66,7 @@ void loop() {
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
-  int valoreCensoAnterior[] = {-1, -1}; 
+  int valoresCensoAnterior[] = {-1, -1}; 
   leerInstruccion(valoresRecibidos);
   evaluarInstruccion(valoresRecibidos);
   
@@ -331,6 +331,8 @@ void analizarResultadoRiego(int zona, int humedadSuelo, char* archivo) {
 void evaluarInstruccion(int valores[]) {
   switch(valores[0]){
     case INST_CENSO: {
+      // Ocurre cuando el esclavo avisa que termino el censo y me envia los valores de ese censo
+      // de la zona 1 y de la zona 2
       float perEfectividadZ1 = calcularEfectividad(valores[1], valores[2], valores[3], valores[4]);
       float perEfectividadZ2 = calcularEfectividad(valores[5], valores[6], valores[7], valores[8]); 
       Serial.print("%EF1 ");
@@ -366,10 +368,12 @@ void evaluarInstruccion(int valores[]) {
       break;
     }
     case INST_RIEGO_Z1: {
+      // Ocurre cuando el esclavo me avisa que termino de regar la zona 1
       riegoEnCursoZona1 = 'F';
       break;
     }
     case INST_RIEGO_Z2: {
+      // Ocurre cuando el esclavo me avisa que termino de regar la zona 2
       riegoEnCursoZona2 = 'F';
       break;
     }
