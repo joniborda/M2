@@ -31,7 +31,7 @@ unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 #define PRIORIDAD_LUZ 0.4
 #define MAX_TEMP 50
 #define MAX_HUMEDAD_SUELO 1023 //1 Completamente humedo - 1023 Completamente seco
-#define MAX_LUZ 1023 //1 Completamente oscuro - 1023 Completamente iluminado
+#define MAX_LUZ 1023 //1  Completamente oscuro - 1023 Completamente iluminado
 #define MAX_HUMEDAD 100
 
 char riegoEnCursoZona1 = 'F';
@@ -40,24 +40,23 @@ char riegoEnCursoZona2 = 'F';
 void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
-  Serial.println("M.");
+  Serial.println("M_OK"); //Maestro iniciado correctamente
 
   if (!SD.begin(PIN_CS_SD)) {
-    Serial.println("E. ini la SD");
+    Serial.println("E_SD_001"); //Error al inicializar la tarjeta SD
   }else{
+    Serial.println("SD_002"); //Tarjeta SD incializada correctamente.
     inicializarArchivosDeCensos();
-    Serial.println("SD ok");
   }
   
 }
 
 void loop() {
-  
+    
   currentMillis = millis();
-  //Serial.println((unsigned long)(currentMillis - previousMillis));
   if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_CENSO) {
     
-    Serial.println("sendCenso");
+    Serial.println("M_C"); //Maestro envia orden de censar al esclavo
     String ret = "";
     ret = ret + '<' + INST_CENSO + '>';
     serialSlave.print(ret);
@@ -70,6 +69,7 @@ void loop() {
   
   leerInstruccion(valoresRecibidos);
   evaluarInstruccion(valoresRecibidos);
+  
   /*
   for (int i = 0; i < 9; i++) {
     valoresRecibidos[i] = -1;  
@@ -85,13 +85,14 @@ void leerInstruccion(int* vec) {
   char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
   int fieldIndex = 0;
   char entrada[60];
+  
   for (int i = 0; i < 60; i++) {
     entrada[i] = '\0';
   }
   
   if (serialSlave.available() > 0) {
     serialSlave.readBytesUntil('>', entrada, 59);
-    
+    Serial.println("L_E"); //Leyendo del esclavo
     Serial.println(entrada);
     int i = 0;
     while(entrada[i] != '\0') {
@@ -125,9 +126,8 @@ void leerBluetooth(int* vec) {
   }
   
   if (Serial.available() > 0) {
-    Serial.println("blu");
+    Serial.println("L_B_001"); //Leyendo datos del modulo bluetooth
     Serial.readBytesUntil('>', entrada, 59);
-    
     Serial.println(entrada);
     int i = 0;
     while(entrada[i] != '\0') {
@@ -162,11 +162,11 @@ float obtenerVariableRiego(const char* archivo) {
       fp.read(input, sizeof(input));
       varRiego = atof(input);
     } else {
-      Serial.println("No leo.");
+      Serial.println("E_L_V"); //Error al leer el archivo de variable
     }
   } else {
     String ret = "";
-    ret = ret + "E varRiego:  " + archivo;
+    ret = ret + "E_A_V " + archivo;
     Serial.println(ret);
     varRiego = 33.33; //Si falla la apertura de la SD, se envia una variable fija de manera que el arduino pueda seguir regando.
   }
@@ -180,7 +180,8 @@ void escribirVariableRiego(float var, const char* archivo) {
   if (fp) {
     fp.print(var);
   } else {
-    Serial.println("E write varRiego.");
+    Serial.println("E_E_V");
+    Serial.println(archivo);
   }
   fp.close();
 }
@@ -192,7 +193,7 @@ void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
     ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1;    
     fp.println(ret);
   } else {
-    Serial.println("E abrir de z1.");
+    Serial.println("E_A_Z1"); //Error al abrir archivo ZONA1.TXT
   }
   fp.close();
   
@@ -202,7 +203,7 @@ void guardarEnArchivo(int* vec, int perEfectividadZ1, int perEfectividadZ2) {
     ret = ret + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;    
     fp.println(ret);
   } else {
-    Serial.println("Er abrir de z2.");
+    Serial.println("E_A_Z2"); //Error al abrir archivo ZONA2.TXT
   }
   fp.close();
 }
@@ -212,7 +213,7 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
   float perHumedadAmbiente = humedadAmbiente / MAX_HUMEDAD;
   float perHumedadSuelo = (float)humedadSuelo / MAX_HUMEDAD_SUELO;
   float perLuz = luz / MAX_LUZ;
-  return PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (1 - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (1 - perHumedadSuelo) - PRIORIDAD_LUZ * (1 - perLuz);
+  return PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (1 - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (perHumedadSuelo) + PRIORIDAD_LUZ * (perLuz);
 }
 
 int determinarRiegoEnZona1(int humSuelo) {
@@ -298,33 +299,36 @@ void inicializarArchivosDeCensos() {
   }
   fp = SD.open("ZONA1.TXT", FILE_WRITE);
   if (!fp) {  
-    Serial.println("No creo ZONA1.TXT");
+    Serial.println("E_A_001"); //Error al crear archivo ZONA1.TXT 
   }
   fp.close();
+  
   fp = SD.open("ZONA2.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("No creo ZONA2.TXT");
+    Serial.println("E_A_002"); //Error al crear archivo ZONA2.TXT
   }
   fp.close();
 
   if(!SD.exists("VAR1.txt")){
+    Serial.println("A_V_001"); //El archivo VAR1.TXT no existe en la tarjeta SD
     fp = SD.open("VAR1.txt",FILE_WRITE);
-    Serial.println("n ex var1");
+    Serial.println("A_V_002"); //El archivo VAR1.TXT no existia y se acaba de crear
     if(fp){
-      fp.write("33.33");
+      fp.println("33.33");
     } else {
-      Serial.println("Err. ini var r1.");
+      Serial.println("E_A_001"); //Error al escribir el archivo VAR1.txt con el valor por defecto
     }
     fp.close();
   }
 
   if(!SD.exists("VAR2.txt")){
-    Serial.println("n ex var2");
+    Serial.println("A_V_003"); //El archivo VAR2.TXT no existe en la tarjeta SD
     fp = SD.open("VAR2.txt",FILE_WRITE);
+    Serial.println("A_V_004"); //El archivo VAR2.TXT no existia y se acaba de crear
     if(fp){
-      fp.write(33.33);
+      fp.println("33.33");
     } else {
-      Serial.println("Err. ini var r2.");
+      Serial.println("E_A_002"); //Error al escribir el archivo VAR2.txt con el valor por defecto      
     }
     fp.close();
   }
@@ -337,8 +341,8 @@ void evaluarInstruccion(int valores[]) {
       int perEfectividadZ2 = calcularEfectividad(valores[5], valores[6], valores[7], valores[8]);      
       guardarEnArchivo(valores,perEfectividadZ1,perEfectividadZ2);
       
-      if(determinarRiegoEnZona1(valores[3])){ //Implementar
-        Serial.println("r ZONA 1");
+      if(determinarRiegoEnZona1(valores[3])) {
+        Serial.println("R_Z_1"); //Es eficiente regar en la zona 1
         float varZona1 = obtenerVariableRiego("VAR1.TXT");
         float vol1 = calcularVolumenRiego(valores[3], varZona1);
         String ret = "";
@@ -347,8 +351,8 @@ void evaluarInstruccion(int valores[]) {
         serialSlave.print(ret);
         riegoEnCursoZona1 = 'T';
       }
-      if(determinarRiegoEnZona2()){ //Implementar
-        Serial.println("r ZONA 2");
+      if(determinarRiegoEnZona2()) {
+        Serial.println("R_Z_2"); //Es eficiente regar en la zona 2
         float varZona2 = obtenerVariableRiego("VAR2.TXT");
         float vol2 = calcularVolumenRiego(valores[7], varZona2);
         String ret = "";
@@ -375,22 +379,21 @@ void evaluarInstruccion(int valores[]) {
       //Aca se analiza el resultado del riego de la zona 1.
       float var1 = 0.0;
       float humedadSueloZona1 = valores[1];
-      Serial.print("h ");
+      Serial.println("I_R_1"); //Se va a analizar el resultado del riego en ZONA 1
       Serial.println(humedadSueloZona1);
       float perHumedadSueloZona1 = (100 - (humedadSueloZona1 * 100) / 1023);
-      if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60){
-          Serial.print("ph ");
+      if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60) {
+          Serial.println("PH_Z1"); //Porcentaje de humedad resultado del ultimo riego ZONA 1
           Serial.println(perHumedadSueloZona1);
-          Serial.println("< a 40 o > a 60");
           var1 = obtenerVariableRiego("VAR1.TXT");
-          Serial.print("v1= ");
+          Serial.println("V_PH_1"); //Variable de riego con la que se rego ZONA 1
           Serial.println(var1);
           var1 = (var1 * 50) / perHumedadSueloZona1;
-          Serial.print("new v1 = ");
+          Serial.print("N_V_PH_1"); //Nueva variable de riego a almacenar ZONA 1
           Serial.println(var1);
           escribirVariableRiego(var1, "VAR1.TXT");
       } else {
-        Serial.println("La z1 correcta.");
+        Serial.println("R_Z1_C"); //Porcentaje de humedad en ZONA 1 correcto
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
@@ -398,26 +401,20 @@ void evaluarInstruccion(int valores[]) {
     case INST_RES_RIEGO_Z2: {
       //Aca se analiza el resultado del riego de la zona 2.
       int var2 = 0;
-      // TODO ESTO PUEDE SER UNA FUNCION
       int humedadSueloZona2 = valores[1];
-      int perHumedadSueloZona2 = humedadSueloZona2 / 1023;
-      if(perHumedadSueloZona2 < 40 || perHumedadSueloZona2 > 60){
-        Serial.println("hum z2 entre");
+      Serial.println("I_R_2"); //Se va a analizar el resultado del riego en ZONA 2
+      Serial.println(humedadSueloZona2);
+      float perHumedadSueloZona2 = (100 - (humedadSueloZona2 * 100) / 1023);
+      if(perHumedadSueloZona2 < 40 || perHumedadSueloZona2 > 60) {
+        Serial.println("PH_Z2"); //Porcentaje de humedad resultado del ultimo riego ZONA 2
+        Serial.println(perHumedadSueloZona2);
         var2 = obtenerVariableRiego("VAR2.TXT");
-        if(perHumedadSueloZona2 <= 40){
-          var2 = var2 + (1/perHumedadSueloZona2);
-        }
-        else if(perHumedadSueloZona2 >= 60){
-          var2 = var2 - (1/perHumedadSueloZona2);
-        }
-        if (var2 <= 0) {
-          // ver porque pasa a negativo
-          var2 = 1;
-        }
-        // HASTA ACA ----
-        escribirVariableRiego(var2, "VAR2.TXT");
+        Serial.println("V_PH_2"); //Variable de riego con la que se rego ZONA 2
+        Serial.println(var2);
+        //DEFINIR LOGICA DE AJUSTE DE VARIABLE DE RIEGO
+        //escribirVariableRiego(var2, "VAR2.TXT");
       } else {
-        Serial.println("La z2 ok.");
+        Serial.println("R_Z2_C"); //Porcentaje de humedad en ZONA 2 correcto
       }
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.

@@ -62,11 +62,11 @@ void setup() {
   pinMode(PIN_LED2, OUTPUT);
   pinMode(PIN_BOMBA1, OUTPUT);
   pinMode(PIN_BOMBA2, OUTPUT);
-  pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // si no censa la humedad es porque hay que sacar esto
-  pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // si no censa la humedad es porque hay que sacar esto
+  pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // Si no censa la humedad es porque hay que sacar esto
+  pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // Si no censa la humedad es porque hay que sacar esto
   pinMode(PIN_SENSOR_LUZ1, INPUT);
   pinMode(PIN_SENSOR_LUZ2, INPUT);
-  Serial.println("Arduino Esclavo inciado, esperando instrucciones...");
+  Serial.println("Arduino Esclavo iniciado, esperando instrucciones");
 }
 
 void loop() {
@@ -77,7 +77,7 @@ void loop() {
     float intesidadRiego = -1;
     leerMaestro(&instr_recibida, &intesidadRiego);
     Serial.print("INSTRUCCION: ");
-    Serial.println(instr_recibida);
+    Serial.println("" + instr_recibida);
     switch (instr_recibida) {
       case INST_CENSO: {
         Serial.println("RUTINA DE CENSO.");
@@ -121,32 +121,32 @@ void loop() {
         break;
       }
       case INST_ENCENDER_LUZ_1_MANUAL: {
-        Serial.println("PRENDER LUZ 1 MANUAL.");
+        Serial.println("PRENDER LUZ 1 MANUAL");
         prenderLuz1 = 1;
         break;
       }
       case INST_ENCENDER_LUZ_2_MANUAL: {
-        Serial.println("PRENDER LUZ 1 MANUAL.");
+        Serial.println("PRENDER LUZ 2 MANUAL");
         prenderLuz2 = 1;
         break;
       }
       case INST_APAGAR_LUZ_1_MANUAL: {
-        Serial.println("APAGAR LUZ 1 MANUAL.");
+        Serial.println("APAGAR LUZ 1 MANUAL");
         prenderLuz1 = 2;
         break;
       }
       case INST_APAGAR_LUZ_2_MANUAL: {
-        Serial.println("APAGAR LUZ 2 MANUAL.");
+        Serial.println("APAGAR LUZ 2 MANUAL");
         prenderLuz2 = 2;
         break;
       }
       case INST_AUTO_LUZ_1: {
-        Serial.println("AUTO LUZ 1.");
+        Serial.println("LUZ AUTO 1");
         prenderLuz1 = 0;
         break;
       }
       case INST_AUTO_LUZ_2: {
-        Serial.println("AUTO LUZ 2.");
+        Serial.println("LUZ AUTO 2");
         prenderLuz2 = 0;
         break;
       }
@@ -222,7 +222,7 @@ void sensarZona1(int* vec) {
   vec[3] = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
   vec[4] = analogRead(PIN_SENSOR_LUZ1);
   String ret = "";
-  ret = ret + "Temp1: " + vec[1] + ", HumAmb1: " + vec[2] + ", HumSu1: " + vec[3] + ", SenLuz1: " + vec[4];
+  ret = ret + "TEMP1: " + vec[1] + ", HUMAMB1: " + vec[2] + ", HUMSUE1: " + vec[3] + ", SENLUZ1: " + vec[4];
   Serial.println(ret);
 }
 
@@ -232,16 +232,12 @@ void sensarZona2(int* vec) {
   vec[7] = analogRead(PIN_SENSOR_HUMEDAD_SUELO2);
   vec[8] = analogRead(PIN_SENSOR_LUZ2);
   String ret = "";
-  ret = ret + "Temp2: " + vec[5] + ", HumAmb2: " + vec[6] + ", HumSu2: " + vec[7] + ", SenLuz2: " + vec[8];
+  ret = ret + "TEMP2: " + vec[5] + ", HUMAMB2: " + vec[6] + ", HUMSUE2: " + vec[7] + ", SENLUZ2: " + vec[8];
   Serial.println(ret);
 }
 
 void mantenimiento() {
   int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
-  //
-  /*Para el envio del mantenimiento, se envia con el siguiente formato:
-  *
-  * */
   sensarZona1(valorSensores);
   sensarZona2(valorSensores);
 
@@ -259,7 +255,7 @@ void mantenimiento() {
   delay(10);
   int valorLuzActualZona1 = analogRead(PIN_SENSOR_LUZ1);
   if(valorLuzAnteriorZona1 >= valorLuzActualZona1) {
-    Serial.print("Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto.");
+    Serial.println("Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto.");
   }
   digitalWrite(PIN_LED1, LOW);
 }
@@ -321,8 +317,7 @@ void leerMaestro(int* inst, float* intesidad) {
     }
 
     String ret = "";
-    ret = ret + "inst: " + *inst + ", val: " + *intesidad;
-                
+    ret = ret + "INSTRUCCION: " + *inst + ", INTENSIDAD: " + *intesidad;            
     Serial.println(ret);
   }
 }
