@@ -65,10 +65,7 @@ void loop() {
   if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_CENSO) {
     
     Serial.println("M_C"); //Maestro envia orden de censar al esclavo
-    String ret = "";
-    ret = ret + '<' + INST_CENSO + '>';
-    serialSlave.print(ret);
-    Serial.println(ret);
+    enviarInstruccionAlEsclavo(INST_CENSO);
     previousMillis = millis();
     MS_INTERVAL_TO_CENSO = (unsigned long)10000;
   }
@@ -447,46 +444,58 @@ void evaluarInstruccion(int valores[]) {
       // El bluetooth envia detener el riego en zona 1
       // verificar que estè regando
       // enviar orden al esclavo
-      //String ret = "";
-      //ret = ret + "<"
-      //serialSlave.print('<')
+      enviarInstruccionAlEsclavo(INST_DETENER_RIEGO_Z1);
       break;
     }
     case INST_DETENER_RIEGO_Z2: {
       // El bluetooth envia detener el riego en zona 1
       // verificar que estè regando
       // enviar orden al esclavo
+      enviarInstruccionAlEsclavo(INST_DETENER_RIEGO_Z2);
       break;
     }
     case INST_ENCENDER_LUZ_1_MANUAL: {
       // El bluetooth envia encender luz 1 manualmente
       // enviar orden al esclavo
+      enviarInstruccionAlEsclavo(INST_ENCENDER_LUZ_1_MANUAL);
       break;
     }
     case INST_ENCENDER_LUZ_2_MANUAL: {
       // El bluetooth envia encender luz 2 manualmente
       // enviar orden al esclavo
+      enviarInstruccionAlEsclavo(INST_ENCENDER_LUZ_2_MANUAL);
       break;
     }
     case INST_APAGAR_LUZ_1_MANUAL: {
       // El bluetooth envia apagar luz 1 manualmente
       // enviar orden al esclavo
+      enviarInstruccionAlEsclavo(INST_APAGAR_LUZ_1_MANUAL);
       break;
     }
     case INST_APAGAR_LUZ_2_MANUAL: {
       // El bluetooth envia apagar luz 2 manualmente
       // enviar orden al esclavo
+      enviarInstruccionAlEsclavo(INST_APAGAR_LUZ_2_MANUAL);
       break;
     }
     case INST_AUTO_LUZ_1: {
       // El bluetooth envia orden de dejar en automatica la luz 1
       // enviar orden al esclavo
+      enviarInstruccionAlEsclavo(INST_AUTO_LUZ_1);
       break;
     }
     case INST_AUTO_LUZ_2: {
       // El bluetooth envia orden de dejar en automatica la luz 2
       // enviar orden al esclavo
+      enviarInstruccionAlEsclavo(INST_AUTO_LUZ_2);
       break;
     }
+  }
+
+  void enviarInstruccionAlEsclavo(const int instruccion) {
+    String orden = "";
+      orden = orden + '<' + instruccion + '>';
+      serialSlave.print(orden);
+      Serial.println(orden); // ojo porque esto lo puede recibir el bluetooth
   }
 }
