@@ -242,18 +242,27 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
   return (PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (1 - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (perHumedadSuelo) + PRIORIDAD_LUZ * (perLuz)) * 100;
 }
 
-int determinarRiegoEnZona1(float perEfectividadZ1) {
-  /*
-  La logica seria: evaluar el porcentaje de efectividad, si es mayor a 30
-  entonces deberia compararse con el censo anterior.
-  De manera de obtener el incremento porcentual de la luz y la humedad y encontrar el momento en que la 
-  luz y la humedad se mantienen estables o estan en baja para poder regar
-  */
-  return millis()%2;
-}
-
-int determinarRiegoEnZona2(float perEfectividadZ2) {
-  return millis()%2;
+int determinarRiegoEnZona(int zona, float perEfectividad, int luzActual, int humedadActual) {
+  if(perEfectividad > 70.00){
+    return 1;
+  }
+  else if(perEfectividad > 40.00){
+    int luzAnterior = valoresCensoAnterior[zona - 1];
+    int humedadAnterior = valoresCensoAnterior[zona - 1 + 2];
+    if(luzAnterior == -1 || humedadAnterior == -1) //Es la primera vez que censa, no hay valores anteriores
+      return 0;
+    float varLuz = ((float)(luzActual - luzAnterior) / (float)luzAnterior);
+    if(varLuz < 0) {
+      Serial.println("La luz se encuentra en descenso.");
+      return 1;
+    } else if(varLuz < 60.00){
+      Serial.println("La luz se mantiene estable.");
+      return 1;
+    } else {
+      Serial.println("La luz esta en ascenso, no es conveniente regar.");
+    }
+  }
+  return 0;
 }
 
 float calcularVolumenRiego(int riego, float var) {
@@ -309,27 +318,40 @@ void inicializarArchivosDeCensos() {
 void analizarResultadoRiego(int zona, int humedadSuelo, char* archivo) {
   float var = 0.0;
   float humedadSueloZona = humedadSuelo;
-  String
-  Serial.println("I_R_" + zona); //Se va a analizar el resultado del riego de la ZONA N
-  Serial.println(humedadSueloZona);
+  String ret = "";
+  ret = ret + "I_R_" + zona;
+  Serial.println(ret); //Se va a analizar el resultado del riego de la ZONA N
+  ret = "";
+  ret = ret + "HSuelo resultado: " + humedadSueloZona;
+  Serial.println(ret);
   float perHumedadSueloZona = (100 - (humedadSueloZona * 100) / 1023);
   if(perHumedadSueloZona < 40 || perHumedadSueloZona > 60) {
-      Serial.println("PH_Z" + zona); //Porcentaje de humedad resultado del ultimo riego ZONA N
-      Serial.println(perHumedadSueloZona);
+      ret = "";
+      ret = ret + "PH_Z" + zona;
+      Serial.println(ret); //Porcentaje de humedad resultado del ultimo riego ZONA N
+      ret = "";
+      ret = ret + "%HSuelo resultado: " + perHumedadSueloZona;
+      Serial.println(ret);
       var = obtenerVariableRiego(archivo);
-      Serial.println("V_PH_" + zona); //Variable de riego con la que se rego ZONA N
+      ret = "";
+      ret = ret + "V_PH_Z" + zona;
+      Serial.println(ret); //Variable de riego con la que se rego ZONA N
       Serial.println(var);
       float ajuste = (50 - perHumedadSueloZona)/2;
       var += ajuste;
       if(var < 0)
         var = 1.00;
       if(var > 100)
-        var = 100.00;                   
-      Serial.print("N_V_PH_ " + zona); //Nueva variable de riego a almacenar ZONA 1
+        var = 100.00;   
+      ret = "";
+      ret = ret + "N_V_PH_Z" + zona;                
+      Serial.print(ret); //Nueva variable de riego a almacenar ZONA 1
       Serial.println(var);
       escribirVariableRiego(var, archivo);
   } else {
-    Serial.println("R_C_Z" + zona); //Porcentaje de humedad en ZONA 1 correcto
+    ret = "";
+    ret = ret + "R_C_Z" + zona;
+    Serial.println(ret); //Porcentaje de humedad en ZONA 1 correcto
   }
 }
 
@@ -347,7 +369,7 @@ void evaluarInstruccion(int valores[]) {
       Serial.println(perEfectividadZ2); 
       guardarEnArchivo(valores,perEfectividadZ1,perEfectividadZ2);
       
-      if(determinarRiegoEnZona1(perEfectividadZ1)) {
+      if(determinarRiegoEnZona(1, perEfectividadZ1, valores[4], valores[2])) {
         Serial.println("R_Z_1"); //Es eficiente regar en la zona 1
         float varZona1 = obtenerVariableRiego("VAR1.TXT");
         float vol1 = calcularVolumenRiego(valores[3], varZona1);
@@ -357,7 +379,7 @@ void evaluarInstruccion(int valores[]) {
         serialSlave.print(ret);
         riegoEnCursoZona1 = 'T';
       }
-      if(determinarRiegoEnZona2(perEfectividadZ2)) {
+      if(determinarRiegoEnZona(2, perEfectividadZ2, valores[8], valores[6])) {
         Serial.println("R_Z_2"); //Es eficiente regar en la zona 2
         float varZona2 = obtenerVariableRiego("VAR2.TXT");
         float vol2 = calcularVolumenRiego(valores[7], varZona2);
@@ -367,11 +389,11 @@ void evaluarInstruccion(int valores[]) {
         serialSlave.print(ret);
         riegoEnCursoZona2 = 'T';
       }
-      // guardo los valores para el proximo censo
-      valoresCensoAnterior[0] = valores[4]; // luz 1
-      valoresCensoAnterior[1] = valores[8]; // luz 2
-      valoresCensoAnterior[2] = valores[2]; // ambiente 1
-      valoresCensoAnterior[3] = valores[6]; // ambiente 2
+      // Guardo los valores para el proximo censo
+      valoresCensoAnterior[0] = valores[4]; // LUZ 1
+      valoresCensoAnterior[1] = valores[8]; // LUZ 2
+      valoresCensoAnterior[2] = valores[2]; // HUMEDAD AMBIENTE 1
+      valoresCensoAnterior[3] = valores[6]; // HUMEDAD AMBIENTE 2
       break;
     }
     case INST_MANTENIMIENTO: {
@@ -420,8 +442,10 @@ void evaluarInstruccion(int valores[]) {
     }
     case INST_RES_RIEGO_Z2: {
       //Aca se analiza el resultado del riego de la zona 2.
-      int var2 = 0;
+      /*int var2 = 0;
       int humedadSueloZona2 = valores[1];
+      String ret = "";
+      ret = ret + "I_R_2" + " " + humedadSueloZona2; 
       Serial.println("I_R_2"); //Se va a analizar el resultado del riego en ZONA 2
       Serial.println(humedadSueloZona2);
       float perHumedadSueloZona2 = (100 - (humedadSueloZona2 * 100) / 1023);
@@ -442,7 +466,8 @@ void evaluarInstruccion(int valores[]) {
           escribirVariableRiego(var2, "VAR1.TXT");
       } else {
         Serial.println("R_Z2_C"); //Porcentaje de humedad en ZONA 2 correcto
-      }
+      }*/
+      analizarResultadoRiego(2, valores[1], "varZona2.TXT");
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
     }
@@ -497,11 +522,11 @@ void evaluarInstruccion(int valores[]) {
       break;
     }
   }
+}
 
-  void enviarInstruccionAlEsclavo(const int instruccion) {
+void enviarInstruccionAlEsclavo(const int instruccion) {
     String orden = "";
       orden = orden + '<' + instruccion + '>';
       serialSlave.print(orden);
-      Serial.println(orden); // ojo porque esto lo puede recibir el bluetooth
+      Serial.println(orden); // Cuando se conecte el modulo bluetooth, esto puede salir por el dispositivo.
   }
-}
