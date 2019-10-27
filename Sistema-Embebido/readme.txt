@@ -1,11 +1,10 @@
 PENDIENTE
-- Crear un array para guardar los ultimos dos censos y tomar la decision en base a esto (Humedad y luz)
-- Implementar la funcion determinarRiegoEnZonaN, que analiza el perEfectividad del ultimo censo y a su vez calcula las variaciones de Humedad Atmosferica y Luz
 - Mantenimiento
-- Integrar tareas de APP (Bluetooth).
-- Establecer planes de contigencia (Por ejemplo si se desconecta la sd, el perDeRiego es una constante)
-- Crear tuinas en el maestro que estan el slave (Por ejemplo DETENER RIEGO MANUAL)
-- Simular la humedad del suelo en el esclavo.
+- Simular la humedad del suelo en el esclavo o censar cada 3 min.
+- Integrar el lcd.
+- Avisarle al bluetooth el estado cuando se este regando una zona.
+- Agregar variacion de humedad
+- Revisar variacion de luz y humedad
 DUDAS
 
 PROBLEMAS

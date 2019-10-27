@@ -35,16 +35,19 @@ unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 
 #define PRIORIDAD_TEMP 0.05
 #define PRIORIDAD_HUM_AMB 0.05
-#define PRIORIDAD_HUM_SUELO 0.4
-#define PRIORIDAD_LUZ 0.4
+#define PRIORIDAD_HUM_SUELO 0.3
+#define PRIORIDAD_LUZ 0.6
 #define MAX_TEMP 50
-#define MAX_HUMEDAD_SUELO 1023 //1 Completamente humedo - 1023 Completamente seco
-#define MAX_LUZ 1023 //1  Completamente oscuro - 1023 Completamente iluminado
+#define MAX_HUMEDAD_SUELO 1023
+#define MAX_LUZ 1023 
 #define MAX_HUMEDAD 100
 
-char riegoEnCursoZona1 = 'F';
-char riegoEnCursoZona2 = 'F';
-int valoresCensoAnterior[] = {-1, -1, -1, -1}; //necesito que sea global, se guarda luego de censar y determinar si censo
+//La luz se comporta asi: 1 totalmente iluminado, 1023 totalmente oscuro.
+//La humedad del suelo se comporta asi: 1 totalmente humedo, 1023 totalmente seco.
+
+bool riegoEnCursoZona1 = false;
+bool riegoEnCursoZona2 = false;
+int valoresCensoAnterior[] = {-1, -1, -1, -1}; //Necesito que sea global, se guarda luego de censar y determinar si censo
 
 void setup() {
   serialSlave.begin(9600);
@@ -57,7 +60,6 @@ void setup() {
     Serial.println("SD_002"); //Tarjeta SD incializada correctamente.
     inicializarArchivosDeCensos();
   }
-  
 }
 
 void loop() {
@@ -68,21 +70,21 @@ void loop() {
     Serial.println("M_C"); //Maestro envia orden de censar al esclavo
     enviarInstruccionAlEsclavo(INST_CENSO);
     previousMillis = millis();
-    MS_INTERVAL_TO_CENSO = (unsigned long)10000;
+    MS_INTERVAL_TO_CENSO = (unsigned long)30000;
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
-  leerInstruccion(valoresRecibidos);
+  leerInstruccion(valoresRecibidos); //Proviene del esclavo
   evaluarInstruccion(valoresRecibidos);
   
-  /*
+  
   for (int i = 0; i < 9; i++) {
     valoresRecibidos[i] = -1;  
   }
   
   leerBluetooth(valoresRecibidos);
   evaluarInstruccion(valoresRecibidos);
-  */
+  
 }
 
 void leerInstruccion(int* vec) {
@@ -262,6 +264,7 @@ int determinarRiegoEnZona(int zona, float perEfectividad, int luzActual, int hum
       Serial.println("La luz esta en ascenso, no es conveniente regar.");
     }
   }
+  Serial.println("Porcentaje de efectividad por debajo del minimo.");
   return 0;
 }
 
@@ -345,7 +348,7 @@ void analizarResultadoRiego(int zona, int humedadSuelo, char* archivo) {
         var = 100.00;   
       ret = "";
       ret = ret + "N_V_PH_Z" + zona;                
-      Serial.print(ret); //Nueva variable de riego a almacenar ZONA 1
+      Serial.println(ret); //Nueva variable de riego a almacenar ZONA 1
       Serial.println(var);
       escribirVariableRiego(var, archivo);
   } else {
@@ -375,9 +378,10 @@ void evaluarInstruccion(int valores[]) {
         float vol1 = calcularVolumenRiego(valores[3], varZona1);
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ">";
-        Serial.println(ret);
         serialSlave.print(ret);
-        riegoEnCursoZona1 = 'T';
+        riegoEnCursoZona1 = true;
+        Serial.println(ret);
+        //Probar si el bluetooth recibe correctamente la orden de empezo a regar
       }
       if(determinarRiegoEnZona(2, perEfectividadZ2, valores[8], valores[6])) {
         Serial.println("R_Z_2"); //Es eficiente regar en la zona 2
@@ -385,9 +389,10 @@ void evaluarInstruccion(int valores[]) {
         float vol2 = calcularVolumenRiego(valores[7], varZona2);
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ">";
-        Serial.println(ret);
         serialSlave.print(ret);
-        riegoEnCursoZona2 = 'T';
+        riegoEnCursoZona2 = true;
+        Serial.println(ret);
+        //Probar si el bluetooth recibe correctamente la orden de empezo a regar
       }
       // Guardo los valores para el proximo censo
       valoresCensoAnterior[0] = valores[4]; // LUZ 1
@@ -402,122 +407,71 @@ void evaluarInstruccion(int valores[]) {
     }
     case INST_RIEGO_Z1: {
       // Ocurre cuando el esclavo me avisa que termino de regar la zona 1
-      riegoEnCursoZona1 = 'F';
+      riegoEnCursoZona1 = false;
       break;
     }
     case INST_RIEGO_Z2: {
       // Ocurre cuando el esclavo me avisa que termino de regar la zona 2
-      riegoEnCursoZona2 = 'F';
+      riegoEnCursoZona2 = false;
       break;
     }
     case INST_RES_RIEGO_Z1: {
       //Aca se analiza el resultado del riego de la zona 1.
-      /*float var1 = 0.0;
-      float humedadSueloZona1 = valores[1];
-      Serial.println("I_R_1"); //Se va a analizar el resultado del riego en ZONA 1
-      Serial.println(humedadSueloZona1);
-      float perHumedadSueloZona1 = (100 - (humedadSueloZona1 * 100) / 1023);
-      if(perHumedadSueloZona1 < 40 || perHumedadSueloZona1 > 60) {
-          Serial.println("PH_Z1"); //Porcentaje de humedad resultado del ultimo riego ZONA 1
-          Serial.println(perHumedadSueloZona1);
-          var1 = obtenerVariableRiego("VAR1.TXT");
-          Serial.println("V_PH_1"); //Variable de riego con la que se rego ZONA 1
-          Serial.println(var1);
-          float ajuste = (50 - perHumedadSueloZona1)/2;
-          var1 += ajuste;
-          if(var1 < 0)
-            var1 = 1.00;
-          if(var1 > 100)
-            var1 = 100.00;                   
-          Serial.print("N_V_PH_1 "); //Nueva variable de riego a almacenar ZONA 1
-          Serial.println(var1);
-          escribirVariableRiego(var1, "VAR1.TXT");
-      } else {
-        Serial.println("R_Z1_C"); //Porcentaje de humedad en ZONA 1 correcto
-      }
-      */
       analizarResultadoRiego(1, valores[1], "VAR1.TXT");
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
     }
     case INST_RES_RIEGO_Z2: {
       //Aca se analiza el resultado del riego de la zona 2.
-      /*int var2 = 0;
-      int humedadSueloZona2 = valores[1];
-      String ret = "";
-      ret = ret + "I_R_2" + " " + humedadSueloZona2; 
-      Serial.println("I_R_2"); //Se va a analizar el resultado del riego en ZONA 2
-      Serial.println(humedadSueloZona2);
-      float perHumedadSueloZona2 = (100 - (humedadSueloZona2 * 100) / 1023);
-      if(perHumedadSueloZona2 < 40 || perHumedadSueloZona2 > 60) {
-        Serial.println("PH_Z2"); //Porcentaje de humedad resultado del ultimo riego ZONA 2
-          Serial.println(perHumedadSueloZona2);
-          var2 = obtenerVariableRiego("VAR2.TXT");
-          Serial.println("V_PH_2"); //Variable de riego con la que se rego ZONA 1
-          Serial.println(var2);
-          float ajuste = (50 - perHumedadSueloZona2)/2;
-          var2 += ajuste;
-          if(var2 < 0)
-            var2 = 1.00;
-          if(var2 > 100)
-            var2 = 100.00;                   
-          Serial.print("N_V_PH_2 "); //Nueva variable de riego a almacenar ZONA 1
-          Serial.println(var2);
-          escribirVariableRiego(var2, "VAR1.TXT");
-      } else {
-        Serial.println("R_Z2_C"); //Porcentaje de humedad en ZONA 2 correcto
-      }*/
-      analizarResultadoRiego(2, valores[1], "varZona2.TXT");
+      analizarResultadoRiego(2, valores[1], "VAR2.TXT");
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
     }
+
     case INST_DETENER_RIEGO_Z1: {
       // El bluetooth envia detener el riego en zona 1
-      // verificar que estè regando
-      // enviar orden al esclavo
-      enviarInstruccionAlEsclavo(INST_DETENER_RIEGO_Z1);
+      if(riegoEnCursoZona1)
+        enviarInstruccionAlEsclavo(INST_DETENER_RIEGO_Z1);
+      else
+        Serial.println("E_D_R1");
       break;
     }
+
     case INST_DETENER_RIEGO_Z2: {
-      // El bluetooth envia detener el riego en zona 1
-      // verificar que estè regando
-      // enviar orden al esclavo
-      enviarInstruccionAlEsclavo(INST_DETENER_RIEGO_Z2);
+      // El bluetooth envia detener el riego en zona 2
+      if(riegoEnCursoZona2)
+        enviarInstruccionAlEsclavo(INST_DETENER_RIEGO_Z2);
+      else
+        Serial.println("E_D_R2");
       break;
     }
     case INST_ENCENDER_LUZ_1_MANUAL: {
       // El bluetooth envia encender luz 1 manualmente
-      // enviar orden al esclavo
       enviarInstruccionAlEsclavo(INST_ENCENDER_LUZ_1_MANUAL);
       break;
     }
     case INST_ENCENDER_LUZ_2_MANUAL: {
       // El bluetooth envia encender luz 2 manualmente
-      // enviar orden al esclavo
       enviarInstruccionAlEsclavo(INST_ENCENDER_LUZ_2_MANUAL);
       break;
     }
     case INST_APAGAR_LUZ_1_MANUAL: {
       // El bluetooth envia apagar luz 1 manualmente
-      // enviar orden al esclavo
       enviarInstruccionAlEsclavo(INST_APAGAR_LUZ_1_MANUAL);
       break;
     }
     case INST_APAGAR_LUZ_2_MANUAL: {
       // El bluetooth envia apagar luz 2 manualmente
-      // enviar orden al esclavo
       enviarInstruccionAlEsclavo(INST_APAGAR_LUZ_2_MANUAL);
       break;
     }
     case INST_AUTO_LUZ_1: {
       // El bluetooth envia orden de dejar en automatica la luz 1
-      // enviar orden al esclavo
       enviarInstruccionAlEsclavo(INST_AUTO_LUZ_1);
       break;
     }
     case INST_AUTO_LUZ_2: {
       // El bluetooth envia orden de dejar en automatica la luz 2
-      // enviar orden al esclavo
       enviarInstruccionAlEsclavo(INST_AUTO_LUZ_2);
       break;
     }

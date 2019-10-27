@@ -49,7 +49,7 @@ unsigned long tiempoDespuesRiegoZona1 = 0;
 unsigned long tiempoComienzoRiegoZona2 = 0;
 unsigned long tiempoDespuesRiegoZona2 = 0;
 
-const unsigned long TIEMPO_RIEGO = 3000;
+const unsigned long TIEMPO_RIEGO = 10000;
 int prenderLuz1 = 0; // 0 es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 int prenderLuz2 = 0; // 0 es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 
@@ -112,12 +112,14 @@ void loop() {
         Serial.println("STOP ZONA 1.");
         tiempoComienzoRiegoZona1 = 0;
         analogWrite(PIN_BOMBA1, 0);
+        tiempoDespuesRiegoZona1 = 0;
         break;
       }
       case INST_DETENER_RIEGO_Z2: {
         Serial.println("STOP ZONA 2.");
         tiempoComienzoRiegoZona2 = 0;
         analogWrite(PIN_BOMBA2, 0);
+        tiempoDespuesRiegoZona2 = 0;
         break;
       }
       case INST_ENCENDER_LUZ_1_MANUAL: {
@@ -285,7 +287,6 @@ void leerMaestro(int* inst, float* intesidad) {
 
   if (serialMaster.available() > 0) {
     serialMaster.readBytesUntil('>', entrada, 59);
-    Serial.println(entrada);
     int i = 0;
     while(entrada[i] != '\0') {
       if (entrada[i] == '<') {
