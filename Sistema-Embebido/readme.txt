@@ -7,6 +7,7 @@ PENDIENTE
 - Integrar tareas de APP (Bluetooth).
 - Establecer planes de contigencia (Por ejemplo si se desconecta la sd, el perDeRiego es una constante)
 - Crear tuinas en el maestro que estan el slave (Por ejemplo DETENER RIEGO MANUAL)
+- Simular la humedad del suelo en el esclavo.
 DUDAS
 
 PROBLEMAS
