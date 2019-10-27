@@ -44,6 +44,7 @@ unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 
 char riegoEnCursoZona1 = 'F';
 char riegoEnCursoZona2 = 'F';
+int valoresCensoAnterior[] = {-1, -1, -1, -1}; //necesito que sea global, se guarda luego de censar y determinar si censo
 
 void setup() {
   serialSlave.begin(9600);
@@ -71,7 +72,6 @@ void loop() {
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
-  int valoresCensoAnterior[] = {-1, -1}; 
   leerInstruccion(valoresRecibidos);
   evaluarInstruccion(valoresRecibidos);
   
@@ -340,6 +340,7 @@ void evaluarInstruccion(int valores[]) {
       // de la zona 1 y de la zona 2
       float perEfectividadZ1 = calcularEfectividad(valores[1], valores[2], valores[3], valores[4]);
       float perEfectividadZ2 = calcularEfectividad(valores[5], valores[6], valores[7], valores[8]); 
+      
       Serial.print("%EF1 ");
       Serial.println(perEfectividadZ1);
       Serial.print("%EF2 ");
@@ -366,6 +367,11 @@ void evaluarInstruccion(int valores[]) {
         serialSlave.print(ret);
         riegoEnCursoZona2 = 'T';
       }
+      // guardo los valores para el proximo censo
+      valoresCensoAnterior[0] = valores[4]; // luz 1
+      valoresCensoAnterior[1] = valores[8]; // luz 2
+      valoresCensoAnterior[2] = valores[2]; // ambiente 1
+      valoresCensoAnterior[3] = valores[6]; // ambiente 2
       break;
     }
     case INST_MANTENIMIENTO: {
