@@ -8,7 +8,8 @@
 #define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
 #define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
 #define INST_RIEGO_Z2 3 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
-#define INST_MANTENIMIENTO 4 // INSTRUCCION PARA RUTINA DE MANTENIMIENTO (INICIO/FIN)
+#define INST_MANTENIMIENTO 4 // INSTRUCCION PARA INICIO RUTINA DE MANTENIMIENTO
+#define INST_RES_MANTENIMIENTO 16 // INSTRUCCION PARA RESPUESTA DE RUTINA DE MANTENIMIENTO
 #define INST_DETENER_RIEGO_Z1 5 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
 #define INST_DETENER_RIEGO_Z2 6 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
 #define INST_ENCENDER_LUZ_1_MANUAL 7 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
@@ -37,6 +38,7 @@
 
 // INTERVALO PARA ACCION EN MS
 const unsigned long TIEMPO_RES_RIEGO = 3000;
+const unsigned long TIEMPO_RES_MANTENIMIENTO = 1000;
 
 SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
 
@@ -48,10 +50,21 @@ unsigned long tiempoComienzoRiegoZona1 = 0;
 unsigned long tiempoDespuesRiegoZona1 = 0;
 unsigned long tiempoComienzoRiegoZona2 = 0;
 unsigned long tiempoDespuesRiegoZona2 = 0;
+unsigned long tiempoMantenimiento = 0;
 
 const unsigned long TIEMPO_RIEGO = 10000;
 int prenderLuz1 = 0; // 0 es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 int prenderLuz2 = 0; // 0 es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
+int valoresMantenimiento[5] = {1, 1, 1, 1, 1};
+/*
+0 significa que tiene errores
+1 significa que funciona correctamente
+[0] = temperatura de zona 1 y zona 2
+[1] = humedadAmbiente de zona 1 y zona 2
+[2] = humedadSuelo de zona 1 y zona 2
+[3] = SensorLuz de zona 1
+[4] = SensorLuz de zona 2
+*/
 
 void setup() {
   serialMaster.begin(9600); //Velocidad comunicacion maestro
@@ -89,8 +102,7 @@ void loop() {
       }
       case INST_MANTENIMIENTO: {
         Serial.println("RUTINA DE MANTENIMIENTO.");
-        mantenimiento();
-        //Faltaria cargar el vector con los valores y enviarlo al maestro. Determinar si usamos la funcion enviarResultadoCensoAMaestro o una nueva.
+        iniciarMantenimiento();
         break;
       }
       case INST_RIEGO_Z1: {
@@ -216,6 +228,10 @@ void loop() {
     digitalWrite(PIN_LED2, LOW);
   }
 
+  tiempoActual = millis();
+  if (tiempoMantenimiento > 0 && (unsigned long)(tiempoActual - tiempoMantenimiento) >= TIEMPO_RES_MANTENIMIENTO) {
+    finalizarMantenimiento();
+  }
 }
 
 void sensarZona1(int* vec) {
@@ -238,36 +254,69 @@ void sensarZona2(int* vec) {
   Serial.println(ret);
 }
 
-void mantenimiento() {
+void iniciarMantenimiento(valoresMantenimiento) {
+  tiempoMantenimiento = millis();
+
   int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
   sensarZona1(valorSensores);
   sensarZona2(valorSensores);
+  for (int i = 0; i < sizeof(valoresMantenimiento); i++) {
+    valoresMantenimiento[i] = 1;
+  }
+  
 
   if (abs(valorSensores[1] - valorSensores[5]) > 10) {
-    Serial.println("Sensor de temperatura con fallas.");
+    valoresMantenimiento[0] = 0;
+    Serial.println("E_S_T");//Sensor de temperatura con fallas
   }
 
   if (abs(valorSensores[2] - valorSensores[6]) > 10) {
-    Serial.println("Sensor de humedad atmosferica con fallas.");
+    valoresMantenimiento[1] = 0;
+    Serial.println("E_S_H");//Sensor de humedad atmosferica con fallas
   }
 
   //DEBERIA SER DE NOCHE PORQUE SI NO NUNCA LO VA A DETECTAR
   int valorLuzAnteriorZona1 = valorSensores[4];
   digitalWrite(PIN_LED1, HIGH);
-  delay(10);
-  int valorLuzActualZona1 = analogRead(PIN_SENSOR_LUZ1);
-  if(valorLuzAnteriorZona1 >= valorLuzActualZona1) {
-    Serial.println("Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto.");
+  int valorLuzAnteriorZona2 = valorSensores[8];
+  digitalWrite(PIN_LED2, HIGH);
+}
+
+/**
+ * Censa la luz para ver como varia y envia los resultados al esclavo
+ */
+void finalizarMantenimiento() {
+  int valorLuzActualZona = analogRead(PIN_SENSOR_LUZ1);
+  if(valorLuzAnteriorZona1 >= valorLuzActualZona) {
+    valoresMantenimiento[3] = 0;
+    Serial.println("E_L_1");//Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto
   }
   digitalWrite(PIN_LED1, LOW);
+
+  valorLuzActualZona = analogRead(PIN_SENSOR_LUZ2);
+
+  if(valorLuzAnteriorZona2 >= valorLuzActualZona) {
+    valoresMantenimiento[4] = 0;
+    Serial.println("E_L_2");//Se encendio la luz de la zona 2 y el sensor LDR2 no lo detecto
+  }
+  digitalWrite(PIN_LED2, LOW);
+  /*
+   * Se envia <instruccion, ErrorTemp, ErrorHumAmb, ErrorHumSuelo, ErrorLDR1, ErrrorLDR2>
+   */
+  String ret = "";
+  ret = ret + "<" + INST_RES_MANTENIMIENTO + "," + valoresMantenimiento[0] + "," + valoresMantenimiento[1] + 
+  "," + valoresMantenimiento[2] + "," + valoresMantenimiento[3] + "," + valoresMantenimiento[4] + ">";
+  serialMaster.print(ret);
+  Serial.println(ret);
+  tiempoMantenimiento = 0;
 }
 
 void enviarResultadoCensoAMaestro(int* vec) {
   /*
-  * Formato de envio:
-  * <instruccion, temperatura1, humedadAmbiente1, humedadSuelo1, sensorLuz1, temperatura2, humedadAmbiente2, humedadSuelo2, sensorLuz2>
-  * La instruccion es la que inicio la rutina
-  */
+   * Formato de envio:
+   * <instruccion, temperatura1, humedadAmbiente1, humedadSuelo1, sensorLuz1, temperatura2, humedadAmbiente2, humedadSuelo2, sensorLuz2>
+   * La instruccion es la que inicio la rutina
+   */
   String ret = "";
   ret = ret + "<" + INST_CENSO + "," + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + ">";
   serialMaster.print(ret);
