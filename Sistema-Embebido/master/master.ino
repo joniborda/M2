@@ -13,7 +13,8 @@
 #define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
 #define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
 #define INST_RIEGO_Z2 3 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
-#define INST_MANTENIMIENTO 4 // INSTRUCCION PARA RUTINA DE MANTENIMIENTO (INICIO/FIN)
+#define INST_MANTENIMIENTO 4 // INSTRUCCION PARA INICIO RUTINA DE MANTENIMIENTO
+#define INST_RES_MANTENIMIENTO 16 // INSTRUCCION PARA RESPUESTA DE RUTINA DE MANTENIMIENTO
 #define INST_DETENER_RIEGO_Z1 5 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
 #define INST_DETENER_RIEGO_Z2 6 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
 #define INST_ENCENDER_LUZ_1_MANUAL 7 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
@@ -55,9 +56,9 @@ void setup() {
   Serial.println("M_OK"); //Maestro iniciado correctamente
 
   if (!SD.begin(PIN_CS_SD)) {
-    Serial.println("E_SD_001"); //Error al inicializar la tarjeta SD
+    Serial.println("E_SD_1"); //Error al inicializar la tarjeta SD
   }else{
-    Serial.println("SD_002"); //Tarjeta SD incializada correctamente.
+    Serial.println("SD_2"); //Tarjeta SD incializada correctamente.
     inicializarArchivosDeCensos();
   }
 }
@@ -74,9 +75,8 @@ void loop() {
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
-  leerInstruccion(valoresRecibidos); //Proviene del esclavo
+  leerInstruccionEsclavo(valoresRecibidos); //Proviene del esclavo
   evaluarInstruccion(valoresRecibidos);
-  
   
   for (int i = 0; i < 9; i++) {
     valoresRecibidos[i] = -1;  
@@ -87,10 +87,7 @@ void loop() {
   
 }
 
-void leerInstruccion(int* vec) {
-  byte charIndex = 0;
-  char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
-  int fieldIndex = 0;
+void leerInstruccionEsclavo(int* vec) {
   char entrada[60];
   
   for (int i = 0; i < 60; i++) {
@@ -100,63 +97,49 @@ void leerInstruccion(int* vec) {
   if (serialSlave.available() > 0) {
     serialSlave.readBytesUntil('>', entrada, 59);
     Serial.println("L_E"); //Leyendo del esclavo
-    int i = 0;
-    while(entrada[i] != '\0') {
-      if (entrada[i] == '<') {
-        i++;
-        continue;
-      }
-      if (entrada[i] != ',') {
-        input[charIndex] = entrada[i];
-        charIndex++;  
-      } else {
-        input[charIndex] = '\0';
-        charIndex = 0;
-        vec[fieldIndex] = atoi(input);
-        fieldIndex++;
-      }
-      i++;
-    }
-    input[charIndex] = '\0';
-    vec[fieldIndex] = atoi(input);
-    entrada[0] = '@'; //Indica que el dato leido proviene del esclavo
-    Serial.println(entrada);
+    leerCadenaInstruccion(vec, entrada);
   }
 }
 
 void leerBluetooth(int* vec) {
-  byte charIndex = 0;
-  char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
-  int fieldIndex = 0;
   char entrada[60];
+
   for (int i = 0; i < 60; i++) {
     entrada[i] = '\0';
   }
   
   if (Serial.available() > 0) {
-    Serial.println("L_B_001"); //Leyendo datos del modulo bluetooth
     Serial.readBytesUntil('>', entrada, 59);
-    Serial.println(entrada);
-    int i = 0;
-    while(entrada[i] != '\0') {
-      if (entrada[i] == '<') {
-        i++;
-        continue;
-      }
-      if (entrada[i] != ',') {
-        input[charIndex] = entrada[i];
-        charIndex++;  
-      } else {
-        input[charIndex] = '\0';
-        charIndex = 0;
-        vec[fieldIndex] = atoi(input);
-        fieldIndex++;
-      }
-      i++;
-    }
-    input[charIndex] = '\0';
-    vec[fieldIndex] = atoi(input);
+    Serial.println("L_B_1"); //Leyendo datos del modulo bluetooth
+    leerCadenaInstruccion(vec, entrada);
   }
+}
+
+void leerCadenaInstruccion(int* vec, char* cadenaIntruccion) {
+  byte charIndex = 0;
+  char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
+  int fieldIndex = 0;
+  int i = 0;
+  while(cadenaIntruccion[i] != '\0') {
+    if (cadenaIntruccion[i] == '<') {
+      i++;
+      continue;
+    }
+    if (cadenaIntruccion[i] != ',') {
+      input[charIndex] = cadenaIntruccion[i];
+      charIndex++;  
+    } else {
+      input[charIndex] = '\0';
+      charIndex = 0;
+      vec[fieldIndex] = atoi(input);
+      fieldIndex++;
+    }
+    i++;
+  }
+  input[charIndex] = '\0';
+  vec[fieldIndex] = atoi(input);
+  cadenaIntruccion[0] = '@'; //Indica que el dato leido proviene del esclavo o del bluetooth
+  Serial.println(cadenaIntruccion);
 }
 
 float obtenerVariableRiego(const char* archivo) {
@@ -255,16 +238,16 @@ int determinarRiegoEnZona(int zona, float perEfectividad, int luzActual, int hum
       return 0;
     float varLuz = ((float)(luzActual - luzAnterior) / (float)luzAnterior);
     if(varLuz < 0) {
-      Serial.println("La luz se encuentra en descenso.");
+      Serial.println("L_DESC");//La luz se encuentra en descenso
       return 1;
     } else if(varLuz < 60.00){
-      Serial.println("La luz se mantiene estable.");
+      Serial.println("L_EST");//La luz se mantiene estable
       return 1;
     } else {
-      Serial.println("La luz esta en ascenso, no es conveniente regar.");
+      Serial.println("L_ASC");//La luz esta en ascenso, no es conveniente regar
     }
   }
-  Serial.println("Porcentaje de efectividad por debajo del minimo.");
+  Serial.println("PE_BAJO");//Porcentaje de efectividad por debajo del minimo
   return 0;
 }
 
@@ -283,49 +266,49 @@ void inicializarArchivosDeCensos() {
   }
   fp = SD.open("ZONA1.TXT", FILE_WRITE);
   if (!fp) {  
-    Serial.println("E_A_001"); //Error al crear archivo ZONA1.TXT 
+    Serial.println("E_A_1"); //Error al crear archivo ZONA1.TXT 
   }
   fp.close();
   
   fp = SD.open("ZONA2.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("E_A_002"); //Error al crear archivo ZONA2.TXT
+    Serial.println("E_A_2"); //Error al crear archivo ZONA2.TXT
   }
   fp.close();
 
   if(!SD.exists("VAR1.txt")){
-    Serial.println("A_V_001"); //El archivo VAR1.TXT no existe en la tarjeta SD
+    Serial.println("A_V_1"); //El archivo VAR1.TXT no existe en la tarjeta SD
     fp = SD.open("VAR1.txt",FILE_WRITE);
-    Serial.println("A_V_002"); //El archivo VAR1.TXT no existia y se acaba de crear
+    Serial.println("A_V_2"); //El archivo VAR1.TXT no existia y se acaba de crear
     if(fp){
       fp.println("33.33");
     } else {
-      Serial.println("E_A_001"); //Error al escribir el archivo VAR1.txt con el valor por defecto
+      Serial.println("E_A_1"); //Error al escribir el archivo VAR1.txt con el valor por defecto
     }
     fp.close();
   }
 
   if(!SD.exists("VAR2.txt")){
-    Serial.println("A_V_003"); //El archivo VAR2.TXT no existe en la tarjeta SD
+    Serial.println("A_V_3"); //El archivo VAR2.TXT no existe en la tarjeta SD
     fp = SD.open("VAR2.txt",FILE_WRITE);
-    Serial.println("A_V_004"); //El archivo VAR2.TXT no existia y se acaba de crear
+    Serial.println("A_V_4"); //El archivo VAR2.TXT no existia y se acaba de crear
     if(fp){
       fp.println("33.33");
     } else {
-      Serial.println("E_A_002"); //Error al escribir el archivo VAR2.txt con el valor por defecto      
+      Serial.println("E_A_2"); //Error al escribir el archivo VAR2.txt con el valor por defecto      
     }
     fp.close();
   }
 }
 
-void analizarResultadoRiego(int zona, int humedadSuelo, char* archivo) {
+void analizarResultadoRiego(int zona, int humedadSuelo, const char* archivo) {
   float var = 0.0;
   float humedadSueloZona = humedadSuelo;
   String ret = "";
   ret = ret + "I_R_" + zona;
   Serial.println(ret); //Se va a analizar el resultado del riego de la ZONA N
   ret = "";
-  ret = ret + "HSuelo resultado: " + humedadSueloZona;
+  ret = ret + "HSuelo res: " + humedadSueloZona;
   Serial.println(ret);
   float perHumedadSueloZona = (100 - (humedadSueloZona * 100) / 1023);
   if(perHumedadSueloZona < 40 || perHumedadSueloZona > 60) {
@@ -333,7 +316,7 @@ void analizarResultadoRiego(int zona, int humedadSuelo, char* archivo) {
       ret = ret + "PH_Z" + zona;
       Serial.println(ret); //Porcentaje de humedad resultado del ultimo riego ZONA N
       ret = "";
-      ret = ret + "%HSuelo resultado: " + perHumedadSueloZona;
+      ret = ret + "%HSuelo res: " + perHumedadSueloZona;
       Serial.println(ret);
       var = obtenerVariableRiego(archivo);
       ret = "";
@@ -479,8 +462,8 @@ void evaluarInstruccion(int valores[]) {
 }
 
 void enviarInstruccionAlEsclavo(const int instruccion) {
-    String orden = "";
-      orden = orden + '<' + instruccion + '>';
-      serialSlave.print(orden);
-      Serial.println(orden); // Cuando se conecte el modulo bluetooth, esto puede salir por el dispositivo.
-  }
+  String orden = "";
+  orden = orden + '<' + instruccion + '>';
+  serialSlave.print(orden);
+  Serial.println(orden); // Cuando se conecte el modulo bluetooth, esto puede salir por el dispositivo.
+}
