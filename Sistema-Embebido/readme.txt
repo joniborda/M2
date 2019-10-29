@@ -1,23 +1,14 @@
 PENDIENTE
-- Implementar la funcion determinarRiegoEnZonaN, que analiza el perEfectividad del ultimo censo y a su vez calcula las variaciones de Humedad Atmosferica y Luz
 - Mantenimiento
-. Leer variable de riego
-- Integrar tareas de APP (Bluetooth).
-- Establecer planes de contigencia (Por ejemplo si se desconecta la sd, el perDeRiego es una constante)
-RESUELTO
-- Borrar archivo de censos pasados en el setup.
-
+- Simular la humedad del suelo en el esclavo o censar cada 3 min.
+- Integrar el lcd.
+- Avisarle al bluetooth el estado cuando se este regando una zona.
+- Agregar variacion de humedad
+- Revisar variacion de luz y humedad
+- El censo se hace todo junto, ver si hay que separarlo en zonas
 DUDAS
-- Probar si sirve enviar por separado la instruccion de riego y el vol1
 
 PROBLEMAS
 
 PROBAR
-- Crear archivos con variables de riego
-- Prender luces cuando el % de sea menor a tanto. (Podria estar la accion desde la APP para que envien la orden de prender o apagar manualmente)
-- Guardar en archivo correspondiente a la zona el resultado del censo y su porcentaje de efectividad.
-- Calcular sequedad del suelo = 100 - (Hs/1023)
-- Obtener de la variable de volumen de riego y calcular en base a la Sequedad del suelo y enviarselo para regar
-- Esclavo: despues de cierto tiempo de terminado el riego envia el % de humedad por cada zona.
-- Tomar valor y ajustar dependiendo el resultado : SS 0 - 40 => Aumenta, 60 - 100 => Reduce.
-- Esclavo: recibir % de intesidad y regar por un tiempo establecido (FIJO)
+
