@@ -2,7 +2,6 @@
 #include <DHT_U.h>
 #include <DHT.h>
 
-#define TAM_MAX_WRITE 9
 #define VALOR_LIMITE_LUZ 500
 
 #define INST_CENSO                  1 // INSTRUCCION PARA RUTINA DE CENSO INICIO
@@ -24,20 +23,19 @@
 #define INST_RES_RIEGO_Z1           17 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
 #define INST_RES_RIEGO_Z2           18 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
 
-#define PIN_SENSOR_HUMEDAD_AMBIENTE1 4
-#define PIN_SENSOR_HUMEDAD_AMBIENTE2 12
-#define PIN_SENSOR_HUMEDAD_SUELO1 A2
-#define PIN_SENSOR_HUMEDAD_SUELO2 A3
 #define PIN_SENSOR_LUZ1 A0
 #define PIN_SENSOR_LUZ2 A1
+#define PIN_SENSOR_HUMEDAD_SUELO1 A2
+#define PIN_SENSOR_HUMEDAD_SUELO2 A3
+// PUERTOS DE CONEXION CON MAESTRO
+#define PUERTO_RX_MASTER 2
+#define PUERTO_TX_MASTER 3
+#define PIN_SENSOR_HUMEDAD_AMBIENTE1 4
+#define PIN_SENSOR_HUMEDAD_AMBIENTE2 12
 #define PIN_BOMBA1 9
 #define PIN_BOMBA2 6
 #define PIN_LED1 7
 #define PIN_LED2 8
-
-// PUERTOS DE CONEXION CON MAESTRO
-#define PUERTO_RX_MASTER 2
-#define PUERTO_TX_MASTER 3
 
 // INTERVALO PARA ACCION EN MS
 const unsigned long TIEMPO_RES_RIEGO = 3000;
@@ -49,17 +47,17 @@ DHT sensorDHT1 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE1, DHT11);
 DHT sensorDHT2 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
 
 unsigned long tiempoActual = millis();
-unsigned long tiempoComienzoRiegoZona1 = 0;
-unsigned long tiempoDespuesRiegoZona1 = 0;
-unsigned long tiempoComienzoRiegoZona2 = 0;
-unsigned long tiempoDespuesRiegoZona2 = 0;
-unsigned long tiempoMantenimiento = 0;
+unsigned long tiempoComienzoRiegoZona1 = 0; // Tiempo que falta para avisar que termino el riego
+unsigned long tiempoDespuesRiegoZona1 = 0; // Tiempo que falta para dar la respuesta de riego
+unsigned long tiempoComienzoRiegoZona2 = 0; // Tiempo que falta para avisar que termino el riego
+unsigned long tiempoDespuesRiegoZona2 = 0; // Tiempo que falta para dar la respuesta de riego
+unsigned long tiempoMantenimiento = 0; // Tiempo que falta para terminar el mantenimiento
 
 const unsigned long TIEMPO_RIEGO = 10000;
 int prenderLuz1 = 0; // 0 es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 int prenderLuz2 = 0; // 0 es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 int valoresMantenimiento[5] = {1, 1, 1, 1, 1};
-/*
+/* Valores de Mantenimiento
 0 significa que tiene errores
 1 significa que funciona correctamente
 [0] = temperatura de zona 1 y zona 2
@@ -98,8 +96,8 @@ void loop() {
       case INST_CENSO: {
         Serial.println("RUTINA DE CENSO.");
         int valorSensores[] = {INST_FIN_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
-        sensarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
-        sensarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
+        censarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
+        censarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
         enviarResultadoCensoAMaestro(valorSensores);
         break;
       }
@@ -179,7 +177,7 @@ void loop() {
     // Aviso que termino de regar la zona 1.
     analogWrite(PIN_BOMBA1, 0);
     String ret = "";
-    ret = ret + "<" + INST_RIEGO_Z1 + ">";
+    ret = ret + "<" + INST_FIN_RIEGO_Z1 + ">";
     serialMaster.print(ret);
     tiempoDespuesRiegoZona1 = millis();
     tiempoComienzoRiegoZona1 = 0;
@@ -199,7 +197,7 @@ void loop() {
     // Aviso que termino de regar la zona 2.
     analogWrite(PIN_BOMBA2, 0);
     String ret = "";
-    ret = ret + "<" + INST_RIEGO_Z2 + ">";
+    ret = ret + "<" + INST_FIN_RIEGO_Z2 + ">";
     serialMaster.print(ret);
     Serial.println(ret);
     tiempoDespuesRiegoZona2 = millis();
@@ -237,7 +235,7 @@ void loop() {
   }
 }
 
-void sensarZona1(int* vec) {
+void censarZona1(int* vec) {
   vec[1] = sensorDHT1.readTemperature();
   vec[2] = sensorDHT1.readHumidity();
   vec[3] = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
@@ -247,7 +245,7 @@ void sensarZona1(int* vec) {
   Serial.println(ret);
 }
 
-void sensarZona2(int* vec) {
+void censarZona2(int* vec) {
   vec[5] = sensorDHT2.readTemperature();
   vec[6] = sensorDHT2.readHumidity();
   vec[7] = analogRead(PIN_SENSOR_HUMEDAD_SUELO2);
@@ -261,12 +259,11 @@ void iniciarMantenimiento(valoresMantenimiento) {
   tiempoMantenimiento = millis();
 
   int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
-  sensarZona1(valorSensores);
-  sensarZona2(valorSensores);
+  censarZona1(valorSensores);
+  censarZona2(valorSensores);
   for (int i = 0; i < sizeof(valoresMantenimiento); i++) {
     valoresMantenimiento[i] = 1;
   }
-  
 
   if (abs(valorSensores[1] - valorSensores[5]) > 10) {
     valoresMantenimiento[0] = 0;
@@ -311,6 +308,7 @@ void finalizarMantenimiento() {
   "," + valoresMantenimiento[2] + "," + valoresMantenimiento[3] + "," + valoresMantenimiento[4] + ">";
   serialMaster.print(ret);
   Serial.println(ret);
+
   tiempoMantenimiento = 0;
 }
 
