@@ -1,88 +1,105 @@
 package com.example.smartgarden.logic;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.widget.Toast;
+
+import com.example.smartgarden.MainActivity;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.UUID;
 
-public class BTHandler {
+public class BTHandler{
 
     private BluetoothAdapter btAdapter;
     private BluetoothSocket btSocket = null;
 
-    private ConnectedThread MyConexionBT;
+    private ConnectedThread myConexionBT;
     // Identificador unico de servicio - SPP UUID
     private static final UUID BTMODULEUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    private boolean isBtConnected = false;
 
 
     public BTHandler(){
-
         //En el constructor solo obtengo el adapter
         btAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
-    public boolean Connect() {
-        String MAC_ADRESS = "00:21:13:00:A2:13";
+    public boolean connect() {
+        String MAC_ADRESS = "98:D3:31:F7:41:F5";
         BluetoothDevice device = btAdapter.getRemoteDevice(MAC_ADRESS);
 
-        try {
-            btSocket = device.createRfcommSocketToServiceRecord(BTMODULEUUID);
+        if(device != null)
+            try {
+                btSocket = device.createRfcommSocketToServiceRecord(BTMODULEUUID);
+            } catch (IOException e) {
+                btSocket = null;
+                return false;
+            }
+
+        if(btSocket != null) {
             try {
                 btSocket.connect();
-            } catch (IOException ignored) {
-                btSocket.close();
+            } catch (IOException e) {
+                return false;
             }
-        } catch (IOException e) {
-            return isBtConnected;
+
+            InputStream inStream = null;
+            OutputStream outStream = null;
+
+            try {
+                inStream = btSocket.getInputStream();
+                outStream = btSocket.getOutputStream();
+            } catch (IOException e) {
+                return false;
+            }
+
+            if(inStream != null && outStream != null) {
+
+                myConexionBT = new ConnectedThread(inStream, outStream);
+                myConexionBT.start();
+                //Le mando un 1 al arduino para que sepa que me conecto por bluetooth
+                //MyConexionBT.write("<16,1>");
+                return true;
+            }
         }
 
-        MyConexionBT = new ConnectedThread(btSocket);
-        MyConexionBT.start();
-
-        //btConeccted la uso para saber si estoy conectado al arduino
-        isBtConnected = true;
-        //Le mando un 1 al arduino para que sepa que me conecto por bluetooth
-        //MyConexionBT.write("<16,1>");
-        return isBtConnected;
-
+        return false;
     }
 
-    public void Desconnect() {
+    public void desconnect() throws IOException {
         //le mando 0 para que sepa que no desconecto y cierro el socket
         //MyConexionBT.write("<16,0>");
-
-        try {
-            btSocket.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        btSocket.close();
     }
 
-    public boolean checkStateBT() {
-        return isBtConnected;
+    public boolean isBluetoothEnabled() {
+        return btAdapter.isEnabled();
     }
 
+    public boolean sendMsg(Message msg) {
+        return myConexionBT.write(msg.toString());
+    }
 
     //Crea la clase que permite crear el evento de conexion
     public class ConnectedThread extends Thread
     {
         private InputStream mmInStream;
         private OutputStream mmOutStream;
+        private int cantMsg = 0;
 
-        public ConnectedThread(BluetoothSocket socket)
+        ConnectedThread(InputStream inStream, OutputStream outStream)
         {
-            try
-            {
-                mmInStream = socket.getInputStream();
-                mmOutStream = socket.getOutputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            mmInStream = inStream;
+            mmOutStream = outStream;
         }
 
         public void run()
@@ -95,7 +112,6 @@ public class BTHandler {
                 try {
                     bytes = mmInStream.read(buffer);
                     String readMessage = new String(buffer, 0, bytes);
-
                 } catch (IOException e) {
                     break;
                 }
@@ -103,14 +119,15 @@ public class BTHandler {
         }
 
         //Envio de trama
-        public void write(String input)
+        boolean write(String input)
         {
             try {
                 mmOutStream.write(input.getBytes());
+                return true;
             }
             catch (IOException e)
             {
-                e.printStackTrace();
+                return false;
             }
         }
     }

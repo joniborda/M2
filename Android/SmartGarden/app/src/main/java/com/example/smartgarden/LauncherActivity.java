@@ -12,12 +12,11 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.widget.Toast;
 
 public class LauncherActivity extends AppCompatActivity {
 
-    private int DURACION_SPLASH = 4000;
+    private final int DURACION_SPLASH = 4000;
     private Context mContext = this;
     private static final int REQUEST= 112;
 

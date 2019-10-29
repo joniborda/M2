@@ -1,39 +1,49 @@
 package com.example.smartgarden;
 
+import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.os.Vibrator;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.smartgarden.logic.BTHandler;
+import com.example.smartgarden.logic.Command;
+import com.example.smartgarden.logic.Message;
 import com.google.android.material.tabs.TabLayout;
+
+import androidx.annotation.Nullable;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.smartgarden.ui.main.SectionsPagerAdapter;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+@SuppressLint("Registered")
+public class MainActivity extends AppCompatActivity {
 
+    private int conectionAttempts = 3;
     private TabLayout tabs;
 
     // Sensores
     private SensorManager sensorManager;
-    private Sensor sensorShake;
-    private Sensor sensorProx;
 
     ///Variables para Shake
     private float acelVal; // valor actual de la aceleracion y gravedad
     private float acelLast; // ultimo valor de la aceleracion y gravedad
     private float shake; // diferencia de valor entre aceleracion y gravedad
-    private Vibrator v;
 
-    public static BTHandler btHandler = null;
-    public static boolean isShacking;
+    private static BTHandler btHandler = null;
+    public int isArduinoConnected = 0; // 0 no, 1 si, 2 estableciendo conexion
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,40 +59,70 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         tabs.setupWithViewPager(viewPager);
         populateviewPager();
 
-        ///Vibrador para el sensor shake
-        v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-
         ///Asigno sensores
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sensorShake = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorProx = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        Sensor sensorShake = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Sensor sensorProx = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        Sensor gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
         //Asigno listeners a sensores
-        sensorManager.registerListener(this, sensorShake, SensorManager.SENSOR_DELAY_GAME);
-        sensorManager.registerListener(this, sensorProx, SensorManager.SENSOR_DELAY_GAME);
+        sensorManager.registerListener(sensorChangedEventListener, sensorShake, SensorManager.SENSOR_DELAY_GAME);
+        sensorManager.registerListener(sensorChangedEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
+        sensorManager.registerListener(sensorChangedEventListener, sensorProx, SensorManager.SENSOR_DELAY_GAME);
 
         acelVal = SensorManager.GRAVITY_EARTH;
         acelLast = SensorManager.GRAVITY_EARTH;
         shake = 0.00f;
 
+        btHandler = new BTHandler();
+
+        Button btnConnect = findViewById(R.id.btn_connect);
+        btnConnect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showDialogConnect();
+            }
+        });
     }
 
-    private void populateviewPager() {
+    public void populateviewPager() {
 
         Objects.requireNonNull(tabs.getTabAt(0)).setIcon(R.drawable.home_icon);
         Objects.requireNonNull(tabs.getTabAt(1)).setIcon(R.drawable.settings_icon);
         Objects.requireNonNull(tabs.getTabAt(2)).setIcon(R.drawable.maintenance_icon);
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        switch(event.sensor.getType()){
-            case Sensor.TYPE_PROXIMITY:
-                eventAProx(event);
-                break;
-            case Sensor.TYPE_ACCELEROMETER:
-                eventShake(event)
-                ;break;
+    SensorEventListener sensorChangedEventListener
+            = new SensorEventListener() {
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            // TODO Auto-generated method stub
+        }
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            switch (event.sensor.getType()) {
+                case Sensor.TYPE_PROXIMITY:
+                    eventAProx(event);
+                    break;
+                case Sensor.TYPE_ACCELEROMETER:
+                    eventShake(event);
+                    break;
+                case Sensor.TYPE_GYROSCOPE:
+                    eventGyroscope(event);
+                    break;
+            }
+        }
+    };
+
+    public void showDialogConnect() {
+        //primero verifico si el bluetooh esta habilitado, si no lo estoy pide que lo habilites
+        if (!btHandler.isBluetoothEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, 1);
+        } else
+        {
+            tryConnect();
         }
     }
 
@@ -91,29 +131,108 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         float y = event.values[1];
         float z = event.values[2];
 
-        acelLast=acelVal;
-        acelVal= (float) Math.sqrt((double) (x*x + y*y + z*z));
-        float delta = acelVal-acelLast;
+        acelLast = acelVal;
+        acelVal = (float) Math.sqrt((double) (x * x + y * y + z * z));
+        float delta = acelVal - acelLast;
         shake = shake * 0.9f + delta;
 
-        if(shake>12) {
-            Toast.makeText(this, "Shake event", Toast.LENGTH_LONG).show();
+        if (shake > 12) {
+            if (isArduinoConnected() == 1) {
+                Toast.makeText(this, "Iniciando riego...", Toast.LENGTH_SHORT).show();
+                ArrayList<String> values = new ArrayList<String>();
+                String duration = "10000";
+                String intensity = "50"; // %
+                values.add(duration);
+                values.add(intensity);
+                if(!btHandler.sendMsg(new Message(Command.START, values))) {
+                    setArduinoConnected(0);
+                }
+            } else if(isArduinoConnected() == 0){
+                Toast.makeText(this, "Debe iniciar una conexión con SmartGarden", Toast.LENGTH_LONG).show();
+            }
         }
     }
 
     private void eventAProx(SensorEvent event) {
-        if(event.values[0] == event.sensor.getMaximumRange())
-            Toast.makeText(this, "Proximity sensor changed", Toast.LENGTH_LONG).show();
+        if (event.values[0] < event.sensor.getMaximumRange()) {
+            // Detected something nearby
+            if (isArduinoConnected() == 1) {
+                Toast.makeText(this, "Deteniendo riego...", Toast.LENGTH_SHORT).show();
+                if(!btHandler.sendMsg(new Message(Command.STOP))) {
+                    setArduinoConnected(0);
+                }
+            } else if(isArduinoConnected() == 0){
+                Toast.makeText(this, "Debe iniciar una conexión con SmartGarden", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    public void eventGyroscope(SensorEvent event) {
+        if(event.values[2] < -0.5f) { // clockwise
+            if (isArduinoConnected() == 1) {
+                Toast.makeText(this, "Iniciando monitoreo del SmartGarden...", Toast.LENGTH_SHORT).show();
+                if(!btHandler.sendMsg(new Message(Command.MAINTENANCE))) {
+                    setArduinoConnected(0);
+                }
+            } else if(isArduinoConnected() == 0){
+                Toast.makeText(this, "Debe iniciar una conexión con SmartGarden", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
 
+    public void tryConnect() {
+        setArduinoConnected(2);
+        Toast.makeText(this, "Intentando establecer conexión...", Toast.LENGTH_SHORT).show();
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                //llama al metodo conectar de la clase bluetooh, si se conecta setea el flag de modo de trabajo arduino
+                if (btHandler.connect()) {
+                    setArduinoConnected(1);
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Conexión con arduino exitosa", Toast.LENGTH_SHORT).show());
+                } else {
+                    setArduinoConnected(0);
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Conexión con arduino fallida", Toast.LENGTH_SHORT).show());
+                }
+            }
+        };
+        thread.start();
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        //metodo que cuando recibe que me conecte al bluetooh, trata de conectarse al arduino
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            tryConnect();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        sensorManager.unregisterListener(this);
+        sensorManager.unregisterListener(sensorChangedEventListener);
+        if (isArduinoConnected() == 1) {
+            try {
+                btHandler.desconnect();
+            } catch (IOException ignored) {
+            }
+            setArduinoConnected(0);
+        }
+    }
+
+    public void setArduinoConnected(int arduinoConnected) {
+        if(arduinoConnected == 0) conectionAttempts--;
+        if (arduinoConnected == 1) conectionAttempts = 3;
+        if(conectionAttempts == 0) {
+            Toast.makeText(this, "Problemas de conexión con SmartGarden. Se cerrará la aplicación", Toast.LENGTH_LONG).show();
+            finish();
+        }
+        isArduinoConnected = arduinoConnected;
+    }
+
+    public int isArduinoConnected() {
+        return isArduinoConnected;
     }
 }

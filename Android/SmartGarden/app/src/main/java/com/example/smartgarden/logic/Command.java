@@ -1,7 +1,6 @@
 package com.example.smartgarden.logic;
 
 public enum Command {
-    BT("16"),
     WATERING_RESULTS("9"),
     STATE("10"),
     STOP("11"),
