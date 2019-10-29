@@ -10,29 +10,24 @@
 
 #define PIN_CS_SD 4
 
-#define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
-#define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
-#define INST_RIEGO_Z2 3 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
-#define INST_MANTENIMIENTO 4 // INSTRUCCION PARA INICIO RUTINA DE MANTENIMIENTO
-#define INST_RES_MANTENIMIENTO 16 // INSTRUCCION PARA RESPUESTA DE RUTINA DE MANTENIMIENTO
-#define INST_DETENER_RIEGO_Z1 5 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
-#define INST_DETENER_RIEGO_Z2 6 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
-#define INST_ENCENDER_LUZ_1_MANUAL 7 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
-#define INST_ENCENDER_LUZ_2_MANUAL 8 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
-#define INST_APAGAR_LUZ_1_MANUAL 9 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
-#define INST_APAGAR_LUZ_2_MANUAL 10 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
-#define INST_AUTO_LUZ_1 11 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
-#define INST_AUTO_LUZ_2 15 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
-#define INST_RES_RIEGO_Z1 12 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
-#define INST_RES_RIEGO_Z2 13 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
-
-// INTERVALO DE RUTINA DE CENSO EN MS
-static unsigned long MS_INTERVAL_TO_CENSO = 10000; // 15 seg.
-
-SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
-
-unsigned long currentMillis = 0; // grab current time
-unsigned long previousMillis = 0;  // millis() returns an unsigned long.
+#define INST_CENSO                  1 // INSTRUCCION PARA RUTINA DE CENSO INICIO
+#define INST_FIN_CENSO              2 // INSTRUCCION PARA RUTINA DE CENSO FIN
+#define INST_RIEGO_Z1               3 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 INICIO
+#define INST_RIEGO_Z2               4 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 INICIO
+#define INST_FIN_RIEGO_Z1           5 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 FIN
+#define INST_FIN_RIEGO_Z2           6 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 FIN
+#define INST_MANTENIMIENTO          7 // INSTRUCCION PARA INICIO RUTINA DE MANTENIMIENTO
+#define INST_RES_MANTENIMIENTO      8 // INSTRUCCION PARA RESPUESTA DE RUTINA DE MANTENIMIENTO
+#define INST_DETENER_RIEGO_Z1       9 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
+#define INST_DETENER_RIEGO_Z2       10 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
+#define INST_ENCENDER_LUZ_1_MANUAL  11 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_ENCENDER_LUZ_2_MANUAL  12 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_APAGAR_LUZ_1_MANUAL    13 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_APAGAR_LUZ_2_MANUAL    14 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_AUTO_LUZ_1             15 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_AUTO_LUZ_2             16 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_RES_RIEGO_Z1           17 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
+#define INST_RES_RIEGO_Z2           18 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
 
 #define PRIORIDAD_TEMP 0.05
 #define PRIORIDAD_HUM_AMB 0.05
@@ -42,6 +37,14 @@ unsigned long previousMillis = 0;  // millis() returns an unsigned long.
 #define MAX_HUMEDAD_SUELO 1023
 #define MAX_LUZ 1023 
 #define MAX_HUMEDAD 100
+
+// INTERVALO DE RUTINA DE CENSO EN MS
+static unsigned long MS_INTERVAL_TO_CENSO = 10000; // 15 seg.
+
+SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
+
+unsigned long currentMillis = 0; // tiempo actual
+unsigned long msParaNuevoCenso = 0;  // tiempo que falta para enviar el censo
 
 //La luz se comporta asi: 1 totalmente iluminado, 1023 totalmente oscuro.
 //La humedad del suelo se comporta asi: 1 totalmente humedo, 1023 totalmente seco.
@@ -66,11 +69,11 @@ void setup() {
 void loop() {
     
   currentMillis = millis();
-  if ((unsigned long)(currentMillis - previousMillis) >= MS_INTERVAL_TO_CENSO) {
+  if ((unsigned long)(currentMillis - msParaNuevoCenso) >= MS_INTERVAL_TO_CENSO) {
     
     Serial.println("M_C"); //Maestro envia orden de censar al esclavo
     enviarInstruccionAlEsclavo(INST_CENSO);
-    previousMillis = millis();
+    msParaNuevoCenso = millis();
     MS_INTERVAL_TO_CENSO = (unsigned long)30000;
   }
   
@@ -342,8 +345,13 @@ void analizarResultadoRiego(int zona, int humedadSuelo, const char* archivo) {
 }
 
 void evaluarInstruccion(int valores[]) {
-  switch(valores[0]){
+  switch(valores[0]) {
     case INST_CENSO: {
+      // El bluetooth envia orden para iniciar censo
+      enviarInstruccionAlEsclavo(INST_CENSO);
+      break;
+    }
+    case INST_FIN_CENSO: {
       // Ocurre cuando el esclavo avisa que termino el censo y me envia los valores de ese censo
       // de la zona 1 y de la zona 2
       float perEfectividadZ1 = calcularEfectividad(valores[1], valores[2], valores[3], valores[4]);
@@ -386,16 +394,32 @@ void evaluarInstruccion(int valores[]) {
     }
     case INST_MANTENIMIENTO: {
       //ANALIZAR ERRORES E INFORMAR
+      mantenimientoEnCurso = true;
+      enviarInstruccionAlEsclavo(INST_MANTENIMIENTO);
       break;
     }
-    case INST_RIEGO_Z1: {
+    case INST_RES_MANTENIMIENTO: {
+      //ANALIZAR ERRORES E INFORMAR
+      mantenimientoEnCurso = true;
+      String ret = "";
+      ret = ret + "<" + INST_RES_MANTENIMIENTO + "," + valores[1] + "," + valores[2] + "," + valores[3] + "," + valores[4] + "," + valores[5] + ">";
+      Serial.println(ret);// envio al bluetooth el resultado de mantenimiento
+      break;
+    }
+    case INST_FIN_RIEGO_Z1: {
       // Ocurre cuando el esclavo me avisa que termino de regar la zona 1
       riegoEnCursoZona1 = false;
+      String ret = "";
+      ret = ret + "<" + INST_FIN_RIEGO_Z1 + ">";
+      Serial.println(ret); // aviso al bluetooth
       break;
     }
-    case INST_RIEGO_Z2: {
+    case INST_FIN_RIEGO_Z2: {
       // Ocurre cuando el esclavo me avisa que termino de regar la zona 2
       riegoEnCursoZona2 = false;
+      String ret = "";
+      ret = ret + "<" + INST_FIN_RIEGO_Z2 + ">";
+      Serial.println(ret); // aviso al bluetooth
       break;
     }
     case INST_RES_RIEGO_Z1: {

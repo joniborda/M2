@@ -5,21 +5,24 @@
 #define TAM_MAX_WRITE 9
 #define VALOR_LIMITE_LUZ 500
 
-#define INST_CENSO 1 // INSTRUCCION PARA RUTINA DE CENSO (INICIO/FIN)
-#define INST_RIEGO_Z1 2 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 (INICIO/FIN)
-#define INST_RIEGO_Z2 3 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 (INICIO/FIN)
-#define INST_MANTENIMIENTO 4 // INSTRUCCION PARA INICIO RUTINA DE MANTENIMIENTO
-#define INST_RES_MANTENIMIENTO 16 // INSTRUCCION PARA RESPUESTA DE RUTINA DE MANTENIMIENTO
-#define INST_DETENER_RIEGO_Z1 5 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
-#define INST_DETENER_RIEGO_Z2 6 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
-#define INST_ENCENDER_LUZ_1_MANUAL 7 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
-#define INST_ENCENDER_LUZ_2_MANUAL 8 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
-#define INST_APAGAR_LUZ_1_MANUAL 9 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
-#define INST_APAGAR_LUZ_2_MANUAL 10 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
-#define INST_AUTO_LUZ_1 11 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
-#define INST_AUTO_LUZ_2 15 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
-#define INST_RES_RIEGO_Z1 12 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
-#define INST_RES_RIEGO_Z2 13 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
+#define INST_CENSO                  1 // INSTRUCCION PARA RUTINA DE CENSO INICIO
+#define INST_FIN_CENSO              2 // INSTRUCCION PARA RUTINA DE CENSO FIN
+#define INST_RIEGO_Z1               3 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 INICIO
+#define INST_RIEGO_Z2               4 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 INICIO
+#define INST_FIN_RIEGO_Z1           5 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 FIN
+#define INST_FIN_RIEGO_Z2           6 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 FIN
+#define INST_MANTENIMIENTO          7 // INSTRUCCION PARA INICIO RUTINA DE MANTENIMIENTO
+#define INST_RES_MANTENIMIENTO      8 // INSTRUCCION PARA RESPUESTA DE RUTINA DE MANTENIMIENTO
+#define INST_DETENER_RIEGO_Z1       9 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
+#define INST_DETENER_RIEGO_Z2       10 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
+#define INST_ENCENDER_LUZ_1_MANUAL  11 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_ENCENDER_LUZ_2_MANUAL  12 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_APAGAR_LUZ_1_MANUAL    13 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_APAGAR_LUZ_2_MANUAL    14 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_AUTO_LUZ_1             15 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
+#define INST_AUTO_LUZ_2             16 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
+#define INST_RES_RIEGO_Z1           17 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
+#define INST_RES_RIEGO_Z2           18 //INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
 
 #define PIN_SENSOR_HUMEDAD_AMBIENTE1 4
 #define PIN_SENSOR_HUMEDAD_AMBIENTE2 12
@@ -79,7 +82,7 @@ void setup() {
   pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT); // Si no censa la humedad es porque hay que sacar esto
   pinMode(PIN_SENSOR_LUZ1, INPUT);
   pinMode(PIN_SENSOR_LUZ2, INPUT);
-  Serial.println("Arduino Esclavo iniciado, esperando instrucciones");
+  Serial.println("Esclavo iniciado, esperando instrucciones");
 }
 
 void loop() {
@@ -94,7 +97,7 @@ void loop() {
     switch (instr_recibida) {
       case INST_CENSO: {
         Serial.println("RUTINA DE CENSO.");
-        int valorSensores[] = {INST_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
+        int valorSensores[] = {INST_FIN_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
         sensarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
         sensarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
         enviarResultadoCensoAMaestro(valorSensores);
@@ -318,7 +321,7 @@ void enviarResultadoCensoAMaestro(int* vec) {
    * La instruccion es la que inicio la rutina
    */
   String ret = "";
-  ret = ret + "<" + INST_CENSO + "," + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + ">";
+  ret = ret + "<" + vec[0] + "," + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + ">";
   serialMaster.print(ret);
   Serial.println(ret);
 }

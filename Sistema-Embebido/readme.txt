@@ -5,6 +5,7 @@ PENDIENTE
 - Avisarle al bluetooth el estado cuando se este regando una zona.
 - Agregar variacion de humedad
 - Revisar variacion de luz y humedad
+- El censo se hace todo junto, ver si hay que separarlo en zonas
 DUDAS
 
 PROBLEMAS
