@@ -84,7 +84,7 @@ void loop() {
     Serial.println("M_C"); //Maestro envia orden de censar al esclavo
     enviarInstruccionAlEsclavo(INST_CENSO);
     msParaNuevoCenso = millis();
-    MS_INTERVAL_TO_CENSO = (unsigned int)30000;
+    //MS_INTERVAL_TO_CENSO = (unsigned int)30000;
   }
 
   int valoresRecibidos[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -102,10 +102,6 @@ void loop() {
 
 void leerInstruccionEsclavo(int* vec) {
   char entrada[60];
-  /* PROBAR si esto es necesario
-    for (int i = 0; i < 60; i++) {
-    entrada[i] = '\0';
-    }*/
 
   if (serialSlave.available() > 0) {
     serialSlave.readBytesUntil('>', entrada, 59);
@@ -122,18 +118,49 @@ void leerBluetooth(int* vec) {
   }
 
   if (Serial.available() > 0) {
+    
+    Serial.println("algo");
+    
     Serial.readBytesUntil('>', entrada, 59);
+    
+    Serial.println("nada");
     Serial.println("L_B_1"); //Leyendo datos del modulo bluetooth
-    leerCadenaInstruccion(vec, entrada);
+    int charIndex = 0;
+    char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
+    int fieldIndex = 0;
+    int i = 0;
+    
+    while (entrada[i] != '\0' && i < 59) {
+      if (entrada[i] == '<') {
+        i++;
+        continue;
+      }
+      if (entrada[i] != ',') {
+        input[charIndex] = entrada[i];
+        charIndex++;
+      } else {
+        input[charIndex] = '\0';
+        charIndex = 0;
+        vec[fieldIndex] = atoi(input);
+        fieldIndex++;
+      }
+      i++;
+    }
+    input[charIndex] = '\0';
+    vec[fieldIndex] = atoi(input);
+    entrada[0] = '@'; //Indica que el dato leido proviene del esclavo o del bluetooth
+    Serial.println(entrada);
+    
   }
 }
 
 void leerCadenaInstruccion(int* vec, char* cadenaIntruccion) {
-  byte charIndex = 0;
+  int charIndex = 0;
   char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
   int fieldIndex = 0;
   int i = 0;
-  while (cadenaIntruccion[i] != '\0') {
+  
+  while (cadenaIntruccion[i] != '\0' && i < 59) {
     if (cadenaIntruccion[i] == '<') {
       i++;
       continue;
@@ -217,26 +244,24 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
   float perHumedadAmbiente = (float)humedadAmbiente / MAX_HUMEDAD;
   float perHumedadSuelo = (float)humedadSuelo / MAX_HUMEDAD_SUELO;
   float perLuz = (float)luz / MAX_LUZ;
-  Serial.print("%T: ");
+  Serial.print("T:");
   Serial.println(perTemperatura);
-  Serial.print("%HA: ");
+  Serial.print("HA:");
   Serial.println(perHumedadAmbiente);
-  Serial.print("%SS: ");
+  Serial.print("SS:");
   Serial.println(perHumedadSuelo);
-  Serial.print("%NL: ");
+  Serial.print("NL:");
   Serial.println(perLuz);
-  Serial.println("");
 
   Serial.println("V_PRIORIZADOS");
-  Serial.print("%%T: ");
+  Serial.print("T:");
   Serial.println(perTemperatura * PRIORIDAD_TEMP);
-  Serial.print("%%HA: ");
+  Serial.print("HA:");
   Serial.println(perHumedadAmbiente * PRIORIDAD_HUM_AMB);
-  Serial.print("%%SS: ");
+  Serial.print("SS:");
   Serial.println(perHumedadSuelo * PRIORIDAD_HUM_SUELO);
-  Serial.print("%%NL: ");
+  Serial.print("NL:");
   Serial.println(perLuz * PRIORIDAD_LUZ);
-  Serial.println("");
   return (PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (1 - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (perHumedadSuelo) + PRIORIDAD_LUZ * (perLuz)) * 100;
 }
 
@@ -372,10 +397,11 @@ void evaluarInstruccion(int valores[]) {
         Serial.println(perEfectividadZ1);
         Serial.print("%EF2 ");
         Serial.println(perEfectividadZ2);
+        
         guardarEnArchivo(valores, perEfectividadZ1, perEfectividadZ2);
 
         if (determinarRiegoEnZona(1, perEfectividadZ1, valores[4], valores[2])) {
-          Serial.println("R_Z_1"); //Es eficiente regar en la zona 1
+          Serial.println("RZ1"); //Es eficiente regar en la zona 1
           float varZona1 = obtenerVariableRiego("VAR1.TXT");
           float vol1 = calcularVolumenRiego(valores[3], varZona1);
           String ret = "";
@@ -387,7 +413,7 @@ void evaluarInstruccion(int valores[]) {
           //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
         if (determinarRiegoEnZona(2, perEfectividadZ2, valores[8], valores[6])) {
-          Serial.println("R_Z_2"); //Es eficiente regar en la zona 2
+          Serial.println("RZ2"); //Es eficiente regar en la zona 2
           float varZona2 = obtenerVariableRiego("VAR2.TXT");
           float vol2 = calcularVolumenRiego(valores[7], varZona2);
           String ret = "";
