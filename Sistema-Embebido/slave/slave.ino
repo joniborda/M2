@@ -255,7 +255,7 @@ void censarZona2(int* vec) {
   Serial.println(ret);
 }
 
-void iniciarMantenimiento(valoresMantenimiento) {
+void iniciarMantenimiento() {
   tiempoMantenimiento = millis();
 
   int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -276,9 +276,10 @@ void iniciarMantenimiento(valoresMantenimiento) {
   }
 
   //DEBERIA SER DE NOCHE PORQUE SI NO NUNCA LO VA A DETECTAR
-  int valorLuzAnteriorZona1 = valorSensores[4];
+  // PRENDO LAS LUCES PARA LUEGO AL FINALIZAR, VER SI AUMENTA USO EL ARRAY DE MANTENIMIENTO PARA GUARDAR EL CENSO
+  valoresMantenimiento[3] = valorSensores[4];
   digitalWrite(PIN_LED1, HIGH);
-  int valorLuzAnteriorZona2 = valorSensores[8];
+  valoresMantenimiento[4] = valorSensores[8];
   digitalWrite(PIN_LED2, HIGH);
 }
 
@@ -287,7 +288,7 @@ void iniciarMantenimiento(valoresMantenimiento) {
  */
 void finalizarMantenimiento() {
   int valorLuzActualZona = analogRead(PIN_SENSOR_LUZ1);
-  if(valorLuzAnteriorZona1 >= valorLuzActualZona) {
+  if(valoresMantenimiento[3] >= valorLuzActualZona) {
     valoresMantenimiento[3] = 0;
     Serial.println("E_L_1");//Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto
   }
@@ -295,7 +296,7 @@ void finalizarMantenimiento() {
 
   valorLuzActualZona = analogRead(PIN_SENSOR_LUZ2);
 
-  if(valorLuzAnteriorZona2 >= valorLuzActualZona) {
+  if(valoresMantenimiento[4] >= valorLuzActualZona) {
     valoresMantenimiento[4] = 0;
     Serial.println("E_L_2");//Se encendio la luz de la zona 2 y el sensor LDR2 no lo detecto
   }
