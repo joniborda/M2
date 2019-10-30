@@ -379,7 +379,8 @@ void evaluarInstruccion(int valores[]) {
           float varZona1 = obtenerVariableRiego("VAR1.TXT");
           float vol1 = calcularVolumenRiego(valores[3], varZona1);
           String ret = "";
-          ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ">";
+          // cambiar para pasar el el porcentaje y el tiempo de riego en ms
+          ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ",10000>";
           serialSlave.print(ret);
           riegoEnCursoZona1 = true;
           Serial.println(ret);
