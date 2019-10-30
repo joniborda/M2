@@ -84,7 +84,7 @@ void loop() {
     Serial.println("M_C"); //Maestro envia orden de censar al esclavo
     enviarInstruccionAlEsclavo(INST_CENSO);
     msParaNuevoCenso = millis();
-    //MS_INTERVAL_TO_CENSO = (unsigned int)30000;
+    MS_INTERVAL_TO_CENSO = (unsigned int)30000;
   }
 
   int valoresRecibidos[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -118,12 +118,7 @@ void leerBluetooth(int* vec) {
   }
 
   if (Serial.available() > 0) {
-    
-    Serial.println("algo");
-    
     Serial.readBytesUntil('>', entrada, 59);
-    
-    Serial.println("nada");
     Serial.println("L_B_1"); //Leyendo datos del modulo bluetooth
     int charIndex = 0;
     char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
@@ -150,7 +145,6 @@ void leerBluetooth(int* vec) {
     vec[fieldIndex] = atoi(input);
     entrada[0] = '@'; //Indica que el dato leido proviene del esclavo o del bluetooth
     Serial.println(entrada);
-    
   }
 }
 
