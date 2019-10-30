@@ -90,10 +90,10 @@ void loop() {
 
 void leerInstruccionEsclavo(int* vec) {
   char entrada[60];
-  
+  /* PROBAR si esto es necesario
   for (int i = 0; i < 60; i++) {
     entrada[i] = '\0';
-  }
+  }*/
   
   if (serialSlave.available() > 0) {
     serialSlave.readBytesUntil('>', entrada, 59);
