@@ -1,9 +1,6 @@
 #include <SD.h>
 #include <SoftwareSerial.h>
 
-#define TAM_MAX_READ 9
-#define TAM_MAX_WRITE 2
-
 // PUERTOS DE CONEXION CON ESCLAVO
 #define PUERTO_RX_SLAVE 2
 #define PUERTO_TX_SLAVE 3
@@ -38,20 +35,21 @@
 #define MAX_LUZ 1023 
 #define MAX_HUMEDAD 100
 
-// INTERVALO DE RUTINA DE CENSO EN MS
-static unsigned long MS_INTERVAL_TO_CENSO = 10000; // 15 seg.
-
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
-unsigned long currentMillis = 0; // tiempo actual
-unsigned long msParaNuevoCenso = 0;  // tiempo que falta para enviar el censo
+// INTERVALO DE RUTINA DE CENSO EN MS
+static unsigned int MS_INTERVAL_TO_CENSO = 10000;
+
+static unsigned long currentMillis = 0; // tiempo actual
+static unsigned long msParaNuevoCenso = 0;  // tiempo que falta para enviar el censo
 
 //La luz se comporta asi: 1 totalmente iluminado, 1023 totalmente oscuro.
 //La humedad del suelo se comporta asi: 1 totalmente humedo, 1023 totalmente seco.
 
-bool riegoEnCursoZona1 = false;
-bool riegoEnCursoZona2 = false;
-int valoresCensoAnterior[] = {-1, -1, -1, -1}; //Necesito que sea global, se guarda luego de censar y determinar si censo
+static bool riegoEnCursoZona1 = false;
+static bool riegoEnCursoZona2 = false;
+static bool mantenimientoEnCurso = false;
+static int valoresCensoAnterior[] = {-1, -1, -1, -1}; //Necesito que sea global, se guarda luego de censar y determinar si censo
 
 void setup() {
   serialSlave.begin(9600);
@@ -74,7 +72,7 @@ void loop() {
     Serial.println("M_C"); //Maestro envia orden de censar al esclavo
     enviarInstruccionAlEsclavo(INST_CENSO);
     msParaNuevoCenso = millis();
-    MS_INTERVAL_TO_CENSO = (unsigned long)30000;
+    MS_INTERVAL_TO_CENSO = (unsigned int)30000;
   }
   
   int valoresRecibidos[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
