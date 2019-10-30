@@ -417,6 +417,7 @@ void evaluarInstruccion(int valores[]) {
         //ANALIZAR ERRORES E INFORMAR
         mantenimientoEnCurso = true;
         String ret = "";
+        // Se envia <instruccion, ErrorTemp, ErrorHumAmb, ErrorHumSuelo, ErrorLDR1, ErrrorLDR2>
         ret = ret + "<" + INST_RES_MANTENIMIENTO + "," + valores[1] + "," + valores[2] + "," + valores[3] + "," + valores[4] + "," + valores[5] + ">";
         Serial.println(ret);// envio al bluetooth el resultado de mantenimiento
         break;
@@ -500,9 +501,10 @@ void evaluarInstruccion(int valores[]) {
     case INST_INICIO_CONEXION_BT: {
       // El bluetooth me avisa que se conecto
       String ret = "";
-        ret = ret + "<" + INST_INICIO_CONEXION_BT + "," + valoresCensoAnterior[0] + "," + valoresCensoAnterior[1] + "," + valoresCensoAnterior[2] + "," + 
-        valoresCensoAnterior[3] + "," + valoresCensoAnterior[4] + "," + valoresCensoAnterior[5] + "," + valoresCensoAnterior[6] + "," + valoresCensoAnterior[7] + ">";
-        Serial.println(ret); // aviso al bluetooth
+      // <instruccion,temp1,amb1,suelo1,luz1,temp2,amb2,suelo2,luz2>
+      ret = ret + "<" + INST_INICIO_CONEXION_BT + "," + valoresCensoAnterior[0] + "," + valoresCensoAnterior[1] + "," + valoresCensoAnterior[2] + "," + 
+      valoresCensoAnterior[3] + "," + valoresCensoAnterior[4] + "," + valoresCensoAnterior[5] + "," + valoresCensoAnterior[6] + "," + valoresCensoAnterior[7] + ">";
+      Serial.println(ret); // aviso al bluetooth
       break;
     }
   }
