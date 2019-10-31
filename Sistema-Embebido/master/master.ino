@@ -387,7 +387,7 @@ void evaluarInstruccion(int valores[]) {
         float perEfectividadZ1 = calcularEfectividad(valores[1], valores[2], valores[3], valores[4]);
         float perEfectividadZ2 = calcularEfectividad(valores[5], valores[6], valores[7], valores[8]);
         String msg = "";
-        msg += "<" + INS_FIN_CENSO + "," + valores[1] + "," + valores[2] + "," + valores[3] + "," + valores[4] + "," + valores[5] + "," + valores[6] + "," + valores[7] + "," + valores[8] + ">";
+        msg = msg + "<" + INST_FIN_CENSO + "," + valores[1] + "," + valores[2] + "," + valores[3] + "," + valores[4] + "," + valores[5] + "," + valores[6] + "," + valores[7] + "," + valores[8] + ">";
         Serial.println(msg);
         
         Serial.print("%EF1 ");
