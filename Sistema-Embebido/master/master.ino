@@ -386,7 +386,10 @@ void evaluarInstruccion(int valores[]) {
         // de la zona 1 y de la zona 2
         float perEfectividadZ1 = calcularEfectividad(valores[1], valores[2], valores[3], valores[4]);
         float perEfectividadZ2 = calcularEfectividad(valores[5], valores[6], valores[7], valores[8]);
-
+        String msg = "";
+        msg += "<" + INS_FIN_CENSO + "," + valores[1] + "," + valores[2] + "," + valores[3] + "," + valores[4] + "," + valores[5] + "," + valores[6] + "," + valores[7] + "," + valores[8] + ">";
+        Serial.println(msg);
+        
         Serial.print("%EF1 ");
         Serial.println(perEfectividadZ1);
         Serial.print("%EF2 ");
