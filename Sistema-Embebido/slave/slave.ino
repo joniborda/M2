@@ -30,24 +30,25 @@
 #define INST_FIN_RIEGO_MANUAL       24 // INSTRUCCION QUE INDICA QUE SE FINALIZO EL RIEGO MANUAL
 #define INST_DETENER_RIEGO_MANUAL   25 // INSTRUCCION QUE DETIENE EL RIEGO MANUAL
 
-#define PIN_SENSOR_LUZ1 A0
-#define PIN_SENSOR_LUZ2 A1
+#define PIN_SENSOR_LUZ1           A0
+#define PIN_SENSOR_LUZ2           A1
 #define PIN_SENSOR_HUMEDAD_SUELO1 A2
 #define PIN_SENSOR_HUMEDAD_SUELO2 A3
 
 // PUERTOS DE CONEXION CON MAESTRO
-#define PUERTO_RX_MASTER 2
-#define PUERTO_TX_MASTER 3
-#define PIN_SENSOR_HUMEDAD_AMBIENTE1 4
-#define PIN_SENSOR_HUMEDAD_AMBIENTE2 12
-#define PIN_BOMBA1 9
-#define PIN_BOMBA2 6
-#define PIN_LED1 7
-#define PIN_LED2 8
+#define PUERTO_RX_MASTER              2
+#define PUERTO_TX_MASTER              3
+#define PIN_SENSOR_HUMEDAD_AMBIENTE1  4
+#define PIN_SENSOR_HUMEDAD_AMBIENTE2  12
+#define PIN_BOMBA1                    9
+#define PIN_BOMBA2                    6
+#define PIN_LED1                      7
+#define PIN_LED2                      8
 
 // INTERVALO PARA ACCION EN MS
-const unsigned long TIEMPO_RES_RIEGO = 3000;
-const unsigned long TIEMPO_RES_MANTENIMIENTO = 1000;
+const unsigned long TIEMPO_RES_RIEGO = 3000;          // ms para dar la respuesta de humedad despues de regar
+const unsigned long TIEMPO_RES_MANTENIMIENTO = 1000;  // ms para dar la respuesta de mantenimiento despues de encender luces
+const unsigned long TIEMPO_INTERMITENCIA = 1000;      // ms en el cual prende y apaga la bomba de riego
 
 SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
 
@@ -55,36 +56,35 @@ DHT sensorDHT1 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE1, DHT11);
 DHT sensorDHT2 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
 
 unsigned long tiempoActual = millis();
-unsigned long tiempoComienzoRiegoZona1 = 0; // Tiempo que falta para avisar que termino el riego
-unsigned long tiempoDespuesRiegoZona1 = 0; // Tiempo que falta para dar la respuesta de riego
-unsigned long tiempoComienzoRiegoZona2 = 0; // Tiempo que falta para avisar que termino el riego
-unsigned long tiempoDespuesRiegoZona2 = 0; // Tiempo que falta para dar la respuesta de riego
-unsigned long tiempoMantenimiento = 0; // Tiempo que falta para terminar el mantenimiento
-unsigned long tiempoComienzoRiegoManual = 0; // Tiempo que debe transcurrir el riego manual
+unsigned long tiempoComienzoRiegoZona1 = 0;     // Tiempo que falta para avisar que termino el riego
+unsigned long tiempoDespuesRiegoZona1 = 0;      // Tiempo que falta para dar la respuesta de riego
+unsigned long tiempoComienzoRiegoZona2 = 0;     // Tiempo que falta para avisar que termino el riego
+unsigned long tiempoDespuesRiegoZona2 = 0;      // Tiempo que falta para dar la respuesta de riego
+unsigned long tiempoMantenimiento = 0;          // Tiempo que falta para terminar el mantenimiento
+unsigned long tiempoComienzoRiegoManual = 0;    // Tiempo que debe transcurrir el riego manual
+unsigned long tiempoComienzoIntermitencia1 = 0; // Tiempo que apaga y prende la zona 1
+unsigned long tiempoComienzoIntermitencia2 = 0; // Tiempo que apaga y prende la zona 2
+//DEBERIAMOS TENER UNA VARIABLE GLOBAL QUE SEA ESTE REGANDO O NO SIN IMPORTAR EL MEDIO?
+unsigned long TIEMPO_RIEGO = 10000;
+unsigned long TIEMPO_RIEGO_MANUAL = 0;
 
 //Tipo de riego: 0 continuo, 1 intermitente
 static int tipoRiego = 0; //Por defecto es continuo
 
 static bool riegoManualEnCurso = false;
-static bool censoManualEnCurso = false;
-static bool mantenimientoManualEnCurso = false;
-static bool censoAutomaticoEnCurso = false;
 static bool riegoZona1AutomaticoEnCurso = false;
 static bool riegoZona2AutomaticoEnCurso = false;
+static bool censoManualEnCurso = false;
+static bool censoAutomaticoEnCurso = false;
+static bool mantenimientoManualEnCurso = false;
 static bool mantenimientoAutomaticoEnCurso = false; //Ready to development
-
-//DEBERIAMOS TENER UNA VARIABLE GLOBAL QUE SEA ESTE REGANDO O NO SIN IMPORTAR EL MEDIO?
-
-unsigned long TIEMPO_RIEGO = 10000;
-unsigned long TIEMPO_RIEGO_MANUAL = 0;
 
 int prenderLuz1 = 0; // 0 Es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 int prenderLuz2 = 0; // 0 Es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 int valoresMantenimiento[5] = {1, 1, 1, 1, 1};
 
-static float intesidadRiegoActual = 0;
-static const long TIEMPO_INTERMITENCIA = 1000;
-static long tiempoComienzoIntermitencia = 0;
+static float intensidadRiegoZona1 = 0;
+static float intensidadRiegoZona2 = 0;
 
 /* 
 Valores de Mantenimiento
@@ -147,7 +147,8 @@ void loop() {
       if(!evaluaAccionEnProcesoBluetooth()){
         riegoZona1AutomaticoEnCurso = true;
         tiempoComienzoRiegoZona1 = millis();
-        float intensidadRiegoZona1 = intesidadRiego;
+        tiempoComienzoIntermitencia1 = millis();
+        intensidadRiegoZona1 = intesidadRiego;
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z1 + "," + intensidadRiegoZona1 + "," + TIEMPO_RIEGO + ">";
@@ -162,9 +163,10 @@ void loop() {
       if(!evaluaAccionEnProcesoBluetooth()){
         riegoZona2AutomaticoEnCurso = true;
         tiempoComienzoRiegoZona2 = millis();
-        float intensidadRiegoZona2 = intesidadRiego;
+        tiempoComienzoIntermitencia2 = millis();
+        intensidadRiegoZona2 = intesidadRiego;
         analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
-const long TIEMPO_INTERMITENCIA = 1000;
+        
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z2 + "," + intensidadRiegoZona2 + "," + TIEMPO_RIEGO + ">";
         Serial.print(ret);
@@ -256,14 +258,16 @@ const long TIEMPO_INTERMITENCIA = 1000;
       }
     }
     case INST_RIEGO_MANUAL: {
+      // regar las dos zonas
       if(!evaluaAccionEnProcesoMaestro()){
         riegoManualEnCurso = true;
         tiempoComienzoRiegoManual = millis();
-        tiempoComienzoIntermitencia = millis();
         TIEMPO_RIEGO_MANUAL = tRiegoManual;
-        intesidadRiegoActual = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
-        analogWrite(PIN_BOMBA1, intesidadRiego * 255/100);
-        analogWrite(PIN_BOMBA2, intesidadRiego * 255/100);
+        intensidadRiegoZona1 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
+        intensidadRiegoZona2 = intesidadRiego;
+
+        analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
       } else {
         //Se deberia responder que no pudo hacer el riego manual porque esta operando el maestro
       }
@@ -305,10 +309,37 @@ const long TIEMPO_INTERMITENCIA = 1000;
   }
   
   tiempoActual = millis();
-  if(tipoRiego == 1 && (unsigned long)(tiempoActual - tiempoComienzoIntermitencia) >= TIEMPO_INTERMITENCIA){
-   //Implementar
-  }
+  if(tipoRiego == 1) {
+    // Si es intermitente tengo que ver si está regando la zona y despues tengo que ver si esta dentro
+    // del tiempo de intermitencia. 
+    if (tiempoComienzoRiegoZona1 > 0 || tiempoComienzoRiegoManual > 0) {
+      // prendido desde el tiempo 0 hasta el tiempo de intermitencia y apagado desde el tiempo de intermitencia hasta el
+      // doble del tiempo de intermitencia. Ejemplo [0, 1) prendido [1, 2] apagado
+      unsigned long tiempoDentroIntermitencia = (unsigned long)(tiempoActual - tiempoComienzoIntermitencia1);
 
+      analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
+      if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA) {
+        analogWrite(PIN_BOMBA1, 0);
+        if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
+          tiempoComienzoIntermitencia1 = millis();
+        }
+      }
+    }
+    if (tiempoComienzoRiegoZona2 > 0 || tiempoComienzoRiegoManual > 0) {
+      // prendido desde el tiempo 0 hasta el tiempo de intermitencia y apagado desde el tiempo de intermitencia hasta el
+      // doble del tiempo de intermitencia. Ejemplo [0, 1) prendido [1, 2] apagado
+      unsigned long tiempoDentroIntermitencia = (unsigned long)(tiempoActual - tiempoComienzoIntermitencia2);
+
+      analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
+      if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA) {
+        analogWrite(PIN_BOMBA2, 0);
+        if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
+          tiempoComienzoIntermitencia2 = millis();
+        }
+      }
+    }
+  }
+  
   tiempoActual = millis();
   if (tiempoComienzoRiegoManual > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoManual) >= TIEMPO_RIEGO_MANUAL) {
     analogWrite(PIN_BOMBA1, 0);
@@ -580,6 +611,5 @@ bool evaluaAccionEnProcesoBluetooth(){
 }
 
 bool evaluaAccionEnProcesoMaestro(){
-  return riegoZona1AutomaticoEnCurso || riegoZona2AutomaticoEnCurso || censoAutomaticoEnCurso;
+  return riegoZona1AutomaticoEnCurso || riegoZona2AutomaticoEnCurso || censoAutomaticoEnCurso || mantenimientoAutomaticoEnCurso;
 }
-
