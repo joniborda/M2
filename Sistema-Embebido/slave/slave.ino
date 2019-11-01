@@ -234,11 +234,9 @@ void loop() {
     case INST_TIPO_RIEGO_CONT: {
       tipoRiego = 0;
       break;
-      //Implementar impacto en los riegos
     }
     case INST_TIPO_RIEGO_INTER: {
       tipoRiego = 1;
-      //Implementar impacto en los riegos
     }
     case INST_INICIO_CONEXION_BT: {
       if(!evaluaAccionEnProcesoMaestro()){
