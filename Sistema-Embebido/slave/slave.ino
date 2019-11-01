@@ -49,6 +49,9 @@
 const unsigned long TIEMPO_RES_RIEGO = 3000;          // ms para dar la respuesta de humedad despues de regar
 const unsigned long TIEMPO_RES_MANTENIMIENTO = 1000;  // ms para dar la respuesta de mantenimiento despues de encender luces
 const unsigned long TIEMPO_INTERMITENCIA = 1000;      // ms en el cual prende y apaga la bomba de riego
+//DEBERIAMOS TENER UNA VARIABLE GLOBAL QUE SEA ESTE REGANDO O NO SIN IMPORTAR EL MEDIO?
+unsigned long TIEMPO_RIEGO = 10000;
+unsigned long TIEMPO_RIEGO_MANUAL = 0;
 
 SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
 
@@ -64,9 +67,6 @@ unsigned long tiempoMantenimiento = 0;          // Tiempo que falta para termina
 unsigned long tiempoComienzoRiegoManual = 0;    // Tiempo que debe transcurrir el riego manual
 unsigned long tiempoComienzoIntermitencia1 = 0; // Tiempo que apaga y prende la zona 1
 unsigned long tiempoComienzoIntermitencia2 = 0; // Tiempo que apaga y prende la zona 2
-//DEBERIAMOS TENER UNA VARIABLE GLOBAL QUE SEA ESTE REGANDO O NO SIN IMPORTAR EL MEDIO?
-unsigned long TIEMPO_RIEGO = 10000;
-unsigned long TIEMPO_RIEGO_MANUAL = 0;
 
 //Tipo de riego: 0 continuo, 1 intermitente
 static int tipoRiego = 0; //Por defecto es continuo

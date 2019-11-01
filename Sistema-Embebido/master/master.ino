@@ -56,16 +56,12 @@ static unsigned long msParaNuevoCenso = 0;  // tiempo que falta para enviar el c
 static bool riegoEnCursoZona1 = false;
 static bool riegoEnCursoZona2 = false;
 static bool mantenimientoEnCurso = false;
-static int valoresCensoAnterior[] = { -1, -1, -1, -1, -1, -1, -1, -1}; //Necesito que sea global, se guarda luego de censar y determinar si censo
+static int valoresCensoAnterior[] = { -1, -1, -1, -1}; //Necesito que sea global, se guarda luego de censar y determinar si censo
 /** valores de censo anterior 
  *  0 temp1
- *  1 amb1
- *  2 suelo1
- *  3 luz1
- *  4 temp2
- *  5 amb2
- *  6 suelo2
- *  7 luz2
+ *  1 suelo1
+ *  2 temp2
+ *  3 suelo2
  *  
  *  Para determinar que valor corresponde a cada zona usar la formula [4 * (zona - 1) + indice]
  */
@@ -93,6 +89,15 @@ void loop() {
     MS_INTERVAL_TO_CENSO = (unsigned int)30000;
   }
 
+  // [0] => instruccion
+  // [1] => temp1
+  // [2] => humAmb1
+  // [3] => suelo1
+  // [4] => luz
+  // [5] => temp2
+  // [6] => humAmb2
+  // [7] => suelo2
+  // [8] => luz2
   int valoresRecibidos[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1};
   leerInstruccionEsclavo(valoresRecibidos); //Proviene del esclavo
   switch (valoresRecibidos[0]) {
@@ -116,7 +121,7 @@ void loop() {
         
         guardarEnArchivo(valoresRecibidos, perEfectividadZ1, perEfectividadZ2);
 
-        if (determinarRiegoEnZona(1, perEfectividadZ1, valoresRecibidos[4], valoresRecibidos[2])) {
+        if (determinarRiegoEnZona(perEfectividadZ1, valoresRecibidos[4], valoresRecibidos[2], valoresCensoAnterior[0], valoresCensoAnterior[1])) {
           Serial.println("RZ1"); //Es eficiente regar en la zona 1
           float varZona1 = obtenerVariableRiego("VAR1.TXT");
           float vol1 = calcularVolumenRiego(valoresRecibidos[3], varZona1);
@@ -130,7 +135,7 @@ void loop() {
           //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
 
-        if (determinarRiegoEnZona(2, perEfectividadZ2, valoresRecibidos[8], valoresRecibidos[6])) {
+        if (determinarRiegoEnZona(perEfectividadZ2, valoresRecibidos[8], valoresRecibidos[6], valoresCensoAnterior[2], valoresCensoAnterior[3])) {
           Serial.println("RZ2"); //Es eficiente regar en la zona 2
           float varZona2 = obtenerVariableRiego("VAR2.TXT");
           float vol2 = calcularVolumenRiego(valoresRecibidos[7], varZona2);
@@ -145,13 +150,9 @@ void loop() {
         }
         // Guardo los valores para el proximo censo
         valoresCensoAnterior[0] = valoresRecibidos[1]; // temp1
-        valoresCensoAnterior[1] = valoresRecibidos[2]; // amb2
-        valoresCensoAnterior[2] = valoresRecibidos[3]; // suelo1
-        valoresCensoAnterior[3] = valoresRecibidos[4]; // luz1
-        valoresCensoAnterior[4] = valoresRecibidos[5]; // temp2
-        valoresCensoAnterior[5] = valoresRecibidos[6]; // amb2
-        valoresCensoAnterior[6] = valoresRecibidos[7]; // suelo2
-        valoresCensoAnterior[7] = valoresRecibidos[8]; // luz2
+        valoresCensoAnterior[1] = valoresRecibidos[3]; // suelo1
+        valoresCensoAnterior[2] = valoresRecibidos[5]; // temp2
+        valoresCensoAnterior[3] = valoresRecibidos[7]; // suelo2
         break;
       }
     case INST_MANTENIMIENTO: {
@@ -227,41 +228,37 @@ void loop() {
 }
 
 void leerInstruccionEsclavo(int* vec) {
-  char entrada[60];
-
   if (serialSlave.available() > 0) {
+    char entrada[60];
     serialSlave.readBytesUntil('>', entrada, 59);
     Serial.println("L_E"); //Leyendo del esclavo
-    leerCadenaInstruccion(vec, entrada);
-  }
-}
-
-void leerCadenaInstruccion(int* vec, char* cadenaIntruccion) {
-  int charIndex = 0;
-  char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
-  int fieldIndex = 0;
-  int i = 0;
-  
-  while (cadenaIntruccion[i] != '\0' && i < 59) {
-    if (cadenaIntruccion[i] == '<') {
+    
+    int charIndex = 0;
+    char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
+    int fieldIndex = 0;
+    int i = 0;
+    
+    while (entrada[i] != '\0' && i < 59) {
+      if (entrada[i] == '<') {
+        i++;
+        continue;
+      }
+      if (entrada[i] != ',') {
+        input[charIndex] = entrada[i];
+        charIndex++;
+      } else {
+        input[charIndex] = '\0';
+        charIndex = 0;
+        vec[fieldIndex] = atoi(input);
+        fieldIndex++;
+      }
       i++;
-      continue;
     }
-    if (cadenaIntruccion[i] != ',') {
-      input[charIndex] = cadenaIntruccion[i];
-      charIndex++;
-    } else {
-      input[charIndex] = '\0';
-      charIndex = 0;
-      vec[fieldIndex] = atoi(input);
-      fieldIndex++;
-    }
-    i++;
+    input[charIndex] = '\0';
+    vec[fieldIndex] = atoi(input);
+    entrada[0] = '@'; //Indica que el dato leido proviene del esclavo o del bluetooth
+    Serial.println(entrada);
   }
-  input[charIndex] = '\0';
-  vec[fieldIndex] = atoi(input);
-  cadenaIntruccion[0] = '@'; //Indica que el dato leido proviene del esclavo o del bluetooth
-  Serial.println(cadenaIntruccion);
 }
 
 float obtenerVariableRiego(const char* archivo) {
@@ -347,13 +344,11 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
   return (PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (1 - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (perHumedadSuelo) + PRIORIDAD_LUZ * (perLuz)) * 100;
 }
 
-int determinarRiegoEnZona(int zona, float perEfectividad, int luzActual, int humedadActual) {
+int determinarRiegoEnZona(float perEfectividad, int luzActual, int humedadActual, int humedadAnterior, int luzAnterior) {
   if (perEfectividad > 70.00) {
     return 1;
   }
   else if (perEfectividad > 40.00) {
-    int humedadAnterior = valoresCensoAnterior[4 * (zona - 1) + 1];
-    int luzAnterior = valoresCensoAnterior[4 * (zona - 1) + 3];
  
     if (luzAnterior == -1 || humedadAnterior == -1) //Es la primera vez que censa, no hay valores anteriores
       return 0;
