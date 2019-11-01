@@ -123,7 +123,7 @@ void loop() {
 
         if (determinarRiegoEnZona(perEfectividadZ1, valoresRecibidos[4], valoresRecibidos[2], valoresCensoAnterior[0], valoresCensoAnterior[1])) {
           Serial.println("RZ1"); //Es eficiente regar en la zona 1
-          float varZona1 = obtenerVariableRiego("VAR1.TXT");
+          float varZona1 = obtenerVariableRiego("V1.TXT");
           float vol1 = calcularVolumenRiego(valoresRecibidos[3], varZona1);
           String ret = "";
           // cambiar para pasar el el porcentaje y el tiempo de riego en ms
@@ -137,7 +137,7 @@ void loop() {
 
         if (determinarRiegoEnZona(perEfectividadZ2, valoresRecibidos[8], valoresRecibidos[6], valoresCensoAnterior[2], valoresCensoAnterior[3])) {
           Serial.println("RZ2"); //Es eficiente regar en la zona 2
-          float varZona2 = obtenerVariableRiego("VAR2.TXT");
+          float varZona2 = obtenerVariableRiego("V2.TXT");
           float vol2 = calcularVolumenRiego(valoresRecibidos[7], varZona2);
           String ret = "";
           // cambiar para pasar el el porcentaje y el tiempo de riego en ms
@@ -183,13 +183,13 @@ void loop() {
       }
     case INST_RES_RIEGO_Z1: {
       //Aca se analiza el resultado del riego de la zona 1.
-      analizarResultadoRiego(1, valoresRecibidos[1], "VAR1.TXT");
+      analizarResultadoRiego(1, valoresRecibidos[1], "V1.TXT");
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
     }
     case INST_RES_RIEGO_Z2: {
       //Aca se analiza el resultado del riego de la zona 2.
-      analizarResultadoRiego(2, valoresRecibidos[1], "VAR2.TXT");
+      analizarResultadoRiego(2, valoresRecibidos[1], "V2.TXT");
       break;
       //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
     }
@@ -297,23 +297,23 @@ void escribirVariableRiego(float var, const char* archivo) {
 }
 
 void guardarEnArchivo(int* vec, float perEfectividadZ1, float perEfectividadZ2) {
-  File fp = SD.open("ZONA1.TXT", FILE_WRITE);
+  File fp = SD.open("Z1.TXT", FILE_WRITE);
   if (fp) {
     String ret = "";
     ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1;
     fp.println(ret);
   } else {
-    Serial.println("E_A_Z1"); //Error al abrir archivo ZONA1.TXT
+    Serial.println("E_A_Z1"); //Error al abrir archivo Z1.TXT
   }
   fp.close();
 
-  fp = SD.open("ZONA2.TXT", FILE_WRITE);
+  fp = SD.open("Z2.TXT", FILE_WRITE);
   if (fp) {
     String ret = "";
     ret = ret + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;
     fp.println(ret);
   } else {
-    Serial.println("E_A_Z2"); //Error al abrir archivo ZONA2.TXT
+    Serial.println("E_A_Z2"); //Error al abrir archivo Z2.TXT
   }
   fp.close();
 }
@@ -373,45 +373,45 @@ float calcularVolumenRiego(int riego, float var) {
 
 void inicializarArchivosDeCensos() {
   File fp;
-  if (SD.exists("ZONA1.TXT")) {
-    SD.remove("ZONA1.TXT");
+  if (SD.exists("Z1.TXT")) {
+    SD.remove("Z1.TXT");
   }
 
-  if (SD.exists("ZONA2.TXT")) {
-    SD.remove("ZONA2.TXT");
+  if (SD.exists("Z2.TXT")) {
+    SD.remove("Z2.TXT");
   }
-  fp = SD.open("ZONA1.TXT", FILE_WRITE);
+  fp = SD.open("Z1.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("E_A_1"); //Error al crear archivo ZONA1.TXT
+    Serial.println("E_A_1"); //Error al crear archivo Z1.TXT
   }
   fp.close();
 
-  fp = SD.open("ZONA2.TXT", FILE_WRITE);
+  fp = SD.open("Z2.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("E_A_2"); //Error al crear archivo ZONA2.TXT
+    Serial.println("E_A_2"); //Error al crear archivo Z2.TXT
   }
   fp.close();
 
-  if (!SD.exists("VAR1.txt")) {
-    Serial.println("A_V_1"); //El archivo VAR1.TXT no existe en la tarjeta SD
-    fp = SD.open("VAR1.txt", FILE_WRITE);
-    Serial.println("A_V_2"); //El archivo VAR1.TXT no existia y se acaba de crear
+  if (!SD.exists("V1.txt")) {
+    Serial.println("A_V_1"); //El archivo V1.TXT no existe en la tarjeta SD
+    fp = SD.open("V1.txt", FILE_WRITE);
+    Serial.println("A_V_2"); //El archivo V1.TXT no existia y se acaba de crear
     if (fp) {
       fp.println("33.33");
     } else {
-      Serial.println("E_A_1"); //Error al escribir el archivo VAR1.txt con el valor por defecto
+      Serial.println("E_A_1"); //Error al escribir el archivo V1.txt con el valor por defecto
     }
     fp.close();
   }
 
-  if (!SD.exists("VAR2.txt")) {
-    Serial.println("A_V_3"); //El archivo VAR2.TXT no existe en la tarjeta SD
-    fp = SD.open("VAR2.txt", FILE_WRITE);
-    Serial.println("A_V_4"); //El archivo VAR2.TXT no existia y se acaba de crear
+  if (!SD.exists("V2.txt")) {
+    Serial.println("A_V_3"); //El archivo V2.TXT no existe en la tarjeta SD
+    fp = SD.open("V2.txt", FILE_WRITE);
+    Serial.println("A_V_4"); //El archivo V2.TXT no existia y se acaba de crear
     if (fp) {
       fp.println("33.33");
     } else {
-      Serial.println("E_A_2"); //Error al escribir el archivo VAR2.txt con el valor por defecto
+      Serial.println("E_A_2"); //Error al escribir el archivo V2.txt con el valor por defecto
     }
     fp.close();
   }
