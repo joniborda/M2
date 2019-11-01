@@ -76,7 +76,7 @@ static bool riegoZona1AutomaticoEnCurso = false;
 static bool riegoZona2AutomaticoEnCurso = false;
 static bool censoManualEnCurso = false;
 static bool censoAutomaticoEnCurso = false;
-static bool mantenimientoManualEnCurso = false;
+static bool mantenimientoManualEnCurso = false; // por ahora solo lo ejecuta el bluetooth
 static bool mantenimientoAutomaticoEnCurso = false; //Ready to development
 
 int prenderLuz1 = 0; // 0 Es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
@@ -440,6 +440,7 @@ void censarZona2(int* vec) {
 //Analizar 1
 void iniciarMantenimiento() {
   tiempoMantenimiento = millis();
+  mantenimientoManualEnCurso = true;
 
   int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
   censarZona1(valorSensores);
@@ -493,6 +494,7 @@ void finalizarMantenimiento() {
   Serial.println(ret);
 
   tiempoMantenimiento = 0;
+  mantenimientoManualEnCurso = false;
 }
 
 void enviarResultadoCensoAMaestro(int* vec) {
@@ -606,10 +608,10 @@ void leerBluetooth(int* inst, float* intesidad, int* tiempo) {
   }
 }
 
-bool evaluaAccionEnProcesoBluetooth(){
+bool evaluaAccionEnProcesoBluetooth() {
   return riegoManualEnCurso || censoManualEnCurso || mantenimientoManualEnCurso;
 }
 
-bool evaluaAccionEnProcesoMaestro(){
+bool evaluaAccionEnProcesoMaestro() {
   return riegoZona1AutomaticoEnCurso || riegoZona2AutomaticoEnCurso || censoAutomaticoEnCurso || mantenimientoAutomaticoEnCurso;
 }
