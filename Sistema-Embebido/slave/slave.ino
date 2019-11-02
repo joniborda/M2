@@ -12,8 +12,8 @@
 #define INST_FIN_RIEGO_Z2           6 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 FIN
 #define INST_MANTENIMIENTO          7 // INSTRUCCION PARA INICIO RUTINA DE MANTENIMIENTO
 #define INST_RES_MANTENIMIENTO      8 // INSTRUCCION PARA RESPUESTA DE RUTINA DE MANTENIMIENTO
-#define INST_DETENER_RIEGO_Z1       9 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
-#define INST_DETENER_RIEGO_Z2       10 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
+#define INST_DETENER_RIEGO_Z1       9 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1               @DEPRECATED
+#define INST_DETENER_RIEGO_Z2       10 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2              @DEPRECATED
 #define INST_ENCENDER_LUZ_1_MANUAL  11 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
 #define INST_ENCENDER_LUZ_2_MANUAL  12 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
 #define INST_APAGAR_LUZ_1_MANUAL    13 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
@@ -28,12 +28,29 @@
 #define INST_TIPO_RIEGO_CONT        22 // INSTRUCCION PARA CAMBIAR EL TIPO DE RIEGO A CONTINUO
 #define INST_TIPO_RIEGO_INTER       23 // INSTRUCCION PARA CAMBIAR EL TIPO DE RIEGO A INTERMITENTE
 #define INST_FIN_RIEGO_MANUAL       24 // INSTRUCCION QUE INDICA QUE SE FINALIZO EL RIEGO MANUAL
-#define INST_DETENER_RIEGO_MANUAL   25 // INSTRUCCION QUE DETIENE EL RIEGO MANUAL
+#define INST_DETENER_RIEGO_MANUAL   25 // INSTRUCCION QUE DETIENE EL RIEGO MANUAL                     @DEPRECATED
+#define INST_DETENER_RIEGO_GRAL     26 // INSTRUCCION QUE DETENIENE CUALQUIER TIPO DE RIEGO, SEA MANUAL O AUTOMATICO
 
-#define PIN_SENSOR_LUZ1           A0
-#define PIN_SENSOR_LUZ2           A1
-#define PIN_SENSOR_HUMEDAD_SUELO1 A2
-#define PIN_SENSOR_HUMEDAD_SUELO2 A3
+#define M_INICIO_ARDUINO_OK         50
+#define M_INICIO_RIEGO_Z1           52
+#define M_INICIO_RtO_Z2           53
+#define M_INICIO_RIEGO_M            54
+#define M_INICIO_CENSO              55
+#define M_INICIO_CENSO_M            56
+
+#define M_INICIO_CONEXION_BT_ER     57
+#define M_RIEGO_MANUAL_ER           58
+#define M_CENSO_MANUAL_ER           59
+#define M_MANT_MANUAL_ER            60
+#define M_STOP_RIEGO_GRAL_OK        61  
+#define M_STOP_RIEGO_GRAL_ER        62
+#define M_CAMBIO_T_RIEGO_CONT       63
+#define M_CAMBIO_T_RIEGO_INT        64
+
+#define PIN_SENSOR_LUZ1             A0
+#define PIN_SENSOR_LUZ2             A1
+#define PIN_SENSOR_HUMEDAD_SUELO1   A2
+#define PIN_SENSOR_HUMEDAD_SUELO2   A3
 
 // PUERTOS DE CONEXION CON MAESTRO
 #define PUERTO_RX_MASTER              2
@@ -46,10 +63,10 @@
 #define PIN_LED2                      8
 
 // INTERVALO PARA ACCION EN MS
-const unsigned long TIEMPO_RES_RIEGO = 3000;          // ms para dar la respuesta de humedad despues de regar
-const unsigned long TIEMPO_RES_MANTENIMIENTO = 1000;  // ms para dar la respuesta de mantenimiento despues de encender luces
-const unsigned long TIEMPO_INTERMITENCIA = 1000;      // ms en el cual prende y apaga la bomba de riego
-//DEBERIAMOS TENER UNA VARIABLE GLOBAL QUE SEA ESTE REGANDO O NO SIN IMPORTAR EL MEDIO?
+const unsigned long TIEMPO_RES_RIEGO = 3000;          // MS Para dar la respuesta de humedad despues de regar
+const unsigned long TIEMPO_RES_MANTENIMIENTO = 1000;  // MS Para dar la respuesta de mantenimiento despues de encender luces
+const unsigned long TIEMPO_INTERMITENCIA = 1000;      // MS En el cual prende y apaga la bomba de riego
+
 unsigned long TIEMPO_RIEGO = 10000;
 unsigned long TIEMPO_RIEGO_MANUAL = 0;
 
@@ -76,15 +93,15 @@ static bool riegoZona1AutomaticoEnCurso = false;
 static bool riegoZona2AutomaticoEnCurso = false;
 static bool censoManualEnCurso = false;
 static bool censoAutomaticoEnCurso = false;
-static bool mantenimientoManualEnCurso = false; // por ahora solo lo ejecuta el bluetooth
+static bool mantenimientoManualEnCurso = false;
 static bool mantenimientoAutomaticoEnCurso = false; //Ready to development
 
-int prenderLuz1 = 0; // 0 Es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
-int prenderLuz2 = 0; // 0 Es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
-int valoresMantenimiento[5] = {1, 1, 1, 1, 1};
-
+static int prenderLuz1 = 0; // 0 Es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
+static int prenderLuz2 = 0; // 0 Es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 static float intensidadRiegoZona1 = 0;
 static float intensidadRiegoZona2 = 0;
+
+int valoresMantenimiento[5] = {1, 1, 1, 1, 1};
 
 /* 
 Valores de Mantenimiento
@@ -110,7 +127,7 @@ void setup() {
   pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT);
   pinMode(PIN_SENSOR_LUZ1, INPUT);
   pinMode(PIN_SENSOR_LUZ2, INPUT);
-  //Serial.println("Esclavo iniciado, esperando instrucciones");
+  sendMessageToMaster(M_INICIO_ARDUINO_OK);
 }
 
 void loop() {
@@ -120,31 +137,25 @@ void loop() {
 
   leerMaestro(&instr_recibida, &intesidadRiego);
   leerBluetooth(&instr_recibida, &intesidadRiego, &tRiegoManual); //El bluetooth posee mas prioridad que el maestro
-  //Serial.print("INSTRUCCION: ");
-  //Serial.println("" + instr_recibida);
   switch (instr_recibida) {
     case INST_CENSO: {
-      //Serial.println("RUTINA DE CENSO.");
-      if(!evaluaAccionEnProcesoBluetooth()){
+      sendMessageToMaster(M_INICIO_CENSO);
+      if (!evaluaAccionEnProcesoBluetooth()) {
         censoAutomaticoEnCurso = true;
         int valorSensores[] = {INST_FIN_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
         censarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
         censarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
         enviarResultadoCensoAMaestro(valorSensores);
-      } else {
-        //Ignora la peticion del maestro debido a esta efectuando una peticion del bluetooth
       }
       break;
     }
     //Analizar
     case INST_MANTENIMIENTO: {
-      //Serial.println("RUTINA DE MANTENIMIENTO.");
       iniciarMantenimiento();
       break;
     }
     case INST_RIEGO_Z1: {
-      //Serial.println("RIEGO ZONA 1.");
-      if(!evaluaAccionEnProcesoBluetooth()){
+      if (!evaluaAccionEnProcesoBluetooth()) {
         riegoZona1AutomaticoEnCurso = true;
         tiempoComienzoRiegoZona1 = millis();
         tiempoComienzoIntermitencia1 = millis();
@@ -153,139 +164,114 @@ void loop() {
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z1 + "," + intensidadRiegoZona1 + "," + TIEMPO_RIEGO + ">";
         Serial.print(ret);
-      } else {
-        //Dos opciones: 1) Sacamos el estado regando en el maestro 2) Enviamos una nueva instruccion que sea riego no posible
       }
       break;
     }
     case INST_RIEGO_Z2: {
-      //Serial.println("RIEGO ZONA 2.");
-      if(!evaluaAccionEnProcesoBluetooth()){
+      if (!evaluaAccionEnProcesoBluetooth()) {
         riegoZona2AutomaticoEnCurso = true;
         tiempoComienzoRiegoZona2 = millis();
         tiempoComienzoIntermitencia2 = millis();
         intensidadRiegoZona2 = intesidadRiego;
-        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
-        
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);        
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z2 + "," + intensidadRiegoZona2 + "," + TIEMPO_RIEGO + ">";
         Serial.print(ret);
-      } else {
-        //Dos opciones: 1) Sacamos el estado regando en el maestro 2) Enviamos una nueva instruccion que sea riego no posible
       }
       break;
     }
-    case INST_DETENER_RIEGO_Z1: { //Esta instruccion detiene desde la app el riego automatico en zona 1
-      //Serial.println("STOP ZONA 1.");
-      if(riegoZona1AutomaticoEnCurso){
+    case INST_DETENER_RIEGO_GRAL: {
+      bool fDetuvo = false;
+      if(riegoZona1AutomaticoEnCurso) {
         riegoZona1AutomaticoEnCurso = false;
         tiempoComienzoRiegoZona1 = 0;
         analogWrite(PIN_BOMBA1, 0);
         tiempoDespuesRiegoZona1 = 0;
-        //Avisar que se detuvo correctamente el riego en la zona 1 al dispositivo
-      } else {
-        //No esta regando actualmente de manera automatica en zona 1
+        fDetuvo = true;
       }
-      break;
-    }
-    case INST_DETENER_RIEGO_Z2: { //Esta instruccion detiene desde la app el riego automatico en zona 2
-      //Serial.println("STOP ZONA 2.");
-      if(riegoZona2AutomaticoEnCurso){
+      if(riegoZona2AutomaticoEnCurso) {
         riegoZona2AutomaticoEnCurso = false;
         tiempoComienzoRiegoZona2 = 0;
         analogWrite(PIN_BOMBA2, 0);
         tiempoDespuesRiegoZona2 = 0;
-        //Avisar que se detuvo correctamente el riego en la zona 2 al dispositivo
-      } else {
-        //No esta regando actualmente de manera automatica en zona 2
+        fDetuvo = true;
       }
-      break;
+      if(riegoManualEnCurso) {
+        riegoManualEnCurso = false;
+        tiempoComienzoRiegoManual = 0;
+        analogWrite(PIN_BOMBA1, 0);
+        analogWrite(PIN_BOMBA2, 0);
+        fDetuvo = true;
+      }
+      if(fDetuvo) {
+        sendMessageToBluetooth(M_STOP_RIEGO_GRAL_OK);
+      } else {
+        sendMessageToBluetooth(M_STOP_RIEGO_GRAL_ER);
+      }
+    break;
     }
     case INST_ENCENDER_LUZ_1_MANUAL: {
-      //Serial.println("PRENDER LUZ 1 MANUAL");
       prenderLuz1 = 1;
       break;
     }
     case INST_ENCENDER_LUZ_2_MANUAL: {
-      //Serial.println("PRENDER LUZ 2 MANUAL");
       prenderLuz2 = 1;
       break;
     }
     case INST_APAGAR_LUZ_1_MANUAL: {
-      //Serial.println("APAGAR LUZ 1 MANUAL");
       prenderLuz1 = 2;
       break;
     }
     case INST_APAGAR_LUZ_2_MANUAL: {
-      //Serial.println("APAGAR LUZ 2 MANUAL");
       prenderLuz2 = 2;
       break;
     }
     case INST_AUTO_LUZ_1: {
-      //Serial.println("LUZ AUTO 1");
       prenderLuz1 = 0;
       break;
     }
     case INST_AUTO_LUZ_2: {
-      //Serial.println("LUZ AUTO 2");
       prenderLuz2 = 0;
       break;
     }
     case INST_TIPO_RIEGO_CONT: {
       tipoRiego = 0;
+      sendMessageToMaster(M_CAMBIO_T_RIEGO_CONT);
       break;
     }
     case INST_TIPO_RIEGO_INTER: {
       tipoRiego = 1;
+      sendMessageToMaster(M_CAMBIO_T_RIEGO_INT);
     }
     case INST_INICIO_CONEXION_BT: {
-      if(!evaluaAccionEnProcesoMaestro()){
-        censoManualEnCurso = true;
-        int valorSensores[] = {INST_INICIO_CONEXION_BT, -1, -1, -1, -1, -1, -1, -1, -1};
-        censarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
-        censarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
-        String ret = "";
-        ret = ret + "<" + valorSensores[0] + "," 
-        + tipoRiego + "," 
-        + valorSensores[1] + "," + valorSensores[2] + "," + valorSensores[3] + "," + valorSensores[4] + "," 
-        + valorSensores[5] + "," + valorSensores[6] + "," + valorSensores[7] + "," + valorSensores[8] + ">";
-        Serial.println(ret);
-        censoManualEnCurso = false;
-      } else {
-        //Aca la applicacion deberia verificar si el esclavo le pudo responder, si no es asi lo deberia volver a pedir
-      }
+      censoManualEnCurso = true;
+      int valorSensores[] = {INST_INICIO_CONEXION_BT, -1, -1, -1, -1, -1, -1, -1, -1};
+      censarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
+      censarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
+      String ret = "";
+      ret = ret + "<" + valorSensores[0] + "," 
+      + tipoRiego + "," 
+      + valorSensores[1] + "," + valorSensores[2] + "," + valorSensores[3] + "," + valorSensores[4] + "," 
+      + valorSensores[5] + "," + valorSensores[6] + "," + valorSensores[7] + "," + valorSensores[8] + ">";
+      Serial.print(ret);
+      censoManualEnCurso = false;
     }
     case INST_RIEGO_MANUAL: {
-      // regar las dos zonas
-      if(!evaluaAccionEnProcesoMaestro()){
+      if(!evaluaAccionConjunto){
         riegoManualEnCurso = true;
         tiempoComienzoRiegoManual = millis();
         TIEMPO_RIEGO_MANUAL = tRiegoManual;
         intensidadRiegoZona1 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
-        intensidadRiegoZona2 = intesidadRiego;
-
+        intensidadRiegoZona2 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
         analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
       } else {
-        //Se deberia responder que no pudo hacer el riego manual porque esta operando el maestro
-      }
-      break;
-    }
-    case INST_DETENER_RIEGO_MANUAL: {
-      //Serial.println("STOP RIEGO MANUAL.");
-      if(riegoManualEnCurso){
-        riegoManualEnCurso = false;
-        tiempoComienzoRiegoManual = 0;
-        analogWrite(PIN_BOMBA1, 0);
-        analogWrite(PIN_BOMBA2, 0);
-        //Avisar que se detuvo correctamente el riego en la zona 
-      } else {
-        //No esta regando de manera manual actualmente
+        sendMessageToBluetooth(M_RIEGO_MANUAL_ER);
       }
       break;
     }
     case INST_CENSO_MANUAL: {
-      if(!evaluaAccionEnProcesoMaestro()){ //Pensar si hace falta que tambien se evalue la accion del dispositivo, por si toca muchas veces el boton de censar
+      if (!evaluaAccionConjunto()) {
         censoManualEnCurso = true;
         int valorSensores[] = {INST_CENSO_MANUAL, -1, -1, -1, -1, -1, -1, -1, -1};
         censarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
@@ -294,14 +280,14 @@ void loop() {
         ret = ret + "<" +  valorSensores[0] + "," 
         + valorSensores[1] + "," + valorSensores[2] + "," + valorSensores[3] + "," + valorSensores[4] + "," 
         + valorSensores[5] + "," + valorSensores[6] + "," + valorSensores[7] + "," + valorSensores[8] + ">";
-        Serial.println(ret);
+        Serial.print(ret);
         censoManualEnCurso = false;
       } else {
-        //Aca la applicacion deberia verificar si el esclavo le pudo responder, si no es asi lo deberia volver a pedir
+        sendMessageToBluetooth(M_CENSO_MANUAL_ER);
       }
     }
     default:{
-      Serial.println("No se encontro rutina para ese valor.");
+      //Serial.print("No se encontro rutina para ese valor.");
       break;
     }
   }
@@ -339,25 +325,22 @@ void loop() {
   }
   
   tiempoActual = millis();
-  if (tiempoComienzoRiegoManual > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoManual) >= TIEMPO_RIEGO_MANUAL) {
+  if(tiempoComienzoRiegoManual > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoManual) >= TIEMPO_RIEGO_MANUAL) {
+    // Aviso que termino el riego manual.
     analogWrite(PIN_BOMBA1, 0);
     analogWrite(PIN_BOMBA2, 0);
     riegoManualEnCurso = false;
     tiempoComienzoRiegoManual = 0;
     TIEMPO_RIEGO_MANUAL = 0;
-    String ret = "";
-    ret = ret + "<" + INST_FIN_RIEGO_MANUAL + ">";
-    Serial.print(ret);
+    sendMessageToBluetooth(INST_FIN_RIEGO_MANUAL);
   }
   
   tiempoActual = millis();
   if (tiempoComienzoRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona1) >= TIEMPO_RIEGO) {
     // Aviso que termino de regar la zona 1.
     analogWrite(PIN_BOMBA1, 0);
-    String ret = "";
-    ret = ret + "<" + INST_FIN_RIEGO_Z1 + ">";
-    serialMaster.print(ret);
-    Serial.println(ret);
+    sendMessageToBluetooth(INST_FIN_RIEGO_Z1);
+    sendMessageToMaster(INST_FIN_RIEGO_Z1);
     tiempoDespuesRiegoZona1 = millis();
     tiempoComienzoRiegoZona1 = 0;
   }
@@ -376,17 +359,15 @@ void loop() {
   if (tiempoComienzoRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona2) >= TIEMPO_RIEGO) {
     // Aviso que termino de regar la zona 2.
     analogWrite(PIN_BOMBA2, 0);
-    String ret = "";
-    ret = ret + "<" + INST_FIN_RIEGO_Z2 + ">";
-    serialMaster.print(ret);
-    Serial.println(ret);
+    sendMessageToBluetooth(INST_FIN_RIEGO_Z2);
+    sendMessageToMaster(INST_FIN_RIEGO_Z2);
     tiempoDespuesRiegoZona2 = millis();
     tiempoComienzoRiegoZona2 = 0;
   }
 
   tiempoActual = millis();
   if (tiempoDespuesRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona2) >= TIEMPO_RES_RIEGO) {
-    // Paso el tiempo establecido posterior al riego, se envia al maestro el valor del sensor de humedad del suelo.
+    // Paso el tiempo establecido posterior al riego, se envia al maestro y dispositivo el valor del sensor de humedad del suelo.
     String ret = "";
     ret = ret + "<" + INST_RES_RIEGO_Z2 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO2) + ">";
     serialMaster.print(ret);
@@ -394,9 +375,6 @@ void loop() {
     tiempoDespuesRiegoZona2 = 0;
   }
 
-  // 0 Para prender luz de forma automaticamente
-  // 1 Para prender luz de forma manual
-  // 2 Para apagar luz de forma manual (cualquier valor distinto de 1 o 0)
   if (prenderLuz1 == 1 || (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) > VALOR_LIMITE_LUZ)) {
     digitalWrite(PIN_LED1, HIGH);
   } else {
@@ -422,7 +400,7 @@ void censarZona1(int* vec) {
   vec[4] = analogRead(PIN_SENSOR_LUZ1);
   //String ret = "";
   //ret = ret + "TEMP1: " + vec[1] + ", HUMAMB1: " + vec[2] + ", HUMSUE1: " + vec[3] + ", SENLUZ1: " + vec[4];
-  //Serial.println(ret);
+  //Serial.print(ret);
 }
 
 void censarZona2(int* vec) {
@@ -432,7 +410,7 @@ void censarZona2(int* vec) {
   vec[8] = analogRead(PIN_SENSOR_LUZ2);
   //String ret = "";
   //ret = ret + "TEMP2: " + vec[5] + ", HUMAMB2: " + vec[6] + ", HUMSUE2: " + vec[7] + ", SENLUZ2: " + vec[8];
-  //Serial.println(ret);
+  //Serial.print(ret);
 }
 
 //Analizar 1
@@ -449,15 +427,15 @@ void iniciarMantenimiento() {
 
   if (abs(valorSensores[1] - valorSensores[5]) > 10) {
     valoresMantenimiento[0] = 0;
-    Serial.println("E_S_T");//Sensor de temperatura con fallas
+    //Serial.print("E_S_T");//Sensor de temperatura con fallas
   }
 
   if (abs(valorSensores[2] - valorSensores[6]) > 10) {
     valoresMantenimiento[1] = 0;
-    Serial.println("E_S_H");//Sensor de humedad atmosferica con fallas
+    //Serial.print("E_S_H");//Sensor de humedad atmosferica con fallas
   }
 
-  //DEBERIA SER DE NOCHE PORQUE SI NO NUNCA LO VA A DETECTAR
+  // DEBERIA SER DE NOCHE PORQUE SI NO NUNCA LO VA A DETECTAR
   // PRENDO LAS LUCES PARA LUEGO AL FINALIZAR, VER SI AUMENTA USO EL ARRAY DE MANTENIMIENTO PARA GUARDAR EL CENSO
   valoresMantenimiento[3] = valorSensores[4];
   digitalWrite(PIN_LED1, HIGH);
@@ -471,7 +449,7 @@ void finalizarMantenimiento() {
   int valorLuzActualZona = analogRead(PIN_SENSOR_LUZ1);
   if(valoresMantenimiento[3] >= valorLuzActualZona) {
     valoresMantenimiento[3] = 0;
-    Serial.println("E_L_1");//Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto
+    //Serial.print("E_L_1");//Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto
   }
   digitalWrite(PIN_LED1, LOW);
 
@@ -479,7 +457,7 @@ void finalizarMantenimiento() {
 
   if(valoresMantenimiento[4] >= valorLuzActualZona) {
     valoresMantenimiento[4] = 0;
-    Serial.println("E_L_2");//Se encendio la luz de la zona 2 y el sensor LDR2 no lo detecto
+    //Serial.print("E_L_2");//Se encendio la luz de la zona 2 y el sensor LDR2 no lo detecto
   }
   digitalWrite(PIN_LED2, LOW);
   /*
@@ -489,8 +467,7 @@ void finalizarMantenimiento() {
   ret = ret + "<" + INST_RES_MANTENIMIENTO + "," + valoresMantenimiento[0] + "," + valoresMantenimiento[1] + 
   "," + valoresMantenimiento[2] + "," + valoresMantenimiento[3] + "," + valoresMantenimiento[4] + ">";
   serialMaster.print(ret);
-  Serial.println(ret);
-
+  Serial.print(ret);
   tiempoMantenimiento = 0;
   mantenimientoManualEnCurso = false;
 }
@@ -504,24 +481,23 @@ void enviarResultadoCensoAMaestro(int* vec) {
   String ret = "";
   ret = ret + "<" + vec[0] + "," + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + ">";
   serialMaster.print(ret);
-  Serial.println(ret);
+  //Serial.print(ret);
 }
 
 void leerMaestro(int* inst, float* intesidad) {
-  byte charIndex = 0; // Es static porque se pudo haber interrupido la lectura y tiene que continuar desde donde quedo.
+  byte charIndex = 0;
   char charLeido;
   char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
   int fieldIndex = 0;
   char entrada[60];
   
-
   if (serialMaster.available() > 0) {
     for (int i = 0; i < 60; i++) {
       entrada[i] = '\0';
     }
     serialMaster.readBytesUntil('>', entrada, 59);
     int i = 0;
-    while(entrada[i] != '\0' && i < 59) {
+    while (entrada[i] != '\0' && i < 59) {
       if (entrada[i] == '<') {
         i++;
         continue;
@@ -534,7 +510,7 @@ void leerMaestro(int* inst, float* intesidad) {
         charIndex = 0;
         if (fieldIndex == 0) {
           *inst = atoi(input);
-          Serial.println(*inst);
+          Serial.print(*inst);
         } else if (fieldIndex == 1) {
           *intesidad = atof(input);
         }
@@ -544,15 +520,15 @@ void leerMaestro(int* inst, float* intesidad) {
     }
 
     input[charIndex] = '\0';
-    if(fieldIndex == 0){
+    if (fieldIndex == 0){
       *inst = atoi(input);
-    } else if(fieldIndex == 1) {
+    } else if (fieldIndex == 1) {
       *intesidad = atof(input);
     }
 
-    String ret = "";
-    ret = ret + "INSTRUCCION: " + *inst + ", INTENSIDAD: " + *intesidad;            
-    Serial.println(ret);
+    //String ret = "";
+    //ret = ret + "INSTRUCCION: " + *inst + ", INTENSIDAD: " + *intesidad;            
+    //Serial.print(ret);
   }
 }
 
@@ -565,7 +541,7 @@ void leerBluetooth(int* inst, float* intesidad, int* tiempo) {
     }
 
     Serial.readBytesUntil('>', entrada, 59);
-    Serial.println("L_B_1"); //Leyendo datos del modulo bluetooth
+    //Serial.print("L_B_1"); //Leyendo datos del modulo bluetooth
     int charIndex = 0;
     char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
     int fieldIndex = 0;
@@ -584,10 +560,10 @@ void leerBluetooth(int* inst, float* intesidad, int* tiempo) {
         charIndex = 0;
         if (fieldIndex == 0) {
           *inst = atoi(input);
-          Serial.println(*inst);
+          //Serial.print(*inst);
         } else if (fieldIndex == 1) {
           *intesidad = atof(input);
-        } else if(fieldIndex == 2){
+        } else if (fieldIndex == 2) {
           *tiempo = atoi(input);
         }
         fieldIndex++;
@@ -600,10 +576,14 @@ void leerBluetooth(int* inst, float* intesidad, int* tiempo) {
       *inst = atoi(input);
     } else if (fieldIndex == 1) {
       *intesidad = atof(input);
-    } else if(fieldIndex == 2){
+    } else if (fieldIndex == 2) {
       *tiempo = atoi(input);
     }
   }
+}
+
+bool evaluaAccionConjunto(){
+  return evaluaAccionEnProcesoBluetooth() || evaluaAccionEnProcesoMaestro();
 }
 
 bool evaluaAccionEnProcesoBluetooth() {
@@ -612,4 +592,16 @@ bool evaluaAccionEnProcesoBluetooth() {
 
 bool evaluaAccionEnProcesoMaestro() {
   return riegoZona1AutomaticoEnCurso || riegoZona2AutomaticoEnCurso || censoAutomaticoEnCurso || mantenimientoAutomaticoEnCurso;
+}
+
+void sendMessageToMaster(const int nMsj){
+  String msj = "";
+  msj = msj + "<" + nMsj + ">";
+  serialMaster.print(msj);
+}
+
+void sendMessageToBluetooth(const int nMsj){
+  String msj = "";
+  msj = msj + "<" + nMsj + ">";
+  Serial.print(msj);
 }

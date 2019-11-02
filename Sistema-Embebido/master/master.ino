@@ -50,11 +50,12 @@ static unsigned int MS_INTERVAL_TO_CENSO = 10000;
 static unsigned long currentMillis = 0; // tiempo actual
 static unsigned long msParaNuevoCenso = 0;  // tiempo que falta para enviar el censo
 
+bool riegoEnCursoZona1 = false;
+bool riegoEnCursoZona2 = false;
+
 //La luz se comporta asi: 1 totalmente iluminado, 1023 totalmente oscuro.
 //La humedad del suelo se comporta asi: 1 totalmente humedo, 1023 totalmente seco.
 
-static bool riegoEnCursoZona1 = false;
-static bool riegoEnCursoZona2 = false;
 static bool mantenimientoEnCurso = false;
 static int valoresCensoAnterior[] = { -1, -1, -1, -1}; //Necesito que sea global, se guarda luego de censar y determinar si censo
 /** valores de censo anterior 
