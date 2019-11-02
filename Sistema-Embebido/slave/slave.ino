@@ -33,7 +33,7 @@
 
 #define M_INICIO_ARDUINO_OK         50
 #define M_INICIO_RIEGO_Z1           52
-#define M_INICIO_RtO_Z2           53
+#define M_INICIO_RIEGO_Z2           53
 #define M_INICIO_RIEGO_M            54
 #define M_INICIO_CENSO              55
 #define M_INICIO_CENSO_M            56
@@ -146,6 +146,7 @@ void loop() {
         censarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
         censarZona2(valorSensores); //Obtiene los valores de los sensores de la zona 2
         enviarResultadoCensoAMaestro(valorSensores);
+        censoAutomaticoEnCurso = false;
       }
       break;
     }
@@ -208,7 +209,7 @@ void loop() {
       } else {
         sendMessageToBluetooth(M_STOP_RIEGO_GRAL_ER);
       }
-    break;
+      break;
     }
     case INST_ENCENDER_LUZ_1_MANUAL: {
       prenderLuz1 = 1;
@@ -242,6 +243,7 @@ void loop() {
     case INST_TIPO_RIEGO_INTER: {
       tipoRiego = 1;
       sendMessageToMaster(M_CAMBIO_T_RIEGO_INT);
+      break;
     }
     case INST_INICIO_CONEXION_BT: {
       censoManualEnCurso = true;
@@ -255,9 +257,10 @@ void loop() {
       + valorSensores[5] + "," + valorSensores[6] + "," + valorSensores[7] + "," + valorSensores[8] + ">";
       Serial.print(ret);
       censoManualEnCurso = false;
+      break;
     }
     case INST_RIEGO_MANUAL: {
-      if(!evaluaAccionConjunto){
+      if(!evaluaAccionConjunto()){
         riegoManualEnCurso = true;
         tiempoComienzoRiegoManual = millis();
         TIEMPO_RIEGO_MANUAL = tRiegoManual;
@@ -285,6 +288,7 @@ void loop() {
       } else {
         sendMessageToBluetooth(M_CENSO_MANUAL_ER);
       }
+      break;
     }
     default:{
       //Serial.print("No se encontro rutina para ese valor.");
@@ -342,6 +346,7 @@ void loop() {
     sendMessageToBluetooth(INST_FIN_RIEGO_Z1);
     sendMessageToMaster(INST_FIN_RIEGO_Z1);
     tiempoDespuesRiegoZona1 = millis();
+    riegoZona1AutomaticoEnCurso = false;
     tiempoComienzoRiegoZona1 = 0;
   }
 
@@ -362,6 +367,7 @@ void loop() {
     sendMessageToBluetooth(INST_FIN_RIEGO_Z2);
     sendMessageToMaster(INST_FIN_RIEGO_Z2);
     tiempoDespuesRiegoZona2 = millis();
+    riegoZona2AutomaticoEnCurso = false;
     tiempoComienzoRiegoZona2 = 0;
   }
 
@@ -591,6 +597,11 @@ bool evaluaAccionEnProcesoBluetooth() {
 }
 
 bool evaluaAccionEnProcesoMaestro() {
+  Serial.println("var");
+  Serial.println(riegoZona1AutomaticoEnCurso);
+  Serial.println(riegoZona2AutomaticoEnCurso);
+  Serial.println(censoAutomaticoEnCurso);
+  Serial.println(mantenimientoAutomaticoEnCurso);
   return riegoZona1AutomaticoEnCurso || riegoZona2AutomaticoEnCurso || censoAutomaticoEnCurso || mantenimientoAutomaticoEnCurso;
 }
 

@@ -87,7 +87,7 @@ void loop() {
     Serial.println("M_C"); //Maestro envia orden de censar al esclavo
     enviarInstruccionAlEsclavo(INST_CENSO);
     msParaNuevoCenso = millis();
-    MS_INTERVAL_TO_CENSO = (unsigned int)30000;
+    MS_INTERVAL_TO_CENSO = (unsigned int)45000;
   }
 
   // [0] => instruccion
@@ -231,6 +231,9 @@ void loop() {
 void leerInstruccionEsclavo(int* vec) {
   if (serialSlave.available() > 0) {
     char entrada[60];
+    for (int i = 0; i < 60; i++) {
+      entrada[i] = '\0';
+    }
     serialSlave.readBytesUntil('>', entrada, 59);
     Serial.println("L_E"); //Leyendo del esclavo
     
