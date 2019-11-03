@@ -101,7 +101,7 @@ static int prenderLuz2 = 0; // 0 Es automatica, 1 es encendido manual, distinto 
 static float intensidadRiegoZona1 = 0;
 static float intensidadRiegoZona2 = 0;
 
-int valoresMantenimiento[5] = {1, 1, 1, 1, 1};
+static int vecMant [5];
 
 /* 
 Valores de Mantenimiento
@@ -150,9 +150,31 @@ void loop() {
       }
       break;
     }
-    //Analizar
     case INST_MANTENIMIENTO: {
-      iniciarMantenimiento();
+      if(!evaluaAccionConjunto()){
+        tiempoMantenimiento = millis();
+        mantenimientoManualEnCurso = true;
+        int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
+        censarZona1(valorSensores);
+        censarZona2(valorSensores);
+        for (int i = 0; i < sizeof(vecMant); i++) {
+          vecMant[i] = 1;
+        }
+        if (abs(valorSensores[1] - valorSensores[5]) > 10) {
+          vecMant[0] = 0;
+          //Serial.println("E_S_T");//Sensor de temperatura con fallas
+        }
+        if (abs(valorSensores[2] - valorSensores[6]) > 10) {
+          vecMant[1] = 0;
+          //Serial.println("E_S_H");//Sensor de humedad atmosferica con fallas
+        }
+        vecMant[3] = valorSensores[4];
+        digitalWrite(PIN_LED1, HIGH);
+        vecMant[4] = valorSensores[8];
+        digitalWrite(PIN_LED2, HIGH);
+      } else {
+        sendMessageToBluetooth(M_MANT_MANUAL_ER);
+      }
       break;
     }
     case INST_RIEGO_Z1: {
@@ -164,7 +186,7 @@ void loop() {
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z1 + "," + intensidadRiegoZona1 + "," + TIEMPO_RIEGO + ">";
-        Serial.print(ret);
+        Serial.println(ret);
       }
       break;
     }
@@ -177,7 +199,7 @@ void loop() {
         analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);        
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z2 + "," + intensidadRiegoZona2 + "," + TIEMPO_RIEGO + ">";
-        Serial.print(ret);
+        Serial.println(ret);
       }
       break;
     }
@@ -255,7 +277,7 @@ void loop() {
       + tipoRiego + "," 
       + valorSensores[1] + "," + valorSensores[2] + "," + valorSensores[3] + "," + valorSensores[4] + "," 
       + valorSensores[5] + "," + valorSensores[6] + "," + valorSensores[7] + "," + valorSensores[8] + ">";
-      Serial.print(ret);
+      Serial.println(ret);
       censoManualEnCurso = false;
       break;
     }
@@ -283,7 +305,7 @@ void loop() {
         ret = ret + "<" +  valorSensores[0] + "," 
         + valorSensores[1] + "," + valorSensores[2] + "," + valorSensores[3] + "," + valorSensores[4] + "," 
         + valorSensores[5] + "," + valorSensores[6] + "," + valorSensores[7] + "," + valorSensores[8] + ">";
-        Serial.print(ret);
+        Serial.println(ret);
         censoManualEnCurso = false;
       } else {
         sendMessageToBluetooth(M_CENSO_MANUAL_ER);
@@ -291,7 +313,7 @@ void loop() {
       break;
     }
     default:{
-      //Serial.print("No se encontro rutina para ese valor.");
+      //Serial.println("No se encontro rutina para ese valor.");
       break;
     }
   }
@@ -300,30 +322,33 @@ void loop() {
   if(tipoRiego == 1) {
     // Si es intermitente tengo que ver si está regando la zona y despues tengo que ver si esta dentro
     // del tiempo de intermitencia. 
-    if (tiempoComienzoRiegoZona1 > 0 || tiempoComienzoRiegoManual > 0) {
+    if (riegoZona1AutomaticoEnCurso || riegoManualEnCurso) {
       // prendido desde el tiempo 0 hasta el tiempo de intermitencia y apagado desde el tiempo de intermitencia hasta el
       // doble del tiempo de intermitencia. Ejemplo [0, 1) prendido [1, 2] apagado
       unsigned long tiempoDentroIntermitencia = (unsigned long)(tiempoActual - tiempoComienzoIntermitencia1);
 
-      analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
-      if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA) {
+      if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA && tiempoDentroIntermitencia < TIEMPO_INTERMITENCIA * 2) {
         analogWrite(PIN_BOMBA1, 0);
-        if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
-          tiempoComienzoIntermitencia1 = millis();
-        }
+      }
+      else if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
+        analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
+        tiempoComienzoIntermitencia1 = millis();
+      } else {
+        analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
       }
     }
-    if (tiempoComienzoRiegoZona2 > 0 || tiempoComienzoRiegoManual > 0) {
-      // prendido desde el tiempo 0 hasta el tiempo de intermitencia y apagado desde el tiempo de intermitencia hasta el
-      // doble del tiempo de intermitencia. Ejemplo [0, 1) prendido [1, 2] apagado
+    
+    if (riegoZona2AutomaticoEnCurso || riegoManualEnCurso) {
       unsigned long tiempoDentroIntermitencia = (unsigned long)(tiempoActual - tiempoComienzoIntermitencia2);
 
-      analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
-      if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA) {
+      if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA && tiempoDentroIntermitencia < TIEMPO_INTERMITENCIA * 2) {
         analogWrite(PIN_BOMBA2, 0);
-        if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
-          tiempoComienzoIntermitencia2 = millis();
-        }
+      }
+      else if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
+        tiempoComienzoIntermitencia2 = millis();
+      } else {
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
       }
     }
   }
@@ -356,7 +381,7 @@ void loop() {
     String ret = "";
     ret = ret + "<" + INST_RES_RIEGO_Z1 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO1) + ">"; 
     serialMaster.print(ret);
-    Serial.print(ret);
+    Serial.println(ret);
     tiempoDespuesRiegoZona1 = 0;
   }
   
@@ -377,25 +402,48 @@ void loop() {
     String ret = "";
     ret = ret + "<" + INST_RES_RIEGO_Z2 + "," + analogRead(PIN_SENSOR_HUMEDAD_SUELO2) + ">";
     serialMaster.print(ret);
-    Serial.print(ret);
+    Serial.println(ret);
     tiempoDespuesRiegoZona2 = 0;
   }
 
-  if (prenderLuz1 == 1 || (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) > VALOR_LIMITE_LUZ)) {
-    digitalWrite(PIN_LED1, HIGH);
-  } else {
-    digitalWrite(PIN_LED1, LOW);
+  if(!mantenimientoManualEnCurso){
+    if (prenderLuz1 == 1 || (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) > VALOR_LIMITE_LUZ)) {
+      digitalWrite(PIN_LED1, HIGH);
+    } else {
+      digitalWrite(PIN_LED1, LOW);
+    }
+
+    if (prenderLuz2 == 1 || (prenderLuz2 == 0 && analogRead(PIN_SENSOR_LUZ2) > VALOR_LIMITE_LUZ)) {
+      digitalWrite(PIN_LED2, HIGH);
+    } else {
+      digitalWrite(PIN_LED2, LOW);
+    }
   }
 
-  if (prenderLuz2 == 1 || (prenderLuz2 == 0 && analogRead(PIN_SENSOR_LUZ2) > VALOR_LIMITE_LUZ)) {
-    digitalWrite(PIN_LED2, HIGH);
-  } else {
-    digitalWrite(PIN_LED2, LOW);
-  }
-
+ 
   tiempoActual = millis();
   if (tiempoMantenimiento > 0 && (unsigned long)(tiempoActual - tiempoMantenimiento) >= TIEMPO_RES_MANTENIMIENTO) {
-    finalizarMantenimiento();
+    //Censa la luz para ver como varia y envia los resultados al esclavo
+    int valorLuzActualZona = analogRead(PIN_SENSOR_LUZ1);
+    if(vecMant[3] >= valorLuzActualZona) {
+      vecMant[3] = 0;
+      //Serial.println("E_L_1");
+      //Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto
+    }
+    digitalWrite(PIN_LED1, LOW);
+    valorLuzActualZona = analogRead(PIN_SENSOR_LUZ2);
+    if(vecMant[4] >= valorLuzActualZona) {
+      vecMant[4] = 0;
+      //Serial.println("E_L_2");
+      //Se encendio la luz de la zona 2 y el sensor LDR2 no lo detecto
+    }
+    digitalWrite(PIN_LED2, LOW);
+    //Se envia <instruccion, ErrorTemp, ErrorHumAmb, ErrorHumSuelo, ErrorLDR1, ErrorLDR2> 
+    String ret = "";
+    ret = ret + "<" + INST_RES_MANTENIMIENTO + "," + vecMant[0] + "," + vecMant[1] + "," + vecMant[2] + "," + vecMant[3] + "," + vecMant[4] + ">";
+    Serial.println(ret);
+    tiempoMantenimiento = 0;
+    mantenimientoManualEnCurso = false;
   }
 }
 
@@ -404,9 +452,6 @@ void censarZona1(int* vec) {
   vec[2] = sensorDHT1.readHumidity();
   vec[3] = analogRead(PIN_SENSOR_HUMEDAD_SUELO1);
   vec[4] = analogRead(PIN_SENSOR_LUZ1);
-  //String ret = "";
-  //ret = ret + "TEMP1: " + vec[1] + ", HUMAMB1: " + vec[2] + ", HUMSUE1: " + vec[3] + ", SENLUZ1: " + vec[4];
-  //Serial.print(ret);
 }
 
 void censarZona2(int* vec) {
@@ -414,68 +459,6 @@ void censarZona2(int* vec) {
   vec[6] = sensorDHT2.readHumidity();
   vec[7] = analogRead(PIN_SENSOR_HUMEDAD_SUELO2);
   vec[8] = analogRead(PIN_SENSOR_LUZ2);
-  //String ret = "";
-  //ret = ret + "TEMP2: " + vec[5] + ", HUMAMB2: " + vec[6] + ", HUMSUE2: " + vec[7] + ", SENLUZ2: " + vec[8];
-  //Serial.print(ret);
-}
-
-//Analizar 1
-void iniciarMantenimiento() {
-  tiempoMantenimiento = millis();
-  mantenimientoManualEnCurso = true;
-
-  int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
-  censarZona1(valorSensores);
-  censarZona2(valorSensores);
-  for (int i = 0; i < sizeof(valoresMantenimiento); i++) {
-    valoresMantenimiento[i] = 1;
-  }
-
-  if (abs(valorSensores[1] - valorSensores[5]) > 10) {
-    valoresMantenimiento[0] = 0;
-    //Serial.print("E_S_T");//Sensor de temperatura con fallas
-  }
-
-  if (abs(valorSensores[2] - valorSensores[6]) > 10) {
-    valoresMantenimiento[1] = 0;
-    //Serial.print("E_S_H");//Sensor de humedad atmosferica con fallas
-  }
-
-  // DEBERIA SER DE NOCHE PORQUE SI NO NUNCA LO VA A DETECTAR
-  // PRENDO LAS LUCES PARA LUEGO AL FINALIZAR, VER SI AUMENTA USO EL ARRAY DE MANTENIMIENTO PARA GUARDAR EL CENSO
-  valoresMantenimiento[3] = valorSensores[4];
-  digitalWrite(PIN_LED1, HIGH);
-  valoresMantenimiento[4] = valorSensores[8];
-  digitalWrite(PIN_LED2, HIGH);
-}
-
-//Analizar 2
-void finalizarMantenimiento() {
-  //Censa la luz para ver como varia y envia los resultados al esclavo
-  int valorLuzActualZona = analogRead(PIN_SENSOR_LUZ1);
-  if(valoresMantenimiento[3] >= valorLuzActualZona) {
-    valoresMantenimiento[3] = 0;
-    //Serial.print("E_L_1");//Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto
-  }
-  digitalWrite(PIN_LED1, LOW);
-
-  valorLuzActualZona = analogRead(PIN_SENSOR_LUZ2);
-
-  if(valoresMantenimiento[4] >= valorLuzActualZona) {
-    valoresMantenimiento[4] = 0;
-    //Serial.print("E_L_2");//Se encendio la luz de la zona 2 y el sensor LDR2 no lo detecto
-  }
-  digitalWrite(PIN_LED2, LOW);
-  /*
-   * Se envia <instruccion, ErrorTemp, ErrorHumAmb, ErrorHumSuelo, ErrorLDR1, ErrrorLDR2>
-   */
-  String ret = "";
-  ret = ret + "<" + INST_RES_MANTENIMIENTO + "," + valoresMantenimiento[0] + "," + valoresMantenimiento[1] + 
-  "," + valoresMantenimiento[2] + "," + valoresMantenimiento[3] + "," + valoresMantenimiento[4] + ">";
-  serialMaster.print(ret);
-  Serial.print(ret);
-  tiempoMantenimiento = 0;
-  mantenimientoManualEnCurso = false;
 }
 
 void enviarResultadoCensoAMaestro(int* vec) {
@@ -487,7 +470,6 @@ void enviarResultadoCensoAMaestro(int* vec) {
   String ret = "";
   ret = ret + "<" + vec[0] + "," + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + ">";
   serialMaster.print(ret);
-  //Serial.print(ret);
 }
 
 void leerMaestro(int* inst, float* intesidad) {
@@ -516,7 +498,6 @@ void leerMaestro(int* inst, float* intesidad) {
         charIndex = 0;
         if (fieldIndex == 0) {
           *inst = atoi(input);
-          Serial.print(*inst);
         } else if (fieldIndex == 1) {
           *intesidad = atof(input);
         }
@@ -531,23 +512,17 @@ void leerMaestro(int* inst, float* intesidad) {
     } else if (fieldIndex == 1) {
       *intesidad = atof(input);
     }
-
-    //String ret = "";
-    //ret = ret + "INSTRUCCION: " + *inst + ", INTENSIDAD: " + *intesidad;            
-    //Serial.print(ret);
   }
 }
 
 void leerBluetooth(int* inst, float* intesidad, int* tiempo) {
   char entrada[60];
-
   if (Serial.available() > 0) {
     for (int i = 0; i < 60; i++) {
       entrada[i] = '\0';
     }
 
     Serial.readBytesUntil('>', entrada, 59);
-    //Serial.print("L_B_1"); //Leyendo datos del modulo bluetooth
     int charIndex = 0;
     char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
     int fieldIndex = 0;
@@ -566,7 +541,6 @@ void leerBluetooth(int* inst, float* intesidad, int* tiempo) {
         charIndex = 0;
         if (fieldIndex == 0) {
           *inst = atoi(input);
-          //Serial.print(*inst);
         } else if (fieldIndex == 1) {
           *intesidad = atof(input);
         } else if (fieldIndex == 2) {
@@ -597,11 +571,6 @@ bool evaluaAccionEnProcesoBluetooth() {
 }
 
 bool evaluaAccionEnProcesoMaestro() {
-  Serial.println("var");
-  Serial.println(riegoZona1AutomaticoEnCurso);
-  Serial.println(riegoZona2AutomaticoEnCurso);
-  Serial.println(censoAutomaticoEnCurso);
-  Serial.println(mantenimientoAutomaticoEnCurso);
   return riegoZona1AutomaticoEnCurso || riegoZona2AutomaticoEnCurso || censoAutomaticoEnCurso || mantenimientoAutomaticoEnCurso;
 }
 
@@ -614,5 +583,5 @@ void sendMessageToMaster(const int nMsj){
 void sendMessageToBluetooth(const int nMsj){
   String msj = "";
   msj = msj + "<" + nMsj + ">";
-  Serial.print(msj);
+  Serial.println(msj);
 }
