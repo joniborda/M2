@@ -1,5 +1,7 @@
 #include <SD.h>
 #include <SoftwareSerial.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
 // PUERTOS DE CONEXION CON ESCLAVO
 #define PUERTO_RX_SLAVE 2
@@ -33,6 +35,12 @@
 #define INST_FIN_RIEGO_MANUAL       24 // INSTRUCCION QUE INDICA QUE SE FINALIZO EL RIEGO MANUAL
 #define INST_DETENER_RIEGO_MANUAL   25 // INSTRUCCION QUE DETIENE EL RIEGO MANUAL
 
+#define M_INICIO_ARDUINO_OK         50
+#define M_INICIO_RIEGO_M            54
+#define M_STOP_RIEGO_GRAL_OK        61
+#define M_CAMBIO_T_RIEGO_CONT       63
+#define M_CAMBIO_T_RIEGO_INT        64
+
 #define PRIORIDAD_TEMP 0.05
 #define PRIORIDAD_HUM_AMB 0.05
 #define PRIORIDAD_HUM_SUELO 0.3
@@ -44,26 +52,24 @@
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 
+LiquidCrystal_I2C lcd(0x3F,16,4); 
+
 // INTERVALO DE RUTINA DE CENSO EN MS
 static unsigned int MS_INTERVAL_TO_CENSO = 10000;
 
 static unsigned long currentMillis = 0; // tiempo actual
 static unsigned long msParaNuevoCenso = 0;  // tiempo que falta para enviar el censo
 
-bool riegoEnCursoZona1 = false;
-bool riegoEnCursoZona2 = false;
-
 //La luz se comporta asi: 1 totalmente iluminado, 1023 totalmente oscuro.
 //La humedad del suelo se comporta asi: 1 totalmente humedo, 1023 totalmente seco.
 
 static bool mantenimientoEnCurso = false;
 static int valoresCensoAnterior[] = { -1, -1, -1, -1}; //Necesito que sea global, se guarda luego de censar y determinar si censo
-/** valores de censo anterior 
- *  0 temp1
- *  1 suelo1
- *  2 temp2
- *  3 suelo2
- *  
+/*  Valores de censo anterior 
+ *  0 Temp1
+ *  1 HumAmb1
+ *  2 Temp2
+ *  3 HumAmb2
  *  Para determinar que valor corresponde a cada zona usar la formula [4 * (zona - 1) + indice]
  */
 void setup() {
@@ -77,10 +83,12 @@ void setup() {
     Serial.println("SD_2"); //Tarjeta SD incializada correctamente.
     inicializarArchivosDeCensos();
   }
+
+  lcd.init();
+  lcd.backlight();
 }
 
 void loop() {
-
   currentMillis = millis();
   if ((unsigned long)(currentMillis - msParaNuevoCenso) >= MS_INTERVAL_TO_CENSO) {
 
@@ -90,20 +98,20 @@ void loop() {
     MS_INTERVAL_TO_CENSO = (unsigned int)45000;
   }
 
-  // [0] => instruccion
-  // [1] => temp1
-  // [2] => humAmb1
-  // [3] => suelo1
-  // [4] => luz
-  // [5] => temp2
-  // [6] => humAmb2
-  // [7] => suelo2
-  // [8] => luz2
+  // [0] => Instruccion
+  // [1] => Temp1
+  // [2] => HumAmb1
+  // [3] => HumSuelo1
+  // [4] => Luz
+  // [5] => Temp2
+  // [6] => HumAmb2
+  // [7] => HumSuelo2
+  // [8] => Luz2
   int valoresRecibidos[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1};
   leerInstruccionEsclavo(valoresRecibidos); //Proviene del esclavo
   switch (valoresRecibidos[0]) {
     case INST_CENSO: {
-        // implementar guardar que el esclavo inicio el censo
+        // Implementar guardar que el esclavo inicio el censo
         break;
       }
     case INST_FIN_CENSO: {
@@ -131,7 +139,6 @@ void loop() {
           // si le envio el tiempo se va a pisar con el que le dijo el bluetooth
           ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ",10000>";
           serialSlave.print(ret);
-          riegoEnCursoZona1 = true;
           Serial.println(ret);
           //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
@@ -145,7 +152,6 @@ void loop() {
           // si le envio el tiempo se va a pisar con el que le dijo el bluetooth
           ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ",10000>";
           serialSlave.print(ret);
-          riegoEnCursoZona2 = true;
           Serial.println(ret);
           //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
@@ -157,18 +163,17 @@ void loop() {
         break;
       }
     case INST_MANTENIMIENTO: {
-        // el esclavo le avisa que empezo el mantenimiento
+        // El esclavo le avisa que empezo el mantenimiento
         mantenimientoEnCurso = true;
         break;
       }
     case INST_RES_MANTENIMIENTO: {
-        // el esclavo le avisa que termino el mantenimiento
+        // El esclavo le avisa que termino el mantenimiento
         mantenimientoEnCurso = false;
         break;
       }
     case INST_FIN_RIEGO_Z1: {
         // Ocurre cuando el esclavo me avisa que termino de regar la zona 1
-        riegoEnCursoZona1 = false;
         String ret = "";
         ret = ret + "<" + INST_FIN_RIEGO_Z1 + ">";
         Serial.println(ret);
@@ -176,7 +181,6 @@ void loop() {
       }
     case INST_FIN_RIEGO_Z2: {
         // Ocurre cuando el esclavo me avisa que termino de regar la zona 2
-        riegoEnCursoZona2 = false;
         String ret = "";
         ret = ret + "<" + INST_FIN_RIEGO_Z2 + ">";
         Serial.println(ret);
@@ -186,22 +190,27 @@ void loop() {
       //Aca se analiza el resultado del riego de la zona 1.
       analizarResultadoRiego(1, valoresRecibidos[1], "V1.TXT");
       break;
-      //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
     }
     case INST_RES_RIEGO_Z2: {
       //Aca se analiza el resultado del riego de la zona 2.
       analizarResultadoRiego(2, valoresRecibidos[1], "V2.TXT");
       break;
-      //Tambien aca podriamos determinar si la bomba esta funcionando correctamente.
     }
-    case INST_DETENER_RIEGO_Z1: {
-      // El esclavo me avisa que termino el riego
-      riegoEnCursoZona1 = false;
+    case M_INICIO_ARDUINO_OK: {
+      lcd.setCursor(0,0);
+      lcd.print("Hello, world!");
       break;
     }
-    case INST_DETENER_RIEGO_Z2: {
-      // El esclavo me avisa que termino el riego
-      riegoEnCursoZona2 = false;
+    case M_INICIO_RIEGO_M: {
+      break;
+    }
+    case M_STOP_RIEGO_GRAL_OK: {
+      break;
+    }
+    case M_CAMBIO_T_RIEGO_CONT: {
+      break;
+    }
+    case M_CAMBIO_T_RIEGO_INT: {
       break;
     }
     case INST_ENCENDER_LUZ_1_MANUAL: {
@@ -214,15 +223,6 @@ void loop() {
       break;
     }
     case INST_APAGAR_LUZ_2_MANUAL: {
-      break;
-    }
-    case INST_AUTO_LUZ_1: {
-      break;
-    }
-    case INST_AUTO_LUZ_2: {
-      break;
-    }
-    case INST_INICIO_CONEXION_BT: {
       break;
     }
   }
