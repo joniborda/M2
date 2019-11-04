@@ -9,6 +9,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int conectionAttempts = 3;
     private TabLayout tabs;
+    private Button btnConnect;
 
     // Sensores
     private SensorManager sensorManager;
@@ -51,7 +53,9 @@ public class MainActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_main);
 
-        SectionsPagerAdapter sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager());
+        btHandler = new BTHandler();
+
+        SectionsPagerAdapter sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager(), btHandler);
         tabs = findViewById(R.id.tabs);
         ViewPager viewPager = findViewById(R.id.view_pager);
 
@@ -63,24 +67,25 @@ public class MainActivity extends AppCompatActivity {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         Sensor sensorShake = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         Sensor sensorProx = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        Sensor gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
         //Asigno listeners a sensores
         sensorManager.registerListener(sensorChangedEventListener, sensorShake, SensorManager.SENSOR_DELAY_GAME);
-        sensorManager.registerListener(sensorChangedEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
         sensorManager.registerListener(sensorChangedEventListener, sensorProx, SensorManager.SENSOR_DELAY_GAME);
 
         acelVal = SensorManager.GRAVITY_EARTH;
         acelLast = SensorManager.GRAVITY_EARTH;
         shake = 0.00f;
 
-        btHandler = new BTHandler();
-
-        Button btnConnect = findViewById(R.id.btn_connect);
+        btnConnect = findViewById(R.id.btn_connect);
         btnConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showDialogConnect();
+                if(btnConnect.getText().equals(getString(R.string.btn_connect))) {
+                    showDialogConnect();
+                }
+                else {
+                    desconnect();
+                }
             }
         });
     }
@@ -90,6 +95,14 @@ public class MainActivity extends AppCompatActivity {
         Objects.requireNonNull(tabs.getTabAt(0)).setIcon(R.drawable.home_icon);
         Objects.requireNonNull(tabs.getTabAt(1)).setIcon(R.drawable.settings_icon);
         Objects.requireNonNull(tabs.getTabAt(2)).setIcon(R.drawable.maintenance_icon);
+    }
+
+    private void desconnect() {
+        try {
+            btHandler.desconnect();
+        } catch (IOException ignored) {
+        }
+        setArduinoConnected(0);
     }
 
     SensorEventListener sensorChangedEventListener
@@ -107,9 +120,6 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case Sensor.TYPE_ACCELEROMETER:
                     eventShake(event);
-                    break;
-                case Sensor.TYPE_GYROSCOPE:
-                    eventGyroscope(event);
                     break;
             }
         }
@@ -167,19 +177,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void eventGyroscope(SensorEvent event) {
-        if(event.values[2] < -0.5f) { // clockwise
-            if (isArduinoConnected() == 1) {
-                Toast.makeText(this, "Iniciando monitoreo del SmartGarden...", Toast.LENGTH_SHORT).show();
-                if(!btHandler.sendMsg(new Message(Command.MAINTENANCE))) {
-                    setArduinoConnected(0);
-                }
-            } else if(isArduinoConnected() == 0){
-                Toast.makeText(this, "Debe iniciar una conexión con SmartGarden", Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-
     public void tryConnect() {
         setArduinoConnected(2);
         Toast.makeText(this, "Intentando establecer conexión...", Toast.LENGTH_SHORT).show();
@@ -199,7 +196,6 @@ public class MainActivity extends AppCompatActivity {
         thread.start();
     }
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         //metodo que cuando recibe que me conecte al bluetooh, trata de conectarse al arduino
@@ -214,19 +210,27 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         sensorManager.unregisterListener(sensorChangedEventListener);
         if (isArduinoConnected() == 1) {
-            try {
-                btHandler.desconnect();
-            } catch (IOException ignored) {
-            }
-            setArduinoConnected(0);
+            desconnect();
         }
     }
 
     public void setArduinoConnected(int arduinoConnected) {
-        if(arduinoConnected == 0) conectionAttempts--;
-        if (arduinoConnected == 1) conectionAttempts = 3;
+        if(arduinoConnected == 0) {
+            conectionAttempts--;
+            runOnUiThread(() -> btnConnect.setText(R.string.btn_connect));
+        }
+        if (arduinoConnected == 1) {
+            conectionAttempts = 3;
+            runOnUiThread(() -> btnConnect.setText(R.string.btn_desconnect));
+        }
         if(conectionAttempts == 0) {
             Toast.makeText(this, "Problemas de conexión con SmartGarden. Se cerrará la aplicación", Toast.LENGTH_LONG).show();
+            new Handler().postDelayed(new Runnable(){
+                @Override
+                public void run(){
+                    finish();
+                };
+            }, 3000);
             finish();
         }
         isArduinoConnected = arduinoConnected;

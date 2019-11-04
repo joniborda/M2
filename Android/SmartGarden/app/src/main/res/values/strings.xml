@@ -7,4 +7,13 @@
     <string name="name_app_logo_1">Smart</string>
     <string name="name_app_logo_2">Garden</string>
     <string name="btn_connect">Conectarse a SmartGarden</string>
+    <string name="btn_desconnect">Desconectarse de SmartGarden</string>
+    <string name="zona_1">Zona 1</string>
+    <string name="zona_2">Zona 2</string>
+    <string name="temp_amb">Temperatura Ambiental:</string>
+    <string name="hum_amb">Humedad Ambiental:</string>
+    <string name="hum_suelo">Humedad del Suelo:</string>
+    <string name="int_luz">Luz Ambiental:</string>
+    <string name="luz_off">Luz Apagada</string>
+    <string name="image_desconnected">image desconnected</string>
 </resources>

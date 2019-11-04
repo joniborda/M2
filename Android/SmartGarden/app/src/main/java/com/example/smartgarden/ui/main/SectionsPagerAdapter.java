@@ -8,7 +8,9 @@ import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
+
 import com.example.smartgarden.R;
+import com.example.smartgarden.logic.BTHandler;
 
 /**
  * A [FragmentPagerAdapter] that returns a fragment corresponding to
@@ -19,10 +21,17 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     @StringRes
     private static final int[] TAB_TITLES = new int[] {R.string.tab_home, R.string.tab_configuracion, R.string.tab_mantenimiento };
     private final Context mContext;
+    private TabHomeFragment home;
+    private TabConfiguracionFragment config;
+    private TabMantenimientoFragment mantenimiento;
 
-    public SectionsPagerAdapter(Context context, FragmentManager fm) {
+    public SectionsPagerAdapter(Context context, FragmentManager fm, BTHandler handler) {
         super(fm);
         mContext = context;
+        home = new TabHomeFragment(handler);
+        config = new TabConfiguracionFragment(handler);
+        mantenimiento = new TabMantenimientoFragment(handler);
+        handler.addObserver(home);
     }
 
     @NonNull
@@ -31,13 +40,13 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         Fragment fragment;
         switch (position) {
             case 0:
-                fragment = new TabHomeFragment();
+                fragment = home;
                 break;
             case 1:
-                fragment = new TabConfiguracionFragment();
+                fragment = config;
                 break;
             case 2:
-                fragment = new TabMantenimientoFragment();
+                fragment = mantenimiento;
                 break;
             default:
                 fragment = new Fragment();

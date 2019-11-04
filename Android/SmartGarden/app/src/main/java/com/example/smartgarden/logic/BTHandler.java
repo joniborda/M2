@@ -1,24 +1,23 @@
 package com.example.smartgarden.logic;
 
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.widget.Toast;
-
-import com.example.smartgarden.MainActivity;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.util.Observable;
 import java.util.UUID;
 
-public class BTHandler{
+public class BTHandler extends Observable {
+
+    public BTHandler(){
+        //En el constructor solo obtengo el adapter
+        btAdapter = BluetoothAdapter.getDefaultAdapter();
+    }
+
+    public boolean isConnected = false;
 
     private BluetoothAdapter btAdapter;
     private BluetoothSocket btSocket = null;
@@ -27,52 +26,55 @@ public class BTHandler{
     // Identificador unico de servicio - SPP UUID
     private static final UUID BTMODULEUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-
-    public BTHandler(){
-        //En el constructor solo obtengo el adapter
-        btAdapter = BluetoothAdapter.getDefaultAdapter();
-    }
-
     public boolean connect() {
         String MAC_ADRESS = "98:D3:31:F7:41:F5";
-        BluetoothDevice device = btAdapter.getRemoteDevice(MAC_ADRESS);
+        String MAC_ADRESS_JONI = "20:16:04:18:17:63";
 
-        if(device != null)
-            try {
-                btSocket = device.createRfcommSocketToServiceRecord(BTMODULEUUID);
-            } catch (IOException e) {
-                btSocket = null;
-                return false;
-            }
+        BluetoothDevice device1 = btAdapter.getRemoteDevice(MAC_ADRESS);
+        BluetoothDevice device2 = btAdapter.getRemoteDevice(MAC_ADRESS_JONI);
 
-        if(btSocket != null) {
-            try {
-                btSocket.connect();
-            } catch (IOException e) {
-                return false;
-            }
-
-            InputStream inStream = null;
-            OutputStream outStream = null;
-
-            try {
-                inStream = btSocket.getInputStream();
-                outStream = btSocket.getOutputStream();
-            } catch (IOException e) {
-                return false;
-            }
-
-            if(inStream != null && outStream != null) {
-
-                myConexionBT = new ConnectedThread(inStream, outStream);
-                myConexionBT.start();
-                //Le mando un 1 al arduino para que sepa que me conecto por bluetooth
-                //MyConexionBT.write("<16,1>");
-                return true;
+        if(notConnect(device1)) {
+            if(notConnect(device2)) {
+                isConnected = false;
             }
         }
 
-        return false;
+        InputStream inStream = null;
+        OutputStream outStream = null;
+
+        try {
+            inStream = btSocket.getInputStream();
+            outStream = btSocket.getOutputStream();
+        } catch (IOException ignored2) {
+            isConnected = false;
+        }
+
+        if(inStream != null && outStream != null) {
+
+            isConnected = true;
+
+            setChanged();
+            notifyObservers();
+
+            myConexionBT = new ConnectedThread(inStream, outStream);
+            myConexionBT.start();
+            //Le mando un 1 al arduino para que sepa que me conecto por bluetooth
+            //MyConexionBT.write("<16,1>");
+        }
+
+        return isConnected;
+    }
+
+    private boolean notConnect(BluetoothDevice device) {
+
+        try {
+            btSocket = device.createRfcommSocketToServiceRecord(BTMODULEUUID);
+            btSocket.connect();
+            return true;
+        } catch (IOException e) {
+            btSocket = null;
+            return false;
+        }
     }
 
     public void desconnect() throws IOException {
