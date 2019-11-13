@@ -112,6 +112,9 @@ void loop() {
   switch (valoresRecibidos[0]) {
     case INST_CENSO: {
         // Implementar guardar que el esclavo inicio el censo
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print("CENSO");
         break;
       }
     case INST_FIN_CENSO: {
@@ -139,7 +142,10 @@ void loop() {
           // si le envio el tiempo se va a pisar con el que le dijo el bluetooth
           ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ",10000>";
           serialSlave.print(ret);
-          Serial.println(ret);
+          /*Serial.println(ret);
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("RIEGO 1");*/
           //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
 
@@ -152,7 +158,10 @@ void loop() {
           // si le envio el tiempo se va a pisar con el que le dijo el bluetooth
           ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ",10000>";
           serialSlave.print(ret);
-          Serial.println(ret);
+          /*Serial.println(ret);
+          lcd.clear();
+          lcd.setCursor(0,1);
+          lcd.print("RIEGO 2");*/
           //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
         // Guardo los valores para el proximo censo
@@ -165,25 +174,31 @@ void loop() {
     case INST_MANTENIMIENTO: {
         // El esclavo le avisa que empezo el mantenimiento
         mantenimientoEnCurso = true;
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print("MANT");
         break;
       }
     case INST_RES_MANTENIMIENTO: {
         // El esclavo le avisa que termino el mantenimiento
         mantenimientoEnCurso = false;
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print("RES MANT");
         break;
       }
     case INST_FIN_RIEGO_Z1: {
         // Ocurre cuando el esclavo me avisa que termino de regar la zona 1
-        String ret = "";
+        /*String ret = "";
         ret = ret + "<" + INST_FIN_RIEGO_Z1 + ">";
-        Serial.println(ret);
+        Serial.println(ret);*/
         break;
       }
     case INST_FIN_RIEGO_Z2: {
         // Ocurre cuando el esclavo me avisa que termino de regar la zona 2
-        String ret = "";
+        /*String ret = "";
         ret = ret + "<" + INST_FIN_RIEGO_Z2 + ">";
-        Serial.println(ret);
+        Serial.println(ret);*/
         break;
       }
     case INST_RES_RIEGO_Z1: {
@@ -197,26 +212,45 @@ void loop() {
       break;
     }
     case M_INICIO_ARDUINO_OK: {
+      lcd.clear();
       lcd.setCursor(0,0);
-      lcd.print("Hello, world!");
+      lcd.print("INICIO OK");
       break;
     }
     case M_INICIO_RIEGO_M: {
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("INICIO RIEGO");
       break;
     }
     case M_STOP_RIEGO_GRAL_OK: {
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("STOP RIEGO OK");
       break;
     }
     case M_CAMBIO_T_RIEGO_CONT: {
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("CAMBIO RIEGO C");
       break;
     }
     case M_CAMBIO_T_RIEGO_INT: {
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("CAMBIO RIEGO I");
       break;
     }
     case INST_ENCENDER_LUZ_1_MANUAL: {
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("ENCENDER LUZ 1");
       break;
     }
     case INST_ENCENDER_LUZ_2_MANUAL: {
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("ENCENDER LUZ 2");
       break;
     }
     case INST_APAGAR_LUZ_1_MANUAL: {
@@ -268,7 +302,7 @@ void leerInstruccionEsclavo(int* vec) {
 float obtenerVariableRiego(const char* archivo) {
   File fp = SD.open(archivo);
   char caracter;
-  float varRiego = -1;
+  float varRiego = 33.33;
   char input[5];
 
   if (fp) {
