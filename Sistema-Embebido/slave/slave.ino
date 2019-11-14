@@ -184,7 +184,7 @@ void loop() {
         tiempoComienzoRiegoZona1 = millis();
         tiempoComienzoIntermitencia1 = millis();
         intensidadRiegoZona1 = intesidadRiego;
-        analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
+        analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z1 + "," + intensidadRiegoZona1 + "," + TIEMPO_RIEGO + ">";
         Serial.println(ret);
@@ -197,7 +197,7 @@ void loop() {
         tiempoComienzoRiegoZona2 = millis();
         tiempoComienzoIntermitencia2 = millis();
         intensidadRiegoZona2 = intesidadRiego;
-        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);        
+        analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);        
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z2 + "," + intensidadRiegoZona2 + "," + TIEMPO_RIEGO + ">";
         Serial.println(ret);
@@ -289,8 +289,8 @@ void loop() {
         TIEMPO_RIEGO_MANUAL = tRiegoManual;
         intensidadRiegoZona1 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
         intensidadRiegoZona2 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
-        analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
-        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
+        analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
+        analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
       } else {
         sendMessageToBluetooth(M_RIEGO_MANUAL_ER);
       }
@@ -332,10 +332,10 @@ void loop() {
         analogWrite(PIN_BOMBA1, 0);
       }
       else if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
-        analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
+        analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
         tiempoComienzoIntermitencia1 = millis();
       } else {
-        analogWrite(PIN_BOMBA1, intensidadRiegoZona1 * 255/100);
+        analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
       }
     }
     
@@ -346,10 +346,10 @@ void loop() {
         analogWrite(PIN_BOMBA2, 0);
       }
       else if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
-        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
+        analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
         tiempoComienzoIntermitencia2 = millis();
       } else {
-        analogWrite(PIN_BOMBA2, intensidadRiegoZona2 * 255/100);
+        analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
       }
     }
   }
