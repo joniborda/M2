@@ -2,7 +2,8 @@
 #include <DHT_U.h>
 #include <DHT.h>
 
-#define VALOR_LIMITE_LUZ 500
+#define VALOR_MAX_LUZ 500
+#define VALOR_MIN_LUZ 300 // UMBRAL DE 200
 
 #define INST_CENSO                  1 // INSTRUCCION PARA RUTINA DE CENSO INICIO
 #define INST_FIN_CENSO              2 // INSTRUCCION PARA RUTINA DE CENSO FIN
@@ -407,16 +408,20 @@ void loop() {
   }
 
   if(!mantenimientoManualEnCurso){
-    if (prenderLuz1 == 1 || (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) > VALOR_LIMITE_LUZ)) {
+    if (prenderLuz1 == 1 || (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) > VALOR_MAX_LUZ)) {
       digitalWrite(PIN_LED1, HIGH);
     } else {
-      digitalWrite(PIN_LED1, LOW);
+      if (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) < VALOR_MIN_LUZ) {
+        digitalWrite(PIN_LED1, LOW);
+      }
     }
 
-    if (prenderLuz2 == 1 || (prenderLuz2 == 0 && analogRead(PIN_SENSOR_LUZ2) > VALOR_LIMITE_LUZ)) {
+    if (prenderLuz2 == 1 || (prenderLuz2 == 0 && analogRead(PIN_SENSOR_LUZ2) > VALOR_MAX_LUZ)) {
       digitalWrite(PIN_LED2, HIGH);
     } else {
-      digitalWrite(PIN_LED2, LOW);
+      if (prenderLuz2 == 0 && analogRead(PIN_SENSOR_LUZ2) < VALOR_MIN_LUZ) {
+        digitalWrite(PIN_LED2, LOW);
+      }
     }
   }
 
