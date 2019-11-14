@@ -1,11 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/constraintLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:layout_height="match_parent">
 
+    <LinearLayout
+        android:id="@+id/layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        tools:context=".MainActivity">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:id="@+id/layout_in_progress"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/txt_in_progress"
+                style="@style/StyleStringMantenimieto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/mant_in_progress" />
+
+            <ProgressBar
+                android:id="@+id/progress_bar_mant"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="@dimen/image_height_width"
+                android:layout_height="@dimen/image_height_width"
+                android:layout_gravity="center" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_ok"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/txt_todo_en_orden"
+                style="@style/StyleStringMantenimieto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:paddingTop="10dp"
+                android:text="@string/todo_en_orden" />
+
+            <ImageView
+                android:id="@+id/image_ok"
+                android:layout_width="@dimen/image_height_width"
+                android:layout_height="@dimen/image_height_width"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/checked" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_error"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txt_error"
+                style="@style/StyleStringMantenimieto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/mantenimiento_error" />
+
+            <ImageView
+                android:id="@+id/image_error"
+                android:layout_width="@dimen/image_height_width"
+                android:layout_height="@dimen/image_height_width"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/error" />
+
+            <TextView
+                android:id="@+id/txt_error_temp"
+                style="@style/StyleDatosArduino"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:text="@string/error_temp" />
+
+            <TextView
+                android:id="@+id/txt_error_hum_amb"
+                style="@style/StyleDatosArduino"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:text="@string/error_hum_amb" />
+
+            <TextView
+                android:id="@+id/txt_error_hum_suelo"
+                style="@style/StyleDatosArduino"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:text="@string/error_hum_suelo" />
+
+            <TextView
+                android:id="@+id/txt_error_ldr1"
+                style="@style/StyleDatosArduino"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:text="@string/error_ldr1" />
+
+            <TextView
+                android:id="@+id/txt_error_ldr2"
+                style="@style/StyleDatosArduino"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:text="@string/error_ldr2" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/txt_no_mantenimiento"
+            style="@style/StyleDatosArduino"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_horizontal"
+            android:text="@string/no_mantenimiento"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</ScrollView>

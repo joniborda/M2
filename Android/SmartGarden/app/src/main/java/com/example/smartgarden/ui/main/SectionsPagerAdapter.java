@@ -10,7 +10,9 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.example.smartgarden.R;
-import com.example.smartgarden.logic.BTHandler;
+import com.example.smartgarden.logic.HandlerMessage;
+
+import java.util.ArrayList;
 
 /**
  * A [FragmentPagerAdapter] that returns a fragment corresponding to
@@ -25,13 +27,12 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     private TabConfiguracionFragment config;
     private TabMantenimientoFragment mantenimiento;
 
-    public SectionsPagerAdapter(Context context, FragmentManager fm, BTHandler handler) {
+    public SectionsPagerAdapter(Context context, FragmentManager fm) {
         super(fm);
         mContext = context;
-        home = new TabHomeFragment(handler);
-        config = new TabConfiguracionFragment(handler);
-        mantenimiento = new TabMantenimientoFragment(handler);
-        handler.addObserver(home);
+        home = new TabHomeFragment();
+        config = new TabConfiguracionFragment();
+        mantenimiento = new TabMantenimientoFragment();
     }
 
     @NonNull
@@ -64,5 +65,13 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     @Override
     public int getCount() {
         return TAB_TITLES.length;
+    }
+
+    public ArrayList<IFragment> getItems() {
+        ArrayList<IFragment> fragments = new ArrayList<>();
+        fragments.add(home);
+        fragments.add(config);
+        fragments.add(mantenimiento);
+        return fragments;
     }
 }

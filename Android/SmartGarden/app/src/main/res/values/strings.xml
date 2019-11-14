@@ -2,7 +2,7 @@
     <string name="app_name">SmartGarden</string>
     <string name="tab_home">Home</string>
     <string name="tab_configuracion">Settings</string>
-    <string name="tab_mantenimiento">Maintenance</string>
+    <string name="tab_mantenimiento">Mantenimiento</string>
     <string name="image_logo">Image Logo</string>
     <string name="name_app_logo_1">Smart</string>
     <string name="name_app_logo_2">Garden</string>
@@ -10,10 +10,38 @@
     <string name="btn_desconnect">Desconectarse de SmartGarden</string>
     <string name="zona_1">Zona 1</string>
     <string name="zona_2">Zona 2</string>
-    <string name="temp_amb">Temperatura Ambiental:</string>
-    <string name="hum_amb">Humedad Ambiental:</string>
-    <string name="hum_suelo">Humedad del Suelo:</string>
-    <string name="int_luz">Luz Ambiental:</string>
-    <string name="luz_off">Luz Apagada</string>
+    <string name="temp_amb">Temperatura ambiental: </string>
+    <string name="hum_amb">Humedad ambiental: </string>
+    <string name="hum_suelo">Humedad del suelo: </string>
+    <string name="int_luz">Intensidad luz ambiental: </string>
+    <string name="luz">On/Off - Modo manual de la luz</string>
+    <string name="modo_luz">Modo automático de la luz</string>
     <string name="image_desconnected">image desconnected</string>
+    <string name="state_zona">Estado actual: </string>
+    <string name="ult_riego">Último Riego</string>
+    <string name="intensidad">Intensidad (%): </string>
+    <string name="duracion">Duración (ms): </string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="regando">Regando…</string>
+    <string name="censando">Censando…</string>
+    <string name="calculando_resultados">Calculando Resultados…</string>
+    <string name="detener_riego">Detener riego</string>
+    <string name="iniciar_mantenimiento">Iniciar mantenimiento</string>
+    <string name="iniciar_censo">Iniciar censo</string>
+    <string name="iniciar_riego">Iniciar riego</string>
+    <string name="tipo_riego">Tipo de riego</string>
+    <string name="ingrese_duracion">Ingrese duración (en ms):</string>
+    <string name="riego_continuo">Riego continuo</string>
+    <string name="riego_intermitente">Riego intermitente</string>
+    <string name="no_mantenimiento">NO HAY NINGÚN MANTENIMIENTO EN PROCESO</string>
+    <string name="todo_en_orden">Todo está en orden!</string>
+    <string name="mantenimiento_error">Hemos encontrado errores</string>
+    <string name="error_temp">Sensor de temperatura… ERROR</string>
+    <string name="error_hum_amb">Sensor de humedad ambiental… ERROR</string>
+    <string name="error_hum_suelo">Sensor de humedad del suelo… ERROR</string>
+    <string name="error_ldr1">Sensor de intensidad de luz (Zona 1)… ERROR</string>
+    <string name="error_ldr2">Sensor de intensidad de luz (Zona 2)… ERROR</string>
+    <string name="mant_in_progress">Mantenimiento en progreso</string>
+    <string name="hum_suelo_riego">Resultado - Humedad del suelo:</string>
 </resources>

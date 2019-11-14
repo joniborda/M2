@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <View
+        android:id="@+id/divider9"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="#CCCBCB"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/txt_zona"
+        style="@style/StyleZonaTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider9" />
+
+    <View
+        android:id="@+id/divider10"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="#CCCBCB"
+        app:layout_constraintTop_toBottomOf="@id/txt_zona" />
+
+    <TextView
+        android:id="@+id/estado_actual"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:text="@string/state_zona"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider10" />
+
+    <TextView
+        android:id="@+id/txt_state"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/estado_actual"
+        app:layout_constraintTop_toBottomOf="@id/divider10" />
+
+    <TextView
+        android:id="@+id/temp_amb"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:paddingTop="3dp"
+        android:text="@string/temp_amb"
+        android:textColor="#000000"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_state" />
+
+    <TextView
+        android:id="@+id/txt_temp_amb"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/temp_amb"
+        app:layout_constraintTop_toBottomOf="@+id/txt_state" />
+
+    <TextView
+        android:id="@+id/hum_amb"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:text="@string/hum_amb"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/temp_amb" />
+
+    <TextView
+        android:id="@+id/txt_hum_amb"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/hum_amb"
+        app:layout_constraintTop_toBottomOf="@+id/txt_temp_amb" />
+
+    <TextView
+        android:id="@+id/hum_suelo"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:text="@string/hum_suelo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/hum_amb" />
+
+    <TextView
+        android:id="@+id/txt_hum_suelo"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/hum_suelo"
+        app:layout_constraintTop_toBottomOf="@+id/txt_hum_amb" />
+
+    <TextView
+        android:id="@+id/int_luz"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:text="@string/int_luz"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/hum_suelo" />
+
+    <TextView
+        android:id="@+id/txt_int_luz"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/int_luz"
+        app:layout_constraintTop_toBottomOf="@+id/txt_hum_suelo" />
+
+    <Switch
+        android:id="@+id/switch_modo_luz"
+        style="@style/StyleDatosArduino"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:paddingStart="8dp"
+        android:text="@string/modo_luz"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/int_luz" />
+
+    <Switch
+        android:id="@+id/switch_luz_on_off"
+        style="@style/StyleDatosArduino"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:paddingBottom="3dp"
+        android:text="@string/luz"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/switch_modo_luz" />
+
+    <TextView
+        android:id="@+id/txt_ultimo_riego"
+        style="@style/StyleDatosArduino"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="@string/ult_riego"
+        app:layout_constraintTop_toBottomOf="@id/switch_luz_on_off" />
+
+    <TextView
+        android:id="@+id/int_riego"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:text="@string/intensidad"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txt_ultimo_riego" />
+
+    <TextView
+        android:id="@+id/txt_int_riego"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        app:layout_constraintStart_toEndOf="@+id/int_riego"
+        app:layout_constraintTop_toBottomOf="@+id/txt_ultimo_riego" />
+
+    <TextView
+        android:id="@+id/duracion"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:text="@string/duracion"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/int_riego" />
+
+    <TextView
+        android:id="@+id/txt_duracion"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/duracion"
+        app:layout_constraintTop_toTopOf="@+id/duracion" />
+
+    <TextView
+        android:id="@+id/hum_suelo_riego"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:text="@string/hum_suelo_riego"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/duracion" />
+
+    <TextView
+        android:id="@+id/txt_hum_suelo_riego"
+        style="@style/StyleDatosArduino"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/hum_suelo_riego"
+        app:layout_constraintTop_toBottomOf="@+id/duracion" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

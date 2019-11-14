@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/layout"
     android:layout_width="match_parent"
@@ -11,134 +11,22 @@
 
     <ImageView
         android:id="@+id/image_state"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="@dimen/image_height_width"
+        android:layout_height="@dimen/image_height_width"
         android:layout_gravity="center"
         android:contentDescription="@string/image_desconnected"
-        android:src="@drawable/icon_disconnected" />
+        android:src="@drawable/icon_disconnected"
+        android:visibility="gone" />
 
-    <LinearLayout
-        android:id="@+id/data_layout"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
-        <View
-            android:id="@+id/divider2"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_zonas"
             android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="#CED5C5" />
-
-        <TextView
-            android:id="@+id/txt_zona1"
-            style="@style/StyleZonaTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/zona_1" />
-
-        <View
-            android:id="@+id/divider3"
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="#CED5C5" />
-
-        <TextView
-            android:id="@+id/txt_temp_amb_1"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="3dp"
-            android:text="@string/temp_amb"
-            android:textColor="#000000" />
-
-        <TextView
-            android:id="@+id/txt_hum_amb_1"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/hum_amb" />
-
-        <TextView
-            android:id="@+id/txt_hum_suelo_1"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/hum_suelo" />
-
-        <TextView
-            android:id="@+id/txt_int_luz_1"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/int_luz" />
-
-        <Switch
-            android:id="@+id/switch_luz_1_on_off"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingBottom="3dp"
-            android:text="@string/luz_off" />
-
-        <View
-            android:id="@+id/divider4"
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="#CED5C5" />
-
-        <TextView
-            android:id="@+id/txt_zona_2"
-            style="@style/StyleZonaTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="casual"
-            android:gravity="center_horizontal"
-            android:paddingTop="3dp"
-            android:text="@string/zona_2"
-            android:textStyle="bold" />
-
-        <View
-            android:id="@+id/divider"
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="#CED5C5" />
-
-        <TextView
-            android:id="@+id/txt_temp_amb_2"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="3dp"
-            android:text="@string/temp_amb" />
-
-        <TextView
-            android:id="@+id/txt_hum_amb_2"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/hum_amb" />
-
-        <TextView
-            android:id="@+id/txt_hum_suelo_2"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/hum_suelo" />
-
-        <TextView
-            android:id="@+id/txt_int_luz_2"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/int_luz" />
-
-        <Switch
-            android:id="@+id/switch_luz_2_on_off"
-            style="@style/StyleDatosArduino"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/luz_off" />
-
-    </LinearLayout>
+            android:layout_height="wrap_content" />
+    </ScrollView>
 
 </FrameLayout>
+
