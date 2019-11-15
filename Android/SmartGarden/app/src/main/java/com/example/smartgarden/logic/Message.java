@@ -1,15 +1,13 @@
 package com.example.smartgarden.logic;
 
-import java.util.ArrayList;
-
 public class Message {
 
     private Command command;
-    private ArrayList<String> values = null;
+    private Riego riego = null;
 
-    public Message(Command command, ArrayList<String> values) {
+    public Message(Command command, Riego riego) {
         this.command = command;
-        this.values  = values;
+        this.riego  = riego;
     }
 
     public Message(Command command) {
@@ -19,10 +17,9 @@ public class Message {
     @Override
     public String toString() {
         StringBuilder toString = new StringBuilder(String.format("<%s", command.toString()));
-        if(values != null)
-            for(int i = 0; i < values.size(); i++) {
-                toString.append(String.format(",%s", values.get(i)));
-            }
+        if(riego != null) {
+            toString.append(riego.toString());
+        }
         return String.format("%s>", toString);
     }
 

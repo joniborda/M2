@@ -8,7 +8,11 @@ import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
+
 import com.example.smartgarden.R;
+import com.example.smartgarden.logic.HandlerMessage;
+
+import java.util.ArrayList;
 
 /**
  * A [FragmentPagerAdapter] that returns a fragment corresponding to
@@ -19,10 +23,16 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     @StringRes
     private static final int[] TAB_TITLES = new int[] {R.string.tab_home, R.string.tab_configuracion, R.string.tab_mantenimiento };
     private final Context mContext;
+    private TabHomeFragment home;
+    private TabConfiguracionFragment config;
+    private TabMantenimientoFragment mantenimiento;
 
     public SectionsPagerAdapter(Context context, FragmentManager fm) {
         super(fm);
         mContext = context;
+        home = new TabHomeFragment();
+        config = new TabConfiguracionFragment();
+        mantenimiento = new TabMantenimientoFragment();
     }
 
     @NonNull
@@ -31,13 +41,13 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         Fragment fragment;
         switch (position) {
             case 0:
-                fragment = new TabHomeFragment();
+                fragment = home;
                 break;
             case 1:
-                fragment = new TabConfiguracionFragment();
+                fragment = config;
                 break;
             case 2:
-                fragment = new TabMantenimientoFragment();
+                fragment = mantenimiento;
                 break;
             default:
                 fragment = new Fragment();
@@ -55,5 +65,13 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     @Override
     public int getCount() {
         return TAB_TITLES.length;
+    }
+
+    public ArrayList<IFragment> getItems() {
+        ArrayList<IFragment> fragments = new ArrayList<>();
+        fragments.add(home);
+        fragments.add(config);
+        fragments.add(mantenimiento);
+        return fragments;
     }
 }
