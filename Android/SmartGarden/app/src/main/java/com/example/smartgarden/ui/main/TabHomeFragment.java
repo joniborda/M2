@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,11 +20,12 @@ import com.example.smartgarden.logic.Zona;
 import com.example.smartgarden.logic.ZonaStatus;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class TabHomeFragment extends Fragment implements IFragment{
+public class TabHomeFragment extends Fragment implements IFragment {
 
     private ImageView imageDesconnected;
     private RecyclerView rvZonas;
@@ -45,95 +45,76 @@ public class TabHomeFragment extends Fragment implements IFragment{
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.tab1_home, container, false);
 
-        // find views
-        findViews(v);
-
-        return v;
-    }
-
-    private void findViews(View v) {
         imageDesconnected = v.findViewById(R.id.image_state);
 
         // Lookup the recyclerview in activity layout
         rvZonas = v.findViewById(R.id.rv_zonas);
-
         // Initialize contacts
         zonas = Zona.createZonaList();
-
         // Create adapter passing in the sample user data
         adapter = new ZonaAdapter(zonas);
         // Attach the adapter to the recyclerview to populate items
-
-        // Buscar los ultimos resultados a la bd
-
         rvZonas.setAdapter(adapter);
         // Set layout manager to position the items
         rvZonas.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        desconexion(); // Inicialmente desconectado
+
+        return v;
     }
 
-    @SuppressLint("SetTextI18n")
+    @Override
     public void conexion(String [] values) {
-        getActivity().runOnUiThread(() -> {
-            int indexData = 0;
+        int indexData = 0;
 
-            Zona newZona1 = zonas.get(indexZona1);
-            Zona newZona2 = zonas.get(indexZona2);
+        Zona newZona1 = zonas.get(indexZona1);
+        Zona newZona2 = zonas.get(indexZona2);
 
-            // data
-            // tipo de riego -> no darle bola, comienzo index = 1
-            // tempAmb1, humAmb1, humSuelo1, intLuz1
-            // tempAmb2, humAmb2, humSuelo2, intLuz2
+        // data
+        // tipo de riego -> no darle bola, comienzo index = 1
+        // tempAmb1, humAmb1, humSuelo1, intLuz1
+        // tempAmb2, humAmb2, humSuelo2, intLuz2
 
-            // ---------- zona 1 ------------
-            newZona1.setEstado(ZonaStatus.Censando);
-            newZona1.setTempAmb(Float.parseFloat(values[++indexData]));
-            newZona1.setHumAmb(Float.parseFloat(values[++indexData]));
-            newZona1.setHumSuelo(Float.parseFloat(values[++indexData]));
-            newZona1.setLuzAmb(Float.parseFloat(values[++indexData]));
-            newZona1.setLuzIluminacion(false);
-            // ---------- zona 2 ------------
-            newZona2.setEstado(ZonaStatus.Censando);
-            newZona2.setTempAmb(Float.parseFloat(values[++indexData]));
-            newZona2.setHumAmb(Float.parseFloat(values[++indexData]));
-            newZona2.setHumSuelo(Float.parseFloat(values[++indexData]));
-            newZona2.setLuzAmb(Float.parseFloat(values[++indexData]));
-            newZona2.setLuzIluminacion(false);
+        // ---------- zona 1 ------------
+        newZona1.setEstado(ZonaStatus.Censando);
+        newZona1.setTempAmb(Float.parseFloat(values[++indexData]));
+        newZona1.setHumAmb(Float.parseFloat(values[++indexData]));
+        newZona1.setHumSuelo(Float.parseFloat(values[++indexData]));
+        newZona1.setLuzAmb(Float.parseFloat(values[++indexData]));
+        // ---------- zona 2 ------------
+        newZona2.setEstado(ZonaStatus.Censando);
+        newZona2.setTempAmb(Float.parseFloat(values[++indexData]));
+        newZona2.setHumAmb(Float.parseFloat(values[++indexData]));
+        newZona2.setHumSuelo(Float.parseFloat(values[++indexData]));
+        newZona2.setLuzAmb(Float.parseFloat(values[++indexData]));
 
-            zonas.set(indexZona1, newZona1);
-            adapter.notifyItemChanged(indexZona1);
-            zonas.set(indexZona2, newZona2);
-            adapter.notifyItemChanged(indexZona2);
+        // Luces off y modo automatico de las luces on
 
+        // Buscar los ultimos resultados de riego a la bd
+        Riego riego1 = MainActivity.dbHelper.getUltimoRiego(1);
+        Riego riego2 = MainActivity.dbHelper.getUltimoRiego(2);
+
+        newZona1.setRiego(riego1);
+        newZona2.setRiego(riego2);
+
+        zonas.set(indexZona1, newZona1);
+        adapter.notifyItemChanged(indexZona1);
+        zonas.set(indexZona2, newZona2);
+        adapter.notifyItemChanged(indexZona2);
+
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
             // give visibility
             imageDesconnected.setVisibility(View.GONE);
             rvZonas.setVisibility(View.VISIBLE);
-
         });
     }
 
+    @Override
     public void desconexion() {
-        imageDesconnected.setVisibility(View.VISIBLE);
-        rvZonas.setVisibility(View.GONE);
-    }
-
-    @Override
-    public void resultadoDetenerRiego(boolean ok) {
-
-    }
-
-    @Override
-    public void showErrorRiegoManual() {
-
-    }
-
-    @Override
-    public void showErrorMantenimiento() {
-
-    }
-
-    @Override
-    public void showErrorCenso() {
-
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            imageDesconnected.setVisibility(View.VISIBLE);
+            rvZonas.setVisibility(View.GONE);
+        });
     }
 
     @Override
@@ -148,11 +129,6 @@ public class TabHomeFragment extends Fragment implements IFragment{
         newZona.setEstado(ZonaStatus.Regando);
         zonas.set(nroZona - 1, newZona);
         adapter.notifyItemChanged(nroZona - 1);
-    }
-
-    @Override
-    public void terminoRiegoManual() {
-        // Do nothing
     }
 
     @Override
@@ -171,7 +147,7 @@ public class TabHomeFragment extends Fragment implements IFragment{
         riego.setHumSueloResultado(Float.parseFloat(values[0]));
         MainActivity.dbHelper.setResultadoRiego(riego);
         // Juntar todos los datos de la bd
-        riego = MainActivity.dbHelper.getUltimoRiego(nroZona);
+        riego = MainActivity.dbHelper.getUltimoRiego(nroZona); // Piso el objeto riego con otro
         // set estado a la zona
         Zona newZona = zonas.get(nroZona);
         newZona.setEstado(ZonaStatus.Censando);
@@ -182,38 +158,62 @@ public class TabHomeFragment extends Fragment implements IFragment{
 
     @Override
     public void resultadoCenso(String[] values) {
+        int indexData = 0;
 
+        Zona newZona1 = zonas.get(indexZona1);
+        Zona newZona2 = zonas.get(indexZona2);
+
+        // data
+        // tempAmb1, humAmb1, humSuelo1, intLuz1
+        // tempAmb2, humAmb2, humSuelo2, intLuz2
+
+        // ---------- zona 1 ------------
+        newZona1.setTempAmb(Float.parseFloat(values[indexData++]));
+        newZona1.setHumAmb(Float.parseFloat(values[indexData++]));
+        newZona1.setHumSuelo(Float.parseFloat(values[indexData++]));
+        newZona1.setLuzAmb(Float.parseFloat(values[indexData++]));
+        // ---------- zona 2 ------------
+        newZona2.setTempAmb(Float.parseFloat(values[indexData++]));
+        newZona2.setHumAmb(Float.parseFloat(values[indexData++]));
+        newZona2.setHumSuelo(Float.parseFloat(values[indexData++]));
+        newZona2.setLuzAmb(Float.parseFloat(values[indexData]));
+
+        zonas.set(indexZona1, newZona1);
+        adapter.notifyItemChanged(indexZona1);
+        zonas.set(indexZona2, newZona2);
+        adapter.notifyItemChanged(indexZona2);
+    }
+
+    // ACCIONES EN OTROS FRAGMENTS
+
+    @Override
+    public void terminoRiegoManual() {
+        // Do nothing
     }
 
     @Override
     public void resultadoMantenimiento(String[] values) {
-
+        // Do nothing
     }
 
 
-    private void regandoZona(int nroZona) {
-        Zona newZona = zonas.get(nroZona);
-        newZona.setEstaRegando(true);
-        zonas.set(nroZona - 1, newZona);
-        adapter.notifyItemChanged(nroZona - 1);
+    @Override
+    public void resultadoDetenerRiego(boolean ok) {
+        // Do nothing
     }
 
-    private void regueZona(int nroZona, String [] values) {
-        // data
-        //  intensidad(int %), duracion(ms)
-        int indexData = 0;
-
-        Zona newZona = zonas.get(nroZona);
-        Riego riego = newZona.getRiego();
-        riego.setDuracion(Integer.parseInt(values[++indexData]));
-        riego.setIntensidad(Integer.parseInt(values[++indexData]));
-        newZona.setRiego(riego);
-        zonas.set(nroZona - 1, newZona);
-        adapter.notifyItemChanged(nroZona - 1);
+    @Override
+    public void showErrorRiegoManual() {
+        // Do nothing
     }
 
-    private void regueManual(String [] values) {
-
+    @Override
+    public void showErrorMantenimiento() {
+        // Do nothing
     }
 
+    @Override
+    public void showErrorCensoManual() {
+        // Do nothing
+    }
 }

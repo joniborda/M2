@@ -10,7 +10,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.example.smartgarden.R;
-import com.example.smartgarden.logic.HandlerMessage;
 
 import java.util.ArrayList;
 
@@ -74,4 +73,17 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         fragments.add(mantenimiento);
         return fragments;
     }
+
+    public Fragment home() {
+        return home;
+    }
+
+    public Fragment configuracion() {
+        return config;
+    }
+
+    public Fragment mantenimiento() {
+        return mantenimiento;
+    }
+
 }

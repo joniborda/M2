@@ -3,9 +3,9 @@ package com.example.smartgarden.logic;
 public class Message {
 
     private Command command;
-    private Riego riego = null;
+    private RiegoStandard riego = null;
 
-    public Message(Command command, Riego riego) {
+    public Message(Command command, RiegoStandard riego) {
         this.command = command;
         this.riego  = riego;
     }

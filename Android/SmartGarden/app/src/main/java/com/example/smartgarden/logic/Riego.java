@@ -6,10 +6,11 @@ import androidx.annotation.NonNull;
 
 public class Riego {
 
-    private int intensidad;
-    private int duracion;
     private int nroZona;
     private float humSueloResultado;
+    //-------- datos iniciales ------
+    private int intensidad;
+    private int duracion;
 
     public Riego(int nroZona) {
         this.nroZona = nroZona;
@@ -18,25 +19,22 @@ public class Riego {
         this.humSueloResultado = 0;
     }
 
-    @NonNull
-    @Override
-    public String toString() {
-        String coma = ",";
-        StringBuilder toString = new StringBuilder();
-        toString.append(coma).append(intensidad);
-        toString.append(coma).append(duracion);
-        toString.append(coma).append(humSueloResultado);
-        return super.toString();
+    public ContentValues alltoContentValues() {
+        ContentValues values = new ContentValues();
+        values.put(DataBaseContract.RiegoEntry.INTENSITY, intensidad);
+        values.put(DataBaseContract.RiegoEntry.DURATION, duracion);
+        values.put(DataBaseContract.RiegoEntry.HUM_SUELO, humSueloResultado);
+        return values;
     }
 
-    public ContentValues toContentValues() {
+    public ContentValues datosInicialestoContentValues() {
         ContentValues values = new ContentValues();
         values.put(DataBaseContract.RiegoEntry.INTENSITY, intensidad);
         values.put(DataBaseContract.RiegoEntry.DURATION, duracion);
         return values;
     }
 
-    public ContentValues HumedadSuelotoContenValues() {
+    public ContentValues humedadSuelotoContenValues() {
         ContentValues values = new ContentValues();
         values.put(DataBaseContract.RiegoEntry.HUM_SUELO, humSueloResultado);
         return values;

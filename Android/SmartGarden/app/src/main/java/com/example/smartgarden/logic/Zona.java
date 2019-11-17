@@ -9,20 +9,17 @@ public class Zona {
     // zona: 1 o 2
     private int nroZona;
     private float tempAmb, humAmb, humSuelo, luzAmb;
-    private boolean luzIluminacion, luzAutomatica;
     private Riego riego;
     private ZonaStatus estado;
 
     public Zona(int nroZona) {
         this.nroZona = nroZona;
         this.estado = ZonaStatus.Censando;
-        this.luzIluminacion = false;
         this.tempAmb = 0;
         this.humAmb = 0;
         this.humSuelo = 0;
         this.luzAmb = 0;
         this.riego = new Riego(nroZona);
-        this.luzAutomatica = true;
     }
 
     public int getEstado() {
@@ -35,14 +32,6 @@ public class Zona {
 
     public int getStringFromNroZona() {
         return this.nroZona == 1 ? R.string.zona_1 : R.string.zona_2;
-    }
-
-    public boolean hayLuzIluminacion() {
-        return luzIluminacion;
-    }
-
-    public void setLuzIluminacion(boolean luzIluminacion) {
-        this.luzIluminacion = luzIluminacion;
     }
 
     public float getTempAmb() {
@@ -92,14 +81,6 @@ public class Zona {
 
     public void setRiego(Riego riego) {
         this.riego = riego;
-    }
-
-    public boolean isLuzAutomatica() {
-        return luzAutomatica;
-    }
-
-    public void setLuzAutomatica(boolean modoLuz) {
-        this.luzAutomatica = modoLuz;
     }
 
     public int getNroZona() {

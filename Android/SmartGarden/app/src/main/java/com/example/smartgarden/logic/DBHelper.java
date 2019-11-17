@@ -10,10 +10,11 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "data.db";
-    private static final int ID_DURATION = 0;
+    private static final int ID = 0;
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        context.deleteDatabase(DATABASE_NAME);
     }
 
     @Override
@@ -26,64 +27,84 @@ public class DBHelper extends SQLiteOpenHelper {
                 +  DataBaseContract.RiegoEntry.HUM_SUELO + " REAL NOT NULL,"
                 + "UNIQUE (" +  DataBaseContract.RiegoEntry.ZONA_ID + "))");
 
-        db.execSQL("CREATE TABLE " + DataBaseContract.ParametrosEntry.TABLE_NAME + " ("
-                +  DataBaseContract.ParametrosEntry.ID + " INTEGER PRIMARY KEY,"
-                +  DataBaseContract.ParametrosEntry.DURATION_STANDARD + " INTEGER NOT NULL,"
-                + "UNIQUE (" +  DataBaseContract.ParametrosEntry.ID + "))");
+        db.execSQL("CREATE TABLE " + DataBaseContract.RiegoStandardEntry.TABLE_NAME + " ("
+                +  DataBaseContract.RiegoStandardEntry.ID + " TEXT PRIMARY KEY,"
+                +  DataBaseContract.RiegoStandardEntry.DURATION_STANDARD + " TEXT NOT NULL,"
+                +  DataBaseContract.RiegoStandardEntry.INTENSITY_STANDARD + " TEXT NOT NULL,"
+                + "UNIQUE (" +  DataBaseContract.RiegoStandardEntry.ID + "))");
 
         Riego riego1 = new Riego(1);
         Riego riego2 = new Riego(2);
 
-        db.insert(DataBaseContract.RiegoEntry.TABLE_NAME, null, riego1.toContentValues());
-        db.insert(DataBaseContract.RiegoEntry.TABLE_NAME, null, riego2.toContentValues());
+        db.insert(DataBaseContract.RiegoEntry.TABLE_NAME, null, riego1.alltoContentValues());
+        db.insert(DataBaseContract.RiegoEntry.TABLE_NAME, null, riego2.alltoContentValues());
 
         ContentValues values = new ContentValues();
 
         // Pares clave-valor
-        values.put(DataBaseContract.ParametrosEntry.ID, ID_DURATION);
-        values.put(DataBaseContract.ParametrosEntry.DURATION_STANDARD, 10);
+        values.put(DataBaseContract.RiegoStandardEntry.ID, ID);
+        values.put(DataBaseContract.RiegoStandardEntry.DURATION_STANDARD, "10");
+        values.put(DataBaseContract.RiegoStandardEntry.INTENSITY_STANDARD, "50");
 
         // Insertar...
-        db.insert(DataBaseContract.ParametrosEntry.TABLE_NAME, null, values);
+        db.insert(DataBaseContract.RiegoStandardEntry.TABLE_NAME, null, values);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // No hay operaciones
+
     }
 
-    public long setDuracion(int duracion) {
+    public void setDuracion(int duracion) {
         SQLiteDatabase db = getWritableDatabase();
 
         // WHERE
-        String selection = DataBaseContract.ParametrosEntry.ID + " LIKE ?";
-        String[] selectionArgs = {String.valueOf(ID_DURATION)};
+        String selection = DataBaseContract.RiegoStandardEntry.ID + " LIKE ?";
+        String[] selectionArgs = {String.valueOf(ID)};
 
-        ContentValues values = new ContentValues();
-        values.put(DataBaseContract.ParametrosEntry.DURATION_STANDARD, duracion);
+        RiegoStandard riegoStandard = new RiegoStandard("", String.valueOf(duracion));
 
         // Actualizar
-        long vRet = db.update(
-                DataBaseContract.RiegoEntry.TABLE_NAME,
-                values,
+        db.update(
+                DataBaseContract.RiegoStandardEntry.TABLE_NAME,
+                riegoStandard.duraciontoContenValues(),
                 selection,
                 selectionArgs);
 
         db.close();
-
-        return vRet;
     }
 
-    public int getDuracion() {
-        int duracion = -1;
+    public void setIntensidad(int intensidad) {
+        SQLiteDatabase db = getWritableDatabase();
+
+        // WHERE
+        String selection = DataBaseContract.RiegoStandardEntry.ID + " LIKE ?";
+        String[] selectionArgs = {String.valueOf(ID)};
+
+        RiegoStandard riegoStandard = new RiegoStandard(String.valueOf(intensidad), "");
+
+        // Actualizar
+        db.update(
+                DataBaseContract.RiegoStandardEntry.TABLE_NAME,
+                riegoStandard.intensidadtoContenValues(),
+                selection,
+                selectionArgs);
+
+        db.close();
+    }
+
+
+    public RiegoStandard getRiegoStandard() {
+        RiegoStandard riegoStandard = null;
 
         SQLiteDatabase db = getReadableDatabase();
-        String[] columns = new String[]{DataBaseContract.ParametrosEntry.DURATION_STANDARD};
-        String selection = DataBaseContract.ParametrosEntry.ID + " LIKE ?"; // WHERE id LIKE ?
-        String[] selectionArgs = new String[]{String.valueOf(ID_DURATION)};
+        String[] columns = new String[]{DataBaseContract.RiegoStandardEntry.DURATION_STANDARD,
+                                        DataBaseContract.RiegoStandardEntry.INTENSITY_STANDARD};
+        String selection = DataBaseContract.RiegoStandardEntry.ID + " LIKE ?"; // WHERE id LIKE ?
+        String[] selectionArgs = new String[]{String.valueOf(ID)};
 
         Cursor c = db.query(
-                DataBaseContract.RiegoEntry.TABLE_NAME,
+                DataBaseContract.RiegoStandardEntry.TABLE_NAME,
                 columns,
                 selection,
                 selectionArgs,
@@ -93,16 +114,20 @@ public class DBHelper extends SQLiteOpenHelper {
         );
 
         if(c.moveToNext()){
-            duracion = Integer.parseInt(c.getString(c.getColumnIndex(DataBaseContract.ParametrosEntry.DURATION_STANDARD)));
+            String intensidad = c.getString(c.getColumnIndex(DataBaseContract.RiegoStandardEntry.DURATION_STANDARD));
+            if(c.moveToNext()) {
+                String duracion = c.getString(c.getColumnIndex(DataBaseContract.RiegoStandardEntry.INTENSITY_STANDARD));
+                riegoStandard = new RiegoStandard(intensidad, duracion);
+            }
         }
 
         c.close();
         db.close();
 
-        return duracion;
+        return riegoStandard;
     }
 
-    public long setComienzoRiego(Riego riego) {
+    public void setComienzoRiego(Riego riego) {
         SQLiteDatabase db = getWritableDatabase();
 
         // WHERE
@@ -110,18 +135,16 @@ public class DBHelper extends SQLiteOpenHelper {
         String[] selectionArgs = {String.valueOf(riego.getNroZona())};
 
         // Actualizar
-        long vRet = db.update(
+        db.update(
                 DataBaseContract.RiegoEntry.TABLE_NAME,
-                riego.toContentValues(),
+                riego.datosInicialestoContentValues(),
                 selection,
                 selectionArgs);
 
         db.close();
-
-        return vRet;
     }
 
-    public long setResultadoRiego(Riego riego) {
+    public void setResultadoRiego(Riego riego) {
         SQLiteDatabase db = getWritableDatabase();
 
         // WHERE
@@ -129,15 +152,13 @@ public class DBHelper extends SQLiteOpenHelper {
         String[] selectionArgs = {String.valueOf(riego.getNroZona())};
 
         // Actualizar
-        long vRet = db.update(
+        db.update(
                 DataBaseContract.RiegoEntry.TABLE_NAME,
-                riego.HumedadSuelotoContenValues(),
+                riego.humedadSuelotoContenValues(),
                 selection,
                 selectionArgs);
 
         db.close();
-
-        return vRet;
     }
 
     public Riego getUltimoRiego(int zonaID) {

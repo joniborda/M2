@@ -1,5 +1,8 @@
 package com.example.smartgarden.logic;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum Command {
     // ENVIO Y RECIBO
     CONEXION(19),
@@ -7,7 +10,7 @@ public enum Command {
 
     // SOLO ENVIO
     DETENER_RIEGO(26),
-    INICIAR_RIEGO(21),
+    INICIAR_RIEGO(21), // junto con la duracion e intensidad seeteadas
     INICIAR_MANTENIMIENTO(7),
     INICIAR_CENSO(20),
     CAMBIAR_RIEGO_INTERMITENTE(23),
@@ -42,6 +45,17 @@ public enum Command {
     RESULTADO_MANTENIMIENTO(8);
 
     private int value;
+    private static Map map = new HashMap<>();
+
+    static {
+        for (Command pageType : Command.values()) {
+            map.put(pageType.value, pageType);
+        }
+    }
+
+    public static Command valueOf(int command) {
+        return (Command) map.get(command);
+    }
 
     Command(int value) {
             this.value = value;

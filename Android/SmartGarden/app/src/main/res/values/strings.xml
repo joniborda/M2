@@ -31,7 +31,7 @@
     <string name="iniciar_censo">Iniciar censo</string>
     <string name="iniciar_riego">Iniciar riego</string>
     <string name="tipo_riego">Tipo de riego</string>
-    <string name="ingrese_duracion">Ingrese duración (en ms):</string>
+    <string name="ingrese_duracion">Duración standard (en ms):</string>
     <string name="riego_continuo">Riego continuo</string>
     <string name="riego_intermitente">Riego intermitente</string>
     <string name="no_mantenimiento">NO HAY NINGÚN MANTENIMIENTO EN PROCESO</string>
@@ -44,4 +44,5 @@
     <string name="error_ldr2">Sensor de intensidad de luz (Zona 2)… ERROR</string>
     <string name="mant_in_progress">Mantenimiento en progreso</string>
     <string name="hum_suelo_riego">Resultado - Humedad del suelo:</string>
+    <string name="intensidad_standard">Intensidad standard (en %):</string>
 </resources>

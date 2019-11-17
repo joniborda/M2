@@ -14,10 +14,11 @@ public class DataBaseContract {
         public static final String HUM_SUELO = "hum_suelo";
     }
 
-    public static abstract class ParametrosEntry implements BaseColumns {
-        public static final String TABLE_NAME ="datos_parametros";
+    public static abstract class RiegoStandardEntry implements BaseColumns {
+        public static final String TABLE_NAME ="datos_riego_standard";
 
         public static final String ID = "id";
         public static final String DURATION_STANDARD = "duration";
+        public static final String INTENSITY_STANDARD = "intensity";
     }
 }

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/configuracion"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/layout"
+        android:id="@+id/constrainLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
@@ -46,8 +48,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:paddingStart="10dp">
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/txt_iniciar_censo"
@@ -57,6 +58,7 @@
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
+                android:paddingStart="10dp"
                 android:text="@string/iniciar_censo"
                 android:textColor="@color/colorBoton" />
 
@@ -73,8 +75,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:paddingStart="10dp">
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/txt_iniciar_mantenimiento"
@@ -84,6 +85,7 @@
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
+                android:paddingStart="10dp"
                 android:paddingBottom="3dp"
                 android:text="@string/iniciar_mantenimiento"
                 android:textColor="@color/colorBoton" />
@@ -138,20 +140,21 @@
             android:layout_height="wrap_content"
             android:paddingStart="10dp"
             android:paddingBottom="3dp"
-            android:text="@string/tipo_riego" />
+            android:text="@string/tipo_riego"
+            android:visibility="visible" />
 
         <RadioGroup
             android:id="@+id/radiobtn_tipo_riegos"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingStart="10dp">
+            android:visibility="visible">
 
             <RadioButton
                 android:id="@+id/radiobtn_continuo"
                 style="@style/StyleDatosArduino"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:enabled="true"
+                android:paddingStart="10dp"
                 android:text="@string/riego_continuo" />
 
             <RadioButton
@@ -159,31 +162,84 @@
                 style="@style/StyleDatosArduino"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingStart="10dp"
                 android:text="@string/riego_intermitente" />
 
         </RadioGroup>
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:paddingStart="10dp">
+            android:layout_height="match_parent">
 
             <TextView
-                android:id="@+id/txt_duracion_riego"
+                android:id="@+id/textView4"
                 style="@style/StyleDatosArduino"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:text="@string/ingrese_duracion" />
+                android:paddingStart="10dp"
+                android:text="@string/ingrese_duracion"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <EditText
-                android:id="@+id/editText2"
+                android:id="@+id/txt_duracion_riego"
+                style="@style/StyleNonEditableText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:editable="true"
+                android:focusable="false"
+                android:gravity="center"
+                android:inputType="number"
+                app:layout_constraintEnd_toStartOf="@+id/edit_btn_duracion"
+                app:layout_constraintStart_toEndOf="@+id/textView4"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <Button
+                android:id="@+id/edit_btn_duracion"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:background="@android:drawable/ic_menu_edit"
+                android:backgroundTint="@android:color/darker_gray"
+                app:layout_constraintBottom_toBottomOf="@+id/txt_duracion_riego"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/txt_duracion_riego"
+                app:layout_constraintTop_toTopOf="@+id/txt_duracion_riego" />
+
+            <TextView
+                android:id="@+id/textView5"
+                style="@style/StyleDatosArduino"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1.5"
-                android:inputType="textPersonName" />
-        </LinearLayout>
+                android:paddingStart="10dp"
+                android:text="@string/intensidad_standard"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView4" />
+
+            <EditText
+                android:id="@+id/txt_intensidad_riego"
+                style="@style/StyleNonEditableText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:editable="true"
+                android:focusable="false"
+                android:gravity="center"
+                android:inputType="number"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/edit_btn_duracion"
+                app:layout_constraintStart_toEndOf="@+id/textView5" />
+
+            <Button
+                android:id="@+id/edit_btn_intensidad"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:background="@android:drawable/ic_menu_edit"
+                android:backgroundTint="@android:color/darker_gray"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/txt_intensidad_riego"
+                app:layout_constraintTop_toBottomOf="@+id/txt_duracion_riego" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </LinearLayout>
 

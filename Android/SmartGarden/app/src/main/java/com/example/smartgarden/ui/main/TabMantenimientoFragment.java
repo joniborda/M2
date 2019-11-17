@@ -10,22 +10,34 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.smartgarden.MainActivity;
 import com.example.smartgarden.R;
 import com.example.smartgarden.logic.BTHandler;
+import com.example.smartgarden.logic.Command;
 
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class TabMantenimientoFragment extends Fragment implements IFragment{
+public class TabMantenimientoFragment extends Fragment implements IFragment {
 
-    public static Handler bluetoothIn;
-    private StringBuilder DataStringIN = new StringBuilder();
+    public String tag = "mantenimiento";
+
+    private LinearLayout layoutInProgress;
+    private LinearLayout layoutOk;
+    private LinearLayout layoutError;
+    private TextView txtNoMantenimiento;
+    private TextView txtTemp;
+    private TextView txtHumAmb;
+    private TextView txtHumSuelo;
+    private TextView txtLdr1;
+    private TextView txtLdr2;
 
     public TabMantenimientoFragment() {
 
@@ -37,31 +49,23 @@ public class TabMantenimientoFragment extends Fragment implements IFragment{
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.tab3_mantenimiento, container, false);
 
-        bluetoothIn = new Handler(){
-            public void handleMessage(android.os.Message msg){
-                if(msg.what == BTHandler.handlerState){
-                    String readMessage = (String) msg.obj;
-                    DataStringIN.append(readMessage);
-                    int endOfLineIndex = DataStringIN.indexOf("\r\n");
-                    if (endOfLineIndex > 0) {
-                        String dataInPrint = DataStringIN.substring(0, endOfLineIndex);
-//                        String [] array = dataInPrint.split("-");
-//                        if(array.length == 3){
-//                            String aux = "Temperatura: " + array[0]  + "\nHumedad : " + array[1] +  "\nPresion Atmosferica: " + array[2];
-//                        }
-                        DataStringIN.delete(0, DataStringIN.length());
-                    }
-                }
-            }
-
-        };
+        layoutInProgress = root.findViewById(R.id.layout_in_progress);
+        layoutError = root.findViewById(R.id.layout_error);
+        layoutOk = root.findViewById(R.id.layout_ok);
+        txtNoMantenimiento  = root.findViewById(R.id.txt_no_mantenimiento);
+        txtTemp = root.findViewById(R.id.txt_error_temp);
+        txtHumAmb = root.findViewById(R.id.txt_error_hum_amb);
+        txtHumSuelo = root.findViewById(R.id.txt_error_hum_suelo);
+        txtLdr1 = root.findViewById(R.id.txt_error_ldr1);
+        txtLdr2 = root.findViewById(R.id.txt_error_ldr2);
 
         return root;
     }
 
-    @Override
-    public void conexion(String[] values) {
-
+    protected void iniciarMantenimientoReceived()
+    {
+        layoutInProgress.setVisibility(View.VISIBLE);
+        txtNoMantenimiento.setVisibility(View.GONE);
     }
 
     @Override
@@ -70,22 +74,28 @@ public class TabMantenimientoFragment extends Fragment implements IFragment{
     }
 
     @Override
-    public void resultadoDetenerRiego(boolean ok) {
-
-    }
-
-    @Override
-    public void showErrorRiegoManual() {
-
-    }
-
-    @Override
     public void showErrorMantenimiento() {
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            txtNoMantenimiento.setVisibility(View.VISIBLE);
+        });
+    }
+
+    @Override
+    public void resultadoMantenimiento(String[] values) {
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+
+        });
+    }
+
+    // ACCIONES EN OTROS FRAGMENTS
+
+    @Override
+    public void conexion(String[] values) {
 
     }
 
     @Override
-    public void showErrorCenso() {
+    public void showErrorCensoManual() {
 
     }
 
@@ -100,6 +110,11 @@ public class TabMantenimientoFragment extends Fragment implements IFragment{
     }
 
     @Override
+    public void terminoRiegoAutomatico(int nroZona) {
+
+    }
+
+    @Override
     public void resultadoRiegoAutomatico(int nroZona, String[] values) {
 
     }
@@ -110,7 +125,12 @@ public class TabMantenimientoFragment extends Fragment implements IFragment{
     }
 
     @Override
-    public void resultadoMantenimiento(String[] values) {
+    public void resultadoDetenerRiego(boolean ok) {
+
+    }
+
+    @Override
+    public void showErrorRiegoManual() {
 
     }
 }

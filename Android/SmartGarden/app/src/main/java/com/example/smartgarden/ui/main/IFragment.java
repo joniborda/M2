@@ -1,17 +1,27 @@
 package com.example.smartgarden.ui.main;
 
 public interface IFragment {
-    public void conexion(String[] values);
-    public void desconexion();
-    public void resultadoDetenerRiego(boolean ok);
-    public void showErrorRiegoManual();
-    public void showErrorMantenimiento();
-    public void showErrorCenso();
-    public void comenzoRiegoAutomatico(int nroZona, String[] values);
-    public void terminoRiegoManual();
-    public void terminoRiegoAutomatico(int nroZona);
-    public void resultadoRiegoAutomatico(int nroZona, String[] values);
-    public void resultadoCenso(String[] values);
-    public void resultadoMantenimiento(String[] values);
+    void conexion(String[] values);
 
+    void desconexion();
+
+    void resultadoDetenerRiego(boolean ok);
+
+    void showErrorRiegoManual();
+
+    void showErrorMantenimiento();
+
+    void showErrorCensoManual();
+
+    void comenzoRiegoAutomatico(int nroZona, String[] values);
+
+    void terminoRiegoManual();
+
+    void terminoRiegoAutomatico(int nroZona);
+
+    void resultadoRiegoAutomatico(int nroZona, String[] values);
+
+    void resultadoCenso(String[] values);
+
+    void resultadoMantenimiento(String[] values);
 }

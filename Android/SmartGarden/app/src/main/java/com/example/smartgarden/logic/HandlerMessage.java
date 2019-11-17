@@ -91,7 +91,7 @@ public class  HandlerMessage extends Handler {
                             break;
                         case R_CENSO_ERROR:
                             for (IFragment fragment: fragments) {
-                                fragment.showErrorCenso();
+                                fragment.showErrorCensoManual();
                             }
                             break;
                         case R_INICIAR_RIEGO_ERROR:

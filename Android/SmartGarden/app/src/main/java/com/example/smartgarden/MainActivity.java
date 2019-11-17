@@ -19,9 +19,11 @@ import com.example.smartgarden.logic.BTHandler;
 import com.example.smartgarden.logic.DBHelper;
 import com.example.smartgarden.logic.HandlerMessage;
 import com.example.smartgarden.logic.SensorEventHandler;
+import com.example.smartgarden.ui.main.TabConfiguracionFragment;
 import com.google.android.material.tabs.TabLayout;
 
 import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -32,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 @SuppressLint("Registered")
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements TabConfiguracionFragment.SendCommand{
 
     private int conectionAttempts = 3;
     private TabLayout tabs;
@@ -64,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
         tabs.setupWithViewPager(viewPager);
         populateviewPager();
 
+
+
         bluetoothIN = new HandlerMessage(sectionsPagerAdapter.getItems());
         dbHelper = new DBHelper(this);
 
@@ -94,7 +98,28 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void populateviewPager() {
+    private void addTags(SectionsPagerAdapter sectionsPagerAdapter) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.home, sectionsPagerAdapter.home(), "home")
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                .addToBackStack(sectionsPagerAdapter.home().getClass().getName())
+                .commit();
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.home, sectionsPagerAdapter.configuracion(), "config")
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                .addToBackStack(sectionsPagerAdapter.home().getClass().getName())
+                .commit();
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.home, sectionsPagerAdapter.mantenimiento(), "mantnimiento")
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                .addToBackStack(sectionsPagerAdapter.home().getClass().getName())
+                .commit();
+    }
+
+    private void populateviewPager() {
         Objects.requireNonNull(tabs.getTabAt(0)).setIcon(R.drawable.home_icon);
         Objects.requireNonNull(tabs.getTabAt(1)).setIcon(R.drawable.settings_icon);
         Objects.requireNonNull(tabs.getTabAt(2)).setIcon(R.drawable.maintenance_icon);
@@ -241,5 +266,11 @@ public class MainActivity extends AppCompatActivity {
 
     public ArduinoStatus getArduinoStatus() {
         return arduinoStatus;
+    }
+
+    @Override
+    public void iniciarMantenimiento() {
+        FragmentTwo f = getSupportFragmentManager().findFragmentById(R.id.);
+        f.displayReceivedData(message);
     }
 }

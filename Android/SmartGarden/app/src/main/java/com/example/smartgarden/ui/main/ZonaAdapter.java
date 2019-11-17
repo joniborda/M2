@@ -21,26 +21,31 @@ import java.util.List;
 
 public class ZonaAdapter extends RecyclerView.Adapter<ZonaAdapter.ViewHolder> {
 
+    // Pass in the contact array into the constructor
+    public ZonaAdapter(List<Zona> zonas) {
+        mZonas = zonas;
+    }
+
     // Provide a direct reference to each of the views within a data item
     // Used to cache the views within the item layout for fast access
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
         // Your holder should contain a member variable
         // for any view that will be set as you render a row
-        public TextView txt_zona;
-        public TextView txt_state_zona;
-        public TextView txt_temp_amb;
-        public TextView txt_hum_amb;
-        public TextView txt_hum_suelo;
-        public TextView txt_int_luz;
-        public TextView txt_int_riego;
-        public TextView txt_duracion;
-        public TextView txt_hum_suelo_riego;
-        public Switch switch_luz;
-        public Switch switch_modo_luz;
+        TextView txt_zona;
+        TextView txt_state_zona;
+        TextView txt_temp_amb;
+        TextView txt_hum_amb;
+        TextView txt_hum_suelo;
+        TextView txt_int_luz;
+        TextView txt_int_riego;
+        TextView txt_duracion;
+        TextView txt_hum_suelo_riego;
+        Switch switch_luz;
+        Switch switch_modo_luz;
 
         // We also create a constructor that accepts the entire item row
         // and does the view lookups to find each subview
-        public ViewHolder(View v) {
+        ViewHolder(View v) {
             // Stores the itemView in a public final member variable that can be used
             // to access the context from any ViewHolder instance.
             super(v);
@@ -61,11 +66,7 @@ public class ZonaAdapter extends RecyclerView.Adapter<ZonaAdapter.ViewHolder> {
 
     // Store a member variable for the contacts
     private List<Zona> mZonas;
-
-    // Pass in the contact array into the constructor
-    public ZonaAdapter(List<Zona> zonas) {
-        mZonas = zonas;
-    }
+    private boolean bandera;
 
     // Usually involves inflating a layout from XML and returning the holder
     @Override
@@ -111,28 +112,37 @@ public class ZonaAdapter extends RecyclerView.Adapter<ZonaAdapter.ViewHolder> {
         txt_int_riego.setText(String.valueOf(zona.getRiego().getIntensidad()));
         txt_duracion.setText(String.valueOf(zona.getRiego().getDuracion()));
         txt_hum_suelo_riego.setText(String.valueOf(zona.getRiego().getHumSueloResultado()));
-        switch_luz.setChecked(zona.hayLuzIluminacion());
-        switch_modo_luz.setChecked(zona.isLuzAutomatica());
 
-        switch_luz.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                // do something, the isChecked will be
-                // true if the switch is in the On position
-                switchLuzListener(isChecked, position);
-            }
-        });
+        switch_luz.setChecked(false);
+        switch_modo_luz.setChecked(true);
+
 
         switch_modo_luz.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                // do something, the isChecked will be
-                // true if the switch is in the On position
-                switchModoLuzListener(isChecked, position);
-                switch_luz.setChecked(false); // si o si se apaga si esta prendido, si no, no pasa nada
+                if(bandera) {
+                    // isChecked will be true if the switch is in the On position
+                    switchModoLuzEventListener(isChecked, position);
+                    switch_luz.setChecked(false); // si o si se manda a apagar, aunque no este prendida
+                } else {
+                    bandera = true; // Para que la proxima vuelva a entrar por true
+                }
             }
         });
+
+        switch_luz.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // isChecked will be true if the switch is in the On position
+                switchLuzEventListener(isChecked, position);
+                if(isChecked && switch_modo_luz.isChecked()) { // Si lo pone en on y el modo automatico esta on
+                    bandera = false; // Para que no entre al metodo onCheckedChanged de switch_modo_luz
+                    switch_modo_luz.setChecked (false); // Activo modo manual -> false el modo automatico
+                }
+            }
+        });
+
     }
 
-    private void switchLuzListener(boolean isOn, int position) {
+    private void switchLuzEventListener(boolean isOn, int position) {
         if(isOn) {
             // mandar a encender la luz
             Command cmd = mZonas.get(position).getNroZona() == 1 ? Command.ENCENDER_LUZ_1 : Command.ENCENDER_LUZ_2;
@@ -144,14 +154,10 @@ public class ZonaAdapter extends RecyclerView.Adapter<ZonaAdapter.ViewHolder> {
         }
     }
 
-    private void switchModoLuzListener(boolean isModoAutomatico, int position) {
+    private void switchModoLuzEventListener(boolean isModoAutomatico, int position) {
         if(isModoAutomatico) {
             // mandar instruccion modo automatico
             Command cmd = mZonas.get(position).getNroZona() == 1 ? Command.AUTO_LUZ_1 : Command.AUTO_LUZ_2;
-            BTHandler.getInstance().sendMsg(new Message(cmd));
-        } else {
-            // cambiar a modo manual, mandar instruccion apagar manual - si ya estaba apagada no hace nada el arduino
-            Command cmd = mZonas.get(position).getNroZona() == 1 ? Command.APAGAR_LUZ_1 : Command.APAGAR_LUZ_2;
             BTHandler.getInstance().sendMsg(new Message(cmd));
         }
     }
