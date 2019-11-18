@@ -31,6 +31,7 @@
 #define INST_FIN_RIEGO_MANUAL       24 // INSTRUCCION QUE INDICA QUE SE FINALIZO EL RIEGO MANUAL
 #define INST_DETENER_RIEGO_MANUAL   25 // INSTRUCCION QUE DETIENE EL RIEGO MANUAL                     @DEPRECATED
 #define INST_DETENER_RIEGO_GRAL     26 // INSTRUCCION QUE DETENIENE CUALQUIER TIPO DE RIEGO, SEA MANUAL O AUTOMATICO
+#define INST_DESCONEXION_BT         27 // INSTRUCCION QUE INDICA LA DESCONEXION DE UN DISPOSITIVO  
 
 #define M_INICIO_ARDUINO_OK         50
 #define M_INICIO_RIEGO_Z1           52
@@ -184,7 +185,9 @@ void loop() {
         tiempoComienzoRiegoZona1 = millis();
         tiempoComienzoIntermitencia1 = millis();
         intensidadRiegoZona1 = intesidadRiego;
-        analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
+        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * 40;
+        //analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
+        analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z1 + "," + intensidadRiegoZona1 + "," + TIEMPO_RIEGO + ">";
         Serial.println(ret);
@@ -313,6 +316,10 @@ void loop() {
       }
       break;
     }
+    case INST_DESCONEXION_BT: {
+  	  sendMessageToBluetooth(INST_DESCONEXION_BT);                                                                           
+	    break;
+    }  
     default:{
       //Serial.println("No se encontro rutina para ese valor.");
       break;

@@ -1,7 +1,5 @@
 #include <SD.h>
 #include <SoftwareSerial.h>
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
 
 // PUERTOS DE CONEXION CON ESCLAVO
 #define PUERTO_RX_SLAVE 2
@@ -35,30 +33,28 @@
 #define INST_FIN_RIEGO_MANUAL       24 // INSTRUCCION QUE INDICA QUE SE FINALIZO EL RIEGO MANUAL
 #define INST_DETENER_RIEGO_MANUAL   25 // INSTRUCCION QUE DETIENE EL RIEGO MANUAL
 
-#define M_INICIO_ARDUINO_OK         50
+#define M_INICIO_ARDUINO_OK         50 // MENSAJE ARDUINO ESCLAVO INICIO EXISTOSO
 #define M_INICIO_RIEGO_M            54
 #define M_STOP_RIEGO_GRAL_OK        61
 #define M_CAMBIO_T_RIEGO_CONT       63
 #define M_CAMBIO_T_RIEGO_INT        64
 
-#define PRIORIDAD_TEMP 0.05
-#define PRIORIDAD_HUM_AMB 0.05
-#define PRIORIDAD_HUM_SUELO 0.3
-#define PRIORIDAD_LUZ 0.6
-#define MAX_TEMP 50
-#define MAX_HUMEDAD_SUELO 1023
-#define MAX_LUZ 1023
-#define MAX_HUMEDAD 100
+#define PRIORIDAD_TEMP            0.05
+#define PRIORIDAD_HUM_AMB         0.05
+#define PRIORIDAD_HUM_SUELO       0.3
+#define PRIORIDAD_LUZ             0.6
+#define MAX_TEMP                  50
+#define MAX_HUMEDAD_SUELO         1023
+#define MAX_LUZ                   1023
+#define MAX_HUMEDAD               100
 
 SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
-
-LiquidCrystal_I2C lcd(0x3F,16,4); 
 
 // INTERVALO DE RUTINA DE CENSO EN MS
 static unsigned int MS_INTERVAL_TO_CENSO = 10000;
 
-static unsigned long currentMillis = 0; // tiempo actual
-static unsigned long msParaNuevoCenso = 0;  // tiempo que falta para enviar el censo
+static unsigned long currentMillis = 0; // Tiempo actual
+static unsigned long msParaNuevoCenso = 0;  // Tiempo que falta para enviar el censo
 
 //La luz se comporta asi: 1 totalmente iluminado, 1023 totalmente oscuro.
 //La humedad del suelo se comporta asi: 1 totalmente humedo, 1023 totalmente seco.
@@ -66,12 +62,13 @@ static unsigned long msParaNuevoCenso = 0;  // tiempo que falta para enviar el c
 static bool mantenimientoEnCurso = false;
 static int valoresCensoAnterior[] = { -1, -1, -1, -1}; //Necesito que sea global, se guarda luego de censar y determinar si censo
 /*  Valores de censo anterior 
- *  0 Temp1
- *  1 HumAmb1
- *  2 Temp2
- *  3 HumAmb2
- *  Para determinar que valor corresponde a cada zona usar la formula [4 * (zona - 1) + indice]
+ *  0 HumedadAmbiente1
+ *  1 Luz1
+ *  2 HumedadAmbiente2
+ *  3 Luz2
+ *  Para determinar que valor corresponde a cada zona usar la formula [4 * (ZONA - 1) + INDICE]
  */
+
 void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
@@ -83,9 +80,7 @@ void setup() {
     Serial.println("SD_2"); //Tarjeta SD incializada correctamente.
     inicializarArchivosDeCensos();
   }
-
-  lcd.init();
-  lcd.backlight();
+  Serial.println("ARDUINO MAESTRO INICIADO CORRECTAMENTE");
 }
 
 void loop() {
@@ -97,7 +92,6 @@ void loop() {
     msParaNuevoCenso = millis();
     MS_INTERVAL_TO_CENSO = (unsigned int)45000;
   }
-
   // [0] => Instruccion
   // [1] => Temp1
   // [2] => HumAmb1
@@ -112,14 +106,13 @@ void loop() {
   switch (valoresRecibidos[0]) {
     case INST_CENSO: {
         // Implementar guardar que el esclavo inicio el censo
-        lcd.clear();
-        lcd.setCursor(0,0);
-        lcd.print("CENSO");
         break;
       }
     case INST_FIN_CENSO: {
         // Ocurre cuando el esclavo avisa que termino el censo y me envia los valores de ese censo
-        // de la zona 1 y de la zona 2
+        // De la zona 1 y de la zona 2
+        bool fRiegoEnCursoZ1 = false;
+        bool fRiegoEnCursoZ2 = false;
         float perEfectividadZ1 = calcularEfectividad(valoresRecibidos[1], valoresRecibidos[2], valoresRecibidos[3], valoresRecibidos[4]);
         float perEfectividadZ2 = calcularEfectividad(valoresRecibidos[5], valoresRecibidos[6], valoresRecibidos[7], valoresRecibidos[8]);
         String msg = "";
@@ -138,14 +131,8 @@ void loop() {
           float varZona1 = obtenerVariableRiego("V1.TXT");
           float vol1 = calcularVolumenRiego(valoresRecibidos[3], varZona1);
           String ret = "";
-          // cambiar para pasar el el porcentaje y el tiempo de riego en ms
-          // si le envio el tiempo se va a pisar con el que le dijo el bluetooth
           ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ",10000>";
           serialSlave.print(ret);
-          /*Serial.println(ret);
-          lcd.clear();
-          lcd.setCursor(0,0);
-          lcd.print("RIEGO 1");*/
           //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
 
@@ -154,37 +141,25 @@ void loop() {
           float varZona2 = obtenerVariableRiego("V2.TXT");
           float vol2 = calcularVolumenRiego(valoresRecibidos[7], varZona2);
           String ret = "";
-          // cambiar para pasar el el porcentaje y el tiempo de riego en ms
-          // si le envio el tiempo se va a pisar con el que le dijo el bluetooth
           ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ",10000>";
           serialSlave.print(ret);
-          /*Serial.println(ret);
-          lcd.clear();
-          lcd.setCursor(0,1);
-          lcd.print("RIEGO 2");*/
           //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
-        // Guardo los valores para el proximo censo
-        valoresCensoAnterior[0] = valoresRecibidos[1]; // temp1
-        valoresCensoAnterior[1] = valoresRecibidos[3]; // suelo1
-        valoresCensoAnterior[2] = valoresRecibidos[5]; // temp2
-        valoresCensoAnterior[3] = valoresRecibidos[7]; // suelo2
+        // Guardo los valores para el determinar el riego
+        valoresCensoAnterior[0] = valoresRecibidos[2]; // HumedadAmbiente1
+        valoresCensoAnterior[1] = valoresRecibidos[4]; // Luz1
+        valoresCensoAnterior[2] = valoresRecibidos[6]; // HumedadAmbiente2
+        valoresCensoAnterior[3] = valoresRecibidos[8]; // Luz2
         break;
       }
     case INST_MANTENIMIENTO: {
         // El esclavo le avisa que empezo el mantenimiento
         mantenimientoEnCurso = true;
-        lcd.clear();
-        lcd.setCursor(0,0);
-        lcd.print("MANT");
         break;
       }
     case INST_RES_MANTENIMIENTO: {
         // El esclavo le avisa que termino el mantenimiento
         mantenimientoEnCurso = false;
-        lcd.clear();
-        lcd.setCursor(0,0);
-        lcd.print("RES MANT");
         break;
       }
     case INST_FIN_RIEGO_Z1: {
@@ -212,45 +187,24 @@ void loop() {
       break;
     }
     case M_INICIO_ARDUINO_OK: {
-      lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("INICIO OK");
       break;
     }
     case M_INICIO_RIEGO_M: {
-      lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("INICIO RIEGO");
       break;
     }
     case M_STOP_RIEGO_GRAL_OK: {
-      lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("STOP RIEGO OK");
       break;
     }
     case M_CAMBIO_T_RIEGO_CONT: {
-      lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("CAMBIO RIEGO C");
       break;
     }
     case M_CAMBIO_T_RIEGO_INT: {
-      lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("CAMBIO RIEGO I");
       break;
     }
     case INST_ENCENDER_LUZ_1_MANUAL: {
-      lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("ENCENDER LUZ 1");
       break;
     }
     case INST_ENCENDER_LUZ_2_MANUAL: {
-      lcd.clear();
-      lcd.setCursor(0,0);
-      lcd.print("ENCENDER LUZ 2");
       break;
     }
     case INST_APAGAR_LUZ_1_MANUAL: {
@@ -383,29 +337,47 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
 }
 
 int determinarRiegoEnZona(float perEfectividad, int luzActual, int humedadActual, int humedadAnterior, int luzAnterior) {
+  if (luzAnterior == -1 || humedadAnterior == -1){
+    //Es la primera vez que censa, no hay valores anteriores
+    Serial.println("NO_E_DATOS_PREV");
+    return 0;
+  }
+
   if (perEfectividad > 70.00) {
+    Serial.println("PER_EFE_MUY_ALTO");
     return 1;
   }
-  else if (perEfectividad > 40.00) {
- 
-    if (luzAnterior == -1 || humedadAnterior == -1) //Es la primera vez que censa, no hay valores anteriores
-      return 0;
+  else if (perEfectividad > 50.00) {
     float varLuz = ((float)(luzActual - luzAnterior) / (float)luzAnterior);
     if (varLuz < 0) {
-      Serial.println("L_DESC");//La luz se encuentra en descenso
-      return 1;
+      Serial.println("L_DESC"); //La luz se encuentra en descenso
     } else if (varLuz < 60.00) {
-      Serial.println("L_EST");//La luz se mantiene estable
-      return 1;
+      Serial.println("L_EST"); //La luz se mantiene estable
     } else {
-      Serial.println("L_ASC");//La luz esta en ascenso, no es conveniente regar
+      Serial.println("L_ASC"); //La luz esta en ascenso, no es conveniente regar
+      return 0;
     }
+
+    float varHum =  ((float)(humedadActual - humedadAnterior) / (float)humedadAnterior);
+    if (varHum < 0) {
+      Serial.println("H_DESC"); //La humedad se encuentra en descenso
+    } else if (varHum < 60.00) {
+      Serial.println("H_EST"); //La humedad se mantiene estable
+    } else {
+      Serial.println("H_ASC"); //La humedad esta en ascenso, no es conveniente regar
+      return 0;
+    }
+  } else {
+    Serial.println("PER_EFE_MUY_BAJO"); //Porcentaje de efectividad por debajo del minimo
+    return 0;
   }
-  Serial.println("PE_BAJO");//Porcentaje de efectividad por debajo del minimo
-  return 0;
+
+  return 1; //En esta instancia, la luz y la humedad son propicias para regar
 }
 
 float calcularVolumenRiego(int riego, float var) {
+  Serial.print("INTESIDAD DE RIEGO: ");
+  Serial.println((riego * var) / 1023);
   return (riego * var) / 1023;
 }
 
@@ -462,7 +434,7 @@ void analizarResultadoRiego(int zona, int humedadSuelo, const char* archivo) {
   ret = ret + "I_R_" + zona;
   Serial.println(ret); //Se va a analizar el resultado del riego de la ZONA N
   ret = "";
-  ret = ret + "HSuelo res: " + humedadSueloZona;
+  ret = ret + "HUMSUELO RESULTANTE: " + humedadSueloZona;
   Serial.println(ret);
   float perHumedadSueloZona = (100 - (humedadSueloZona * 100) / 1023);
   if (perHumedadSueloZona < 40 || perHumedadSueloZona > 60) {
@@ -470,7 +442,7 @@ void analizarResultadoRiego(int zona, int humedadSuelo, const char* archivo) {
     ret = ret + "PH_Z" + zona;
     Serial.println(ret); //Porcentaje de humedad resultado del ultimo riego ZONA N
     ret = "";
-    ret = ret + "%HSuelo res: " + perHumedadSueloZona;
+    ret = ret + "%HUMSUELO RESULTANTE: " + perHumedadSueloZona;
     Serial.println(ret);
     var = obtenerVariableRiego(archivo);
     ret = "";
