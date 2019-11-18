@@ -185,7 +185,7 @@ void loop() {
         tiempoComienzoRiegoZona1 = millis();
         tiempoComienzoIntermitencia1 = millis();
         intensidadRiegoZona1 = intesidadRiego;
-        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * 40;
+        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * 50;
         //analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
         String ret = "";
@@ -200,7 +200,9 @@ void loop() {
         tiempoComienzoRiegoZona2 = millis();
         tiempoComienzoIntermitencia2 = millis();
         intensidadRiegoZona2 = intesidadRiego;
-        analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);        
+        intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * 50;
+        //analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2);                
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z2 + "," + intensidadRiegoZona2 + "," + TIEMPO_RIEGO + ">";
         Serial.println(ret);
