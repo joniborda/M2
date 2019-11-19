@@ -24,8 +24,8 @@ public class  HandlerMessage extends Handler {
                 int endOfLineIndex = dataStringIN.indexOf(">");
                 if (endOfLineIndex > 0) {
                     int firstCommaIndex = dataStringIN.indexOf(",");
-                    Command command = Command.values()[Integer.parseInt(dataStringIN.substring(1,
-                                                                    firstCommaIndex))];
+                    Command command = Command.valueOf(Integer.parseInt(dataStringIN.substring(1,
+                                                                    firstCommaIndex)));
                     String [] values = dataStringIN.substring(firstCommaIndex + 1, endOfLineIndex)
                             .split(",");
                     switch (command) {

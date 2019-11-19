@@ -6,8 +6,10 @@ import android.bluetooth.BluetoothSocket;
 
 import com.example.smartgarden.MainActivity;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.UUID;
 
@@ -35,15 +37,15 @@ public class BTHandler {
     public boolean connect() {
         boolean isConnected = true;
         String MAC_ADRESS = "98:D3:31:F7:41:F5";
-        String MAC_ADRESS_JONI = "20:16:04:18:17:63";
+        String MAC_ADRESS_JONI = "20:16:04:18:17:73";
 
-        BluetoothDevice device1 = btAdapter.getRemoteDevice(MAC_ADRESS);
         BluetoothDevice device2 = btAdapter.getRemoteDevice(MAC_ADRESS_JONI);
 
-        if(notConnect(device1)) {
-            if(notConnect(device2)) {
-                isConnected = false;
-            }
+        try {
+            btSocket = device2.createRfcommSocketToServiceRecord(BTMODULEUUID);
+            btSocket.connect();
+        } catch (IOException e) {
+            btSocket = null;
         }
 
         if(btSocket != null) {
@@ -66,17 +68,6 @@ public class BTHandler {
         }
 
         return isConnected;
-    }
-
-    private boolean notConnect(BluetoothDevice device) {
-        try {
-            btSocket = device.createRfcommSocketToServiceRecord(BTMODULEUUID);
-            btSocket.connect();
-            return false;
-        } catch (IOException e) {
-            btSocket = null;
-            return true;
-        }
     }
 
     public void desconnect() throws IOException {
@@ -107,19 +98,37 @@ public class BTHandler {
 
         public void run()
         {
-            byte[] buffer = new byte[256];
-            int bytes;
-
             // Se mantiene en modo escucha para determinar el ingreso de datos
             while (true) {
-                try {
-                    bytes = mmInStream.read(buffer);
-                    String readMessage = new String(buffer, 0, bytes);
-                    MainActivity.bluetoothIN.obtainMessage(handlerState, bytes, -1, readMessage).sendToTarget();
-                    } catch (IOException e) {
-                    break;
+                String readMessage = readUntilEndMsg();
+                if(readMessage != null) {
+                    MainActivity.bluetoothIN.obtainMessage(handlerState, -1, -1, readMessage).sendToTarget();
                 }
             }
+        }
+
+        private String readUntilEndMsg() {
+            StringBuilder sb = new StringBuilder();
+
+            try {
+                BufferedReader buffer=new BufferedReader(new InputStreamReader(mmInStream));
+
+                int r;
+                while ((r = buffer.read()) != -1) {
+                    char c = (char) r;
+
+                    if (c == '>'){
+                        sb.append(c);
+                        break;
+                    }
+
+                    sb.append(c);
+                }
+            } catch(IOException e) {
+                return null;
+            }
+
+            return sb.toString();
         }
 
         //Envio de trama
