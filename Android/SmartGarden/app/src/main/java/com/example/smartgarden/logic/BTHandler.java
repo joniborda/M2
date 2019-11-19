@@ -35,39 +35,42 @@ public class BTHandler {
     public static final int handlerState = 0;
 
     public boolean connect() {
-        boolean isConnected = true;
-        String MAC_ADRESS = "98:D3:31:F7:41:F5";
         String MAC_ADRESS_JONI = "20:16:04:18:17:73";
 
-        BluetoothDevice device2 = btAdapter.getRemoteDevice(MAC_ADRESS_JONI);
+        BluetoothDevice device = btAdapter.getRemoteDevice(MAC_ADRESS_JONI);
 
         try {
-            btSocket = device2.createRfcommSocketToServiceRecord(BTMODULEUUID);
+            btSocket = device.createRfcommSocketToServiceRecord(BTMODULEUUID);
             btSocket.connect();
+
         } catch (IOException e) {
+            if (btSocket != null) {
+                try {
+                    btSocket.close();
+                } catch (IOException e1) {
+                    btSocket = null;
+                    return false;
+                }
+            }
             btSocket = null;
+            return false;
         }
 
-        if(btSocket != null) {
-            InputStream inStream = null;
-            OutputStream outStream = null;
+        InputStream inStream = null;
+        OutputStream outStream = null;
 
-            try {
-                inStream = btSocket.getInputStream();
-                outStream = btSocket.getOutputStream();
-            } catch (IOException ignored2) {
-                isConnected = false;
-            }
+        try {
+            inStream = btSocket.getInputStream();
+            outStream = btSocket.getOutputStream();
+        } catch (IOException ignored2) {
+            return false;
+        }
 
-            if(inStream != null && outStream != null) {
-
-                myConexionBT = new ConnectedThread(inStream, outStream);
-                myConexionBT.start();
+        myConexionBT = new ConnectedThread(inStream, outStream);
+        myConexionBT.start();
                 sendMsg(new Message(Command.CONEXION));
-            }
-        }
 
-        return isConnected;
+        return true;
     }
 
     public void desconnect() throws IOException {

@@ -5,10 +5,11 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.text.method.KeyListener;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,8 +22,10 @@ import android.widget.Toast;
 
 import com.example.smartgarden.MainActivity;
 import com.example.smartgarden.R;
+import com.example.smartgarden.logic.ArduinoStatus;
 import com.example.smartgarden.logic.BTHandler;
 import com.example.smartgarden.logic.Command;
+import com.example.smartgarden.logic.DBHelper;
 import com.example.smartgarden.logic.Message;
 import com.example.smartgarden.logic.RiegoStandard;
 
@@ -33,8 +36,6 @@ import java.util.Objects;
  */
 public class TabConfiguracionFragment extends Fragment implements IFragment {
 
-    public String tag = "configuracion";
-
     private boolean bandera;
 
     private TextView tiposDeRiego;
@@ -44,31 +45,15 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
     private TextView btnIniciarMantenimiento;
     private TextView btnDetenerRiego;
     private EditText txtDuracion;
-    private Button editButtonDuracion;
     private EditText txtIntensidad;
-    private Button editButtonIntensidad;
     private ProgressBar progressBarCenso;
     private ProgressBar progressBarMant;
-
-    SendCommand SC;
+    private boolean isEditingDuracion;
+    private boolean isEditingintensidad;
+    private int tipoRiego;
 
     public TabConfiguracionFragment() {
 
-    }
-
-    interface SendCommand {
-        void iniciarMantenimiento();
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-
-        try {
-            SC = (SendCommand) getActivity();
-        } catch (ClassCastException e) {
-            throw new ClassCastException("Error in retrieving data. Please try again");
-        }
     }
 
     @SuppressLint("HandlerLeak")
@@ -84,13 +69,22 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
         tiposDeRiego = root.findViewById(R.id.textView2);
         rg = root.findViewById(R.id.radiobtn_tipo_riegos);
         txtDuracion = root.findViewById(R.id.txt_duracion_riego);
-        editButtonDuracion = root.findViewById(R.id.edit_btn_duracion);
+        Button editButtonDuracion = root.findViewById(R.id.edit_btn_duracion);
         txtIntensidad = root.findViewById(R.id.txt_intensidad_riego);
-        editButtonIntensidad = root.findViewById(R.id.edit_btn_intensidad);
+        Button editButtonIntensidad = root.findViewById(R.id.edit_btn_intensidad);
         progressBarCenso = root.findViewById(R.id.progress_bar_censo);
         progressBarMant = root.findViewById(R.id.progress_bar_mant);
 
-        mostrarComoDesconectado();
+        // No se pueden hacer cambios
+        txtDuracion.setTag(txtDuracion.getKeyListener());
+        txtDuracion.setKeyListener(null);
+
+        txtIntensidad.setTag(txtIntensidad.getKeyListener());
+        txtIntensidad.setKeyListener(null);
+
+        // Los botones estan en modo edicion
+        isEditingDuracion = true;
+        isEditingintensidad = true;
 
         btnIniciarRiego.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -110,7 +104,6 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
             @Override
             public void onClick(View v) {
                 iniciarMantenimiento();
-                SC.iniciarMantenimiento();
             }
         });
 
@@ -121,10 +114,11 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
             }
         });
 
+        bandera = false;
         rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener()
         {
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if(bandera) {
+                if(bandera) { // sirve para que cada vez que se crea la view no envie el comando
                     Command cmd = null;
                     switch (checkedId) {
                         case R.id.radiobtn_continuo:
@@ -147,84 +141,70 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
 
         editButtonDuracion.setOnClickListener(new View.OnClickListener() {
 
-            boolean isToSave = false;
-
             @Override
             public void onClick(View v) {
-                if(isToSave) {
-                    // ahora se convierte en boton de editar
-                    txtDuracion.setFocusable(false);
-                    editButtonDuracion.setBackgroundResource(android.R.drawable.ic_menu_edit);
-                    isToSave = false;
-                } else {
+
+                if(isEditingDuracion) {
                     // ahora se convierte en boton de guardar cambios
-                    txtDuracion.setFocusable(true);
+                    txtDuracion.setKeyListener((KeyListener) txtDuracion.getTag());
                     editButtonDuracion.setBackgroundResource(android.R.drawable.ic_menu_save);
-                    isToSave = true;
+                    isEditingDuracion = false;
+                } else {
+                    // guardar
+                    String txtDuracionString = txtDuracion.getText().toString();
+                    // Validate txtIntensidad
+                    if(!txtDuracionString.equals("") && txtDuracionString.matches("\\d+")) {
+                        MainActivity.dbHelper.setIntensidad(Integer.parseInt(txtDuracionString));
+                        // ahora se convierte en boton de editar
+                        editButtonDuracion.setBackgroundResource(android.R.drawable.ic_menu_edit);
+                        isEditingDuracion = true;
+                        txtDuracion.setKeyListener(null);
+                    } else {
+                        showToast("Debe ingresar un numero entero");
+                    }
                 }
             }
         });
 
         editButtonIntensidad.setOnClickListener(new View.OnClickListener() {
-            boolean isToSave = true;
 
             @Override
             public void onClick(View v) {
-                if(isToSave) {
-                    // ahora se convierte en boton de editar
-                    txtIntensidad.setFocusable(false);
-                    editButtonDuracion.setBackgroundResource(android.R.drawable.ic_menu_edit);
-                    isToSave = true;
-                } else {
+
+                if(isEditingintensidad) {
                     // ahora se convierte en boton de guardar cambios
-                    txtIntensidad.setFocusable(true);
-                    editButtonDuracion.setBackgroundResource(android.R.drawable.ic_menu_save);
-                    isToSave = false;
+                    txtIntensidad.setKeyListener((KeyListener) txtIntensidad.getTag());
+                    editButtonIntensidad.setBackgroundResource(android.R.drawable.ic_menu_save);
+                    isEditingintensidad = false;
+                } else {
+                    // guardar
+                    String txtIntensidadString = txtIntensidad.getText().toString();
+                    // Validate txtIntensidad
+                    if(!txtIntensidadString.equals("") && txtIntensidadString.matches("\\d+")) {
+                        MainActivity.dbHelper.setIntensidad(Integer.parseInt(txtIntensidadString));
+                        // ahora se convierte en boton de editar
+                        editButtonIntensidad.setBackgroundResource(android.R.drawable.ic_menu_edit);
+                        isEditingintensidad = true;
+                        txtIntensidad.setKeyListener(null);
+                    } else {
+                        showToast("Debe ingresar un numero entero");
+                    }
                 }
             }
         });
 
-        txtDuracion.addTextChangedListener(new TextWatcher() {
-
-            public void onTextChanged(CharSequence s, int start, int before,
-                                      int count) {
-                if(!s.equals("") ) {
-                    //do your work here
-                }
+        if(MainActivity.arduinoStatus == ArduinoStatus.Desconnected) {
+            mostrarComoDesconectado();
+        } else {
+            switch (tipoRiego) {
+                case 0:
+                    rg.check(R.id.radiobtn_continuo);
+                    break;
+                case 1:
+                    rg.check(R.id.radiobtn_intermitente);
+                    break;
             }
-
-
-
-            public void beforeTextChanged(CharSequence s, int start, int count,
-                                          int after) {
-
-            }
-
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-
-        txtIntensidad.addTextChangedListener(new TextWatcher() {
-
-            public void onTextChanged(CharSequence s, int start, int before,
-                                      int count) {
-                if(!s.equals("") ) {
-                    //do your work here
-                }
-            }
-
-
-
-            public void beforeTextChanged(CharSequence s, int start, int count,
-                                          int after) {
-
-            }
-
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
+        }
 
         return root;
     }
@@ -236,16 +216,18 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
     }
 
     private void mostrarComoDesconectado() {
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            // Inicialmente no se muestra
-            tiposDeRiego.setVisibility(View.GONE);
-            rg.setVisibility(View.GONE);
-            // Inicialmente no puede accionar los botones
-            btnIniciarRiego.setClickable(false);
-            btnIniciarCenso.setClickable(false);
-            btnIniciarMantenimiento.setClickable(false);
-            btnDetenerRiego.setClickable(false);
-        });
+        // Inicialmente no se muestra
+        tiposDeRiego.setVisibility(View.GONE);
+        rg.setVisibility(View.GONE);
+        // Inicialmente no puede accionar los botones
+        btnIniciarRiego.setEnabled(false);
+        btnIniciarRiego.setTextColor(getResources().getColor(R.color.colorBotonDisabled));
+        btnIniciarCenso.setEnabled(false);
+        btnIniciarCenso.setTextColor(getResources().getColor(R.color.colorBotonDisabled));
+        btnIniciarMantenimiento.setEnabled(false);
+        btnIniciarMantenimiento.setTextColor(getResources().getColor(R.color.colorBotonDisabled));
+        btnDetenerRiego.setEnabled(false);
+        btnDetenerRiego.setTextColor(getResources().getColor(R.color.colorBotonDisabled));
     }
 
     private void iniciarRiego(){
@@ -255,9 +237,15 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
 
     private void iniciarCenso(){
         BTHandler.getInstance().sendMsg(new Message(Command.INICIAR_CENSO));
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            progressBarCenso.setVisibility(View.VISIBLE);
+        });
     }
 
     private void iniciarMantenimiento(){
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            progressBarMant.setVisibility(View.VISIBLE);
+        });
         BTHandler.getInstance().sendMsg(new Message(Command.INICIAR_MANTENIMIENTO));
     }
 
@@ -267,22 +255,25 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
 
     @Override
     public void conexion(String[] values) {
-        bandera = false;
+        tipoRiego = Integer.parseInt(values[0]);
         Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
             // set clickable to all buttons
-            btnIniciarRiego.setClickable(true);
-            btnIniciarCenso.setClickable(true);
-            btnIniciarMantenimiento.setClickable(true);
-            btnDetenerRiego.setClickable(true);
+            btnIniciarRiego.setEnabled(true);
+            btnIniciarRiego.setTextColor(getResources().getColor(R.color.colorBoton));
+            btnIniciarCenso.setEnabled(true);
+            btnIniciarCenso.setTextColor(getResources().getColor(R.color.colorBoton));
+            btnIniciarMantenimiento.setEnabled(true);
+            btnIniciarMantenimiento.setTextColor(getResources().getColor(R.color.colorBoton));
+            btnDetenerRiego.setEnabled(true);
+            btnDetenerRiego.setTextColor(getResources().getColor(R.color.colorBoton));
             tiposDeRiego.setVisibility(View.VISIBLE);
             rg.setVisibility(View.VISIBLE);
 
-            Command tipoRiego = Command.valueOf(Integer.parseInt(values[0]));
             switch (tipoRiego) {
-                case CAMBIAR_RIEGO_CONTINUO:
+                case 0:
                     rg.check(R.id.radiobtn_continuo);
                     break;
-                case CAMBIAR_RIEGO_INTERMITENTE:
+                case 1:
                     rg.check(R.id.radiobtn_intermitente);
                     break;
             }
@@ -291,7 +282,9 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
 
     @Override
     public void desconexion() {
-        mostrarComoDesconectado();
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            mostrarComoDesconectado();
+        });
     }
 
     @Override
@@ -310,11 +303,17 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
 
     @Override
     public void showErrorMantenimiento() {
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            progressBarMant.setVisibility(View.GONE);
+        });
         showToast("No se ha podido iniciar el mantenimiento. Intente más tarde.");
     }
 
     @Override
     public void showErrorCensoManual() {
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            progressBarCenso.setVisibility(View.GONE);
+        });
         showToast("No se ha podido iniciar el censo manual. Intente más tarde.");
     }
 

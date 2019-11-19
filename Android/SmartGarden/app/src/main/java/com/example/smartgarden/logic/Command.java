@@ -10,7 +10,7 @@ public enum Command {
 
     // SOLO ENVIO
     DETENER_RIEGO(26),
-    INICIAR_RIEGO(21), // junto con la duracion e intensidad seeteadas
+    INICIAR_RIEGO(21), // junto con la intensidad y duracion seeteadas
     INICIAR_MANTENIMIENTO(7),
     INICIAR_CENSO(20),
     CAMBIAR_RIEGO_INTERMITENTE(23),
@@ -42,7 +42,10 @@ public enum Command {
     RESULTADO_RIEGO_2(18),
     // Data: 8 valores representativos de cada sensor/actuador
     RESULTADO_CENSO(2),
-    RESULTADO_MANTENIMIENTO(8);
+    // <comando, errorTemp, errorHumAmb, errorHumSuelo, errorldr1, errorldr2>
+    RESULTADO_MANTENIMIENTO(8); // 0 error
+                                      // 1 bien
+
 
     private int value;
     private static Map map = new HashMap<>();

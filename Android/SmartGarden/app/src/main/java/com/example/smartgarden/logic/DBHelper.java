@@ -14,7 +14,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        context.deleteDatabase(DATABASE_NAME);
     }
 
     @Override
@@ -115,10 +114,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
         if(c.moveToNext()){
             String intensidad = c.getString(c.getColumnIndex(DataBaseContract.RiegoStandardEntry.DURATION_STANDARD));
-            if(c.moveToNext()) {
-                String duracion = c.getString(c.getColumnIndex(DataBaseContract.RiegoStandardEntry.INTENSITY_STANDARD));
-                riegoStandard = new RiegoStandard(intensidad, duracion);
-            }
+            String duracion = c.getString(c.getColumnIndex(DataBaseContract.RiegoStandardEntry.INTENSITY_STANDARD));
+            riegoStandard = new RiegoStandard(intensidad, duracion);
         }
 
         c.close();
@@ -181,18 +178,14 @@ public class DBHelper extends SQLiteOpenHelper {
                 null
         );
 
-        if(c.moveToNext()){
+        if(c.moveToNext()) {
             String intensity = c.getString(c.getColumnIndex(DataBaseContract.RiegoEntry.INTENSITY));
-            if(c.moveToNext()) {
-                String duration = c.getString(c.getColumnIndex(DataBaseContract.RiegoEntry.DURATION));
-                if(c.moveToNext()) {
-                    String humSuelo = c.getString(c.getColumnIndex(DataBaseContract.RiegoEntry.HUM_SUELO));
-                    riego = new Riego(zonaID);
-                    riego.setIntensidad(Integer.parseInt(intensity));
-                    riego.setDuracion(Integer.parseInt(duration));
-                    riego.setHumSueloResultado(Float.parseFloat(humSuelo));
-                }
-            }
+            String duration = c.getString(c.getColumnIndex(DataBaseContract.RiegoEntry.DURATION));
+            String humSuelo = c.getString(c.getColumnIndex(DataBaseContract.RiegoEntry.HUM_SUELO));
+            riego = new Riego(zonaID);
+            riego.setIntensidad(Integer.parseInt(intensity));
+            riego.setDuracion(Integer.parseInt(duration));
+            riego.setHumSueloResultado(Float.parseFloat(humSuelo));
         }
 
         c.close();

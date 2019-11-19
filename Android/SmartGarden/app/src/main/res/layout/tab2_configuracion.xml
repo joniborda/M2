@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/configuracion"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".ui.main.TabConfiguracionFragment">
 
     <LinearLayout
         android:id="@+id/constrainLayout"
@@ -178,26 +178,26 @@
                 android:layout_height="wrap_content"
                 android:paddingStart="10dp"
                 android:text="@string/ingrese_duracion"
+                app:layout_constraintBottom_toTopOf="@+id/txt_intensidad_riego"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="@+id/txt_duracion_riego" />
 
             <EditText
                 android:id="@+id/txt_duracion_riego"
-                style="@style/StyleNonEditableText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:editable="true"
-                android:focusable="false"
                 android:gravity="center"
                 android:inputType="number"
+                android:imeOptions="actionDone"
+                app:layout_constraintBottom_toTopOf="@+id/txt_intensidad_riego"
                 app:layout_constraintEnd_toStartOf="@+id/edit_btn_duracion"
                 app:layout_constraintStart_toEndOf="@+id/textView4"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <Button
                 android:id="@+id/edit_btn_duracion"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:background="@android:drawable/ic_menu_edit"
                 android:backgroundTint="@android:color/darker_gray"
                 app:layout_constraintBottom_toBottomOf="@+id/txt_duracion_riego"
@@ -212,33 +212,31 @@
                 android:layout_height="wrap_content"
                 android:paddingStart="10dp"
                 android:text="@string/intensidad_standard"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toBottomOf="@+id/txt_intensidad_riego"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView4" />
+                app:layout_constraintTop_toBottomOf="@+id/txt_duracion_riego" />
 
             <EditText
                 android:id="@+id/txt_intensidad_riego"
-                style="@style/StyleNonEditableText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:editable="true"
-                android:focusable="false"
                 android:gravity="center"
                 android:inputType="number"
+                android:imeOptions="actionDone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/edit_btn_duracion"
                 app:layout_constraintStart_toEndOf="@+id/textView5" />
 
             <Button
                 android:id="@+id/edit_btn_intensidad"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:background="@android:drawable/ic_menu_edit"
                 android:backgroundTint="@android:color/darker_gray"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/txt_intensidad_riego"
-                app:layout_constraintTop_toBottomOf="@+id/txt_duracion_riego" />
+                app:layout_constraintTop_toBottomOf="@+id/edit_btn_duracion" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </LinearLayout>

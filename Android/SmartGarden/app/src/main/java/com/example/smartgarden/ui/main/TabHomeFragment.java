@@ -2,12 +2,16 @@ package com.example.smartgarden.ui.main;
 
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +19,7 @@ import android.widget.ImageView;
 
 import com.example.smartgarden.MainActivity;
 import com.example.smartgarden.R;
+import com.example.smartgarden.logic.ArduinoStatus;
 import com.example.smartgarden.logic.Riego;
 import com.example.smartgarden.logic.Zona;
 import com.example.smartgarden.logic.ZonaStatus;
@@ -26,6 +31,8 @@ import java.util.Objects;
  * A simple {@link Fragment} subclass.
  */
 public class TabHomeFragment extends Fragment implements IFragment {
+
+    private static final String TAG = "Home";
 
     private ImageView imageDesconnected;
     private RecyclerView rvZonas;
@@ -39,6 +46,16 @@ public class TabHomeFragment extends Fragment implements IFragment {
 
     }
 
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Initialize contacts
+        zonas = Zona.createZonaList();
+        // Create adapter passing in the sample user data
+        adapter = new ZonaAdapter(zonas);
+    }
+
     @SuppressLint("HandlerLeak")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -49,16 +66,18 @@ public class TabHomeFragment extends Fragment implements IFragment {
 
         // Lookup the recyclerview in activity layout
         rvZonas = v.findViewById(R.id.rv_zonas);
-        // Initialize contacts
-        zonas = Zona.createZonaList();
-        // Create adapter passing in the sample user data
-        adapter = new ZonaAdapter(zonas);
         // Attach the adapter to the recyclerview to populate items
         rvZonas.setAdapter(adapter);
         // Set layout manager to position the items
         rvZonas.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        desconexion(); // Inicialmente desconectado
+        if(MainActivity.arduinoStatus == ArduinoStatus.Desconnected) {
+            imageDesconnected.setVisibility(View.VISIBLE);
+            rvZonas.setVisibility(View.GONE);
+        } else {
+            imageDesconnected.setVisibility(View.GONE);
+            rvZonas.setVisibility(View.VISIBLE);
+        }
 
         return v;
     }
@@ -111,6 +130,7 @@ public class TabHomeFragment extends Fragment implements IFragment {
 
     @Override
     public void desconexion() {
+
         Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
             imageDesconnected.setVisibility(View.VISIBLE);
             rvZonas.setVisibility(View.GONE);

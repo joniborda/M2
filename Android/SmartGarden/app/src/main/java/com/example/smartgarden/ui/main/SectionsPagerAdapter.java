@@ -74,16 +74,4 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         return fragments;
     }
 
-    public Fragment home() {
-        return home;
-    }
-
-    public Fragment configuracion() {
-        return config;
-    }
-
-    public Fragment mantenimiento() {
-        return mantenimiento;
-    }
-
 }

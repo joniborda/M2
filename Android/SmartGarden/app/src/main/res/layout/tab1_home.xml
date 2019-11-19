@@ -3,11 +3,10 @@
 
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/home"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    tools:context=".ui.main.TabHomeFragment">
 
     <ImageView
         android:id="@+id/image_state"
@@ -15,8 +14,7 @@
         android:layout_height="@dimen/image_height_width"
         android:layout_gravity="center"
         android:contentDescription="@string/image_desconnected"
-        android:src="@drawable/icon_disconnected"
-        android:visibility="gone" />
+        android:src="@drawable/icon_disconnected" />
 
     <ScrollView
         android:layout_width="match_parent"
