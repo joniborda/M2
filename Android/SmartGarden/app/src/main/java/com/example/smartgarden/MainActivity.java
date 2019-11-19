@@ -19,9 +19,11 @@ import com.example.smartgarden.logic.BTHandler;
 import com.example.smartgarden.logic.Command;
 import com.example.smartgarden.logic.DBHelper;
 import com.example.smartgarden.logic.HandlerMessage;
+import com.example.smartgarden.logic.MantenimientoStatus;
 import com.example.smartgarden.logic.Message;
 import com.example.smartgarden.logic.RiegoStandard;
 import com.example.smartgarden.logic.SensorEventHandler;
+import com.example.smartgarden.ui.main.IFragment;
 import com.example.smartgarden.ui.main.TabConfiguracionFragment;
 import com.example.smartgarden.ui.main.TabMantenimientoFragment;
 import com.google.android.material.tabs.TabLayout;
@@ -41,8 +43,10 @@ public class MainActivity extends AppCompatActivity {
     private int conectionAttempts = 3;
     private TabLayout tabs;
     private Button btnConnect;
-    public static HandlerMessage bluetoothIN;
+    public static Handler bluetoothIN;
     public static DBHelper dbHelper;
+    public static MantenimientoStatus mantenimientoStatus;
+    private StringBuilder dataStringIN;
 
     // Sensores
     private SensorManager sensorManager;
@@ -55,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     public static ArduinoStatus arduinoStatus = ArduinoStatus.Desconnected; // 0 no, 1 si, 2 estableciendo conexion
 
 
+    @SuppressLint("HandlerLeak")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
         populateviewPager();
 
         bluetoothIN = new HandlerMessage(sectionsPagerAdapter.getItems());
+
         dbHelper = new DBHelper(this);
 
         ///Asigno sensores
@@ -177,7 +183,6 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable(){
                         public void run() {
                             btnConnect.setEnabled(true);
-                            showToast("Conexión con arduino exitosa", Toast.LENGTH_SHORT);
                         }
                     });
                 } else {

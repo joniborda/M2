@@ -2,11 +2,8 @@ package com.example.smartgarden.ui.main;
 
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.text.method.KeyListener;
@@ -15,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,14 +42,12 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
     private TextView btnDetenerRiego;
     private EditText txtDuracion;
     private EditText txtIntensidad;
-    private ProgressBar progressBarCenso;
-    private ProgressBar progressBarMant;
     private boolean isEditingDuracion;
     private boolean isEditingintensidad;
     private int tipoRiego;
 
     public TabConfiguracionFragment() {
-
+        tipoRiego = 0;
     }
 
     @SuppressLint("HandlerLeak")
@@ -72,8 +66,6 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
         Button editButtonDuracion = root.findViewById(R.id.edit_btn_duracion);
         txtIntensidad = root.findViewById(R.id.txt_intensidad_riego);
         Button editButtonIntensidad = root.findViewById(R.id.edit_btn_intensidad);
-        progressBarCenso = root.findViewById(R.id.progress_bar_censo);
-        progressBarMant = root.findViewById(R.id.progress_bar_mant);
 
         // No se pueden hacer cambios
         txtDuracion.setTag(txtDuracion.getKeyListener());
@@ -193,9 +185,25 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
             }
         });
 
+        return root;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         if(MainActivity.arduinoStatus == ArduinoStatus.Desconnected) {
             mostrarComoDesconectado();
         } else {
+            btnIniciarRiego.setEnabled(true);
+            btnIniciarRiego.setTextColor(getResources().getColor(R.color.colorBoton));
+            btnIniciarCenso.setEnabled(true);
+            btnIniciarCenso.setTextColor(getResources().getColor(R.color.colorBoton));
+            btnIniciarMantenimiento.setEnabled(true);
+            btnIniciarMantenimiento.setTextColor(getResources().getColor(R.color.colorBoton));
+            btnDetenerRiego.setEnabled(true);
+            btnDetenerRiego.setTextColor(getResources().getColor(R.color.colorBoton));
+            tiposDeRiego.setVisibility(View.VISIBLE);
+            rg.setVisibility(View.VISIBLE);
             switch (tipoRiego) {
                 case 0:
                     rg.check(R.id.radiobtn_continuo);
@@ -205,8 +213,6 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
                     break;
             }
         }
-
-        return root;
     }
 
     private void showToast(String msg) {
@@ -237,15 +243,9 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
 
     private void iniciarCenso(){
         BTHandler.getInstance().sendMsg(new Message(Command.INICIAR_CENSO));
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            progressBarCenso.setVisibility(View.VISIBLE);
-        });
     }
 
     private void iniciarMantenimiento(){
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            progressBarMant.setVisibility(View.VISIBLE);
-        });
         BTHandler.getInstance().sendMsg(new Message(Command.INICIAR_MANTENIMIENTO));
     }
 
@@ -256,6 +256,7 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
     @Override
     public void conexion(String[] values) {
         tipoRiego = Integer.parseInt(values[0]);
+
         Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
             // set clickable to all buttons
             btnIniciarRiego.setEnabled(true);
@@ -290,52 +291,40 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
     @Override
     public void resultadoDetenerRiego(boolean ok) {
         if(ok) {
-            showToast("Se han detenido correctamente los riegos en curso");
+            ((MainActivity) getActivity()).showToast("Se han detenido correctamente los riegos en curso", Toast.LENGTH_LONG);
         } else {
-            showToast("No se ha encontrado ningún riego en curso");
+            ((MainActivity) getActivity()).showToast("No se ha encontrado ningún riego en curso", Toast.LENGTH_LONG);
         }
     }
 
     @Override
     public void showErrorRiegoManual() {
-        showToast("No se ha podido iniciar el riego manual. Intente más tarde.");
+        ((MainActivity) getActivity()).showToast("No se ha podido iniciar el riego manual. Intente más tarde.", Toast.LENGTH_LONG);
     }
 
     @Override
     public void showErrorMantenimiento() {
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            progressBarMant.setVisibility(View.GONE);
-        });
-        showToast("No se ha podido iniciar el mantenimiento. Intente más tarde.");
+        ((MainActivity) getActivity()).showToast("No se ha podido iniciar el mantenimiento. Intente más tarde.", Toast.LENGTH_LONG);
     }
 
     @Override
     public void showErrorCensoManual() {
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            progressBarCenso.setVisibility(View.GONE);
-        });
-        showToast("No se ha podido iniciar el censo manual. Intente más tarde.");
+        ((MainActivity) getActivity()).showToast("No se ha podido iniciar el censo manual. Intente más tarde.", Toast.LENGTH_LONG);
     }
 
     @Override
     public void terminoRiegoManual() {
-        showToast("El riego manual ha finalizado correctamente. Deslice a la derecha para ver los resultados");
+        ((MainActivity) getActivity()).showToast("El riego manual ha finalizado correctamente.", Toast.LENGTH_LONG);
     }
 
     @Override
     public void resultadoMantenimiento(String[] values) {
-        showToast("El mantenimiento ha finalizado correctamente. Deslice a la izquierda para ver los resultados");
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            progressBarMant.setVisibility(View.GONE);
-        });
+        ((MainActivity) getActivity()).showToast("El mantenimiento ha finalizado correctamente.", Toast.LENGTH_LONG);
     }
 
     @Override
     public void resultadoCenso(String[] values) {
-        showToast("El censo manual ha finalizado correctamente. Deslice a la derecha para ver los resultados");
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            progressBarCenso.setVisibility(View.GONE);
-        });
+        ((MainActivity) getActivity()).showToast("El censo manual ha finalizado correctamente.", Toast.LENGTH_LONG);
     }
 
     // ACCIONES EN OTROS FRAGMENTS

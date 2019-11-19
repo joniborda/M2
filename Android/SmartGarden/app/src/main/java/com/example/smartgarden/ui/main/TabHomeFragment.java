@@ -2,20 +2,18 @@ package com.example.smartgarden.ui.main;
 
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.example.smartgarden.MainActivity;
 import com.example.smartgarden.R;
@@ -32,8 +30,6 @@ import java.util.Objects;
  */
 public class TabHomeFragment extends Fragment implements IFragment {
 
-    private static final String TAG = "Home";
-
     private ImageView imageDesconnected;
     private RecyclerView rvZonas;
 
@@ -46,7 +42,7 @@ public class TabHomeFragment extends Fragment implements IFragment {
 
     }
 
-
+    @SuppressLint("HandlerLeak")
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +50,7 @@ public class TabHomeFragment extends Fragment implements IFragment {
         zonas = Zona.createZonaList();
         // Create adapter passing in the sample user data
         adapter = new ZonaAdapter(zonas);
+
     }
 
     @SuppressLint("HandlerLeak")
@@ -71,6 +68,13 @@ public class TabHomeFragment extends Fragment implements IFragment {
         // Set layout manager to position the items
         rvZonas.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
         if(MainActivity.arduinoStatus == ArduinoStatus.Desconnected) {
             imageDesconnected.setVisibility(View.VISIBLE);
             rvZonas.setVisibility(View.GONE);
@@ -78,8 +82,6 @@ public class TabHomeFragment extends Fragment implements IFragment {
             imageDesconnected.setVisibility(View.GONE);
             rvZonas.setVisibility(View.VISIBLE);
         }
-
-        return v;
     }
 
     @Override
@@ -122,7 +124,6 @@ public class TabHomeFragment extends Fragment implements IFragment {
         adapter.notifyItemChanged(indexZona2);
 
         Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            // give visibility
             imageDesconnected.setVisibility(View.GONE);
             rvZonas.setVisibility(View.VISIBLE);
         });
@@ -130,11 +131,12 @@ public class TabHomeFragment extends Fragment implements IFragment {
 
     @Override
     public void desconexion() {
-
         Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
             imageDesconnected.setVisibility(View.VISIBLE);
             rvZonas.setVisibility(View.GONE);
         });
+
+        ((MainActivity) getActivity()).showToast("Desconexion", Toast.LENGTH_LONG);
     }
 
     @Override

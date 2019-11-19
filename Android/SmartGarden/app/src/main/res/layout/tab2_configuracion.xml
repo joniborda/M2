@@ -62,14 +62,6 @@
                 android:text="@string/iniciar_censo"
                 android:textColor="@color/colorBoton" />
 
-            <ProgressBar
-                android:id="@+id/progress_bar_censo"
-                style="@android:style/Widget.DeviceDefault.Light.ProgressBar"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:indeterminate="true"
-                android:visibility="invisible" />
         </LinearLayout>
 
         <LinearLayout
@@ -89,15 +81,6 @@
                 android:paddingBottom="3dp"
                 android:text="@string/iniciar_mantenimiento"
                 android:textColor="@color/colorBoton" />
-
-            <ProgressBar
-                android:id="@+id/progress_bar_mant"
-                style="@android:style/Widget.DeviceDefault.Light.ProgressBar"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:indeterminate="true"
-                android:visibility="invisible" />
 
         </LinearLayout>
 

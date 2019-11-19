@@ -8,14 +8,18 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.example.smartgarden.MainActivity;
 import com.example.smartgarden.R;
+import com.example.smartgarden.logic.ArduinoStatus;
+import com.example.smartgarden.logic.MantenimientoStatus;
 
 import java.util.Objects;
 
@@ -24,9 +28,6 @@ import java.util.Objects;
  */
 public class TabMantenimientoFragment extends Fragment implements IFragment {
 
-    private static final String TAG = "Mantenimiento";
-
-    private LinearLayout layoutActual;
     private LinearLayout layoutInProgress;
     private LinearLayout layoutOk;
     private LinearLayout layoutError;
@@ -37,8 +38,19 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
     private TextView txtLdr1;
     private TextView txtLdr2;
 
-    public TabMantenimientoFragment() {
+    private int errorTemp;
+    private int errorHumAmb;
+    private int errorHumSuelo;
+    private int errorLdr1;
+    private int errorLdr2;
 
+    public TabMantenimientoFragment() {
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        MainActivity.mantenimientoStatus = MantenimientoStatus.NoMantenimiento;
     }
 
     @SuppressLint("HandlerLeak")
@@ -57,97 +69,145 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
         txtLdr1 = root.findViewById(R.id.txt_error_ldr1);
         txtLdr2 = root.findViewById(R.id.txt_error_ldr2);
 
-        if(layoutActual != null) {
-            layoutActual.setVisibility(View.VISIBLE);
-            txtNoMantenimiento.setVisibility(View.GONE);
-        }
-
         return root;
     }
 
-    public void iniciarMantenimientoReceived() {
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            if(layoutActual!= null) {
-                layoutActual.setVisibility(View.GONE);
-            } else {
-                txtNoMantenimiento.setVisibility(View.GONE);
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(MainActivity.arduinoStatus == ArduinoStatus.Desconnected) {
+            layoutError.setVisibility(View.GONE);
+            layoutInProgress.setVisibility(View.GONE);
+            layoutOk.setVisibility(View.GONE);
+            txtNoMantenimiento.setVisibility(View.VISIBLE);
+        } else {
+            switch (MainActivity.mantenimientoStatus) {
+                case OK:
+                    layoutOk.setVisibility(View.VISIBLE);
+                    layoutInProgress.setVisibility(View.GONE);
+                    txtNoMantenimiento.setVisibility(View.GONE);
+                    break;
+                case InProgress:
+                    layoutInProgress.setVisibility(View.VISIBLE);
+                    txtNoMantenimiento.setVisibility(View.GONE);
+                    break;
+                case Error:
+                    layoutInProgress.setVisibility(View.GONE);
+                    layoutError.setVisibility(View.VISIBLE);
+                    txtNoMantenimiento.setVisibility(View.GONE);
+                    if (errorTemp == 0) {
+                        txtTemp.setVisibility(View.VISIBLE);
+                    }
+                    if(errorHumAmb == 0) {
+                        txtHumAmb.setVisibility(View.VISIBLE);
+                    }
+                    if(errorHumSuelo == 0) {
+                        txtHumSuelo.setVisibility(View.VISIBLE);
+                    }
+                    if(errorLdr1 == 0) {
+                        txtLdr1.setVisibility(View.VISIBLE);
+                    }
+                    if(errorLdr2 == 0) {
+                        txtLdr2.setVisibility(View.VISIBLE);
+                    }
+                    break;
             }
-            layoutActual = layoutInProgress;
-            layoutActual.setVisibility(View.VISIBLE);
-        });
+        }
     }
 
     @Override
     public void desconexion() {
         Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            if(layoutActual != null) {
-                layoutActual.setVisibility(View.GONE);
-            }
-            layoutActual = null;
+            layoutError.setVisibility(View.GONE);
+            layoutInProgress.setVisibility(View.GONE);
+            layoutOk.setVisibility(View.GONE);
             txtNoMantenimiento.setVisibility(View.VISIBLE);
         });
+        MainActivity.mantenimientoStatus = MantenimientoStatus.NoMantenimiento;
     }
 
     @Override
     public void showErrorMantenimiento() {
-        getActivity().runOnUiThread(() -> {
-            if(layoutActual != null) {
-                layoutActual.setVisibility(View.GONE);
-            }
-            layoutActual = null;
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            layoutError.setVisibility(View.GONE);
+            layoutInProgress.setVisibility(View.GONE);
+            layoutOk.setVisibility(View.GONE);
             txtNoMantenimiento.setVisibility(View.VISIBLE);
         });
+        MainActivity.mantenimientoStatus = MantenimientoStatus.NoMantenimiento;
     }
 
     @Override
     public void resultadoMantenimiento(String[] values) {
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            int indexData = 0;
-            boolean noHayError = true;
-            if(layoutActual != null) {
-                layoutActual.setVisibility(View.GONE);
-            }
-            // leer datos
-            int errorTemp = Integer.parseInt(values[indexData++]);
-            int errorHumAmb = Integer.parseInt(values[indexData++]);
-            int errorHumSuelo = Integer.parseInt(values[indexData++]);
-            int errorLdr1 = Integer.parseInt(values[indexData++]);
-            int errorLdr2 = Integer.parseInt(values[indexData]);
 
-            if(errorTemp == 0) {
-                noHayError = false;
+        int indexData = 0;
+
+        // leer datos
+        errorTemp = Integer.parseInt(values[indexData++]);
+        errorHumAmb = Integer.parseInt(values[indexData++]);
+        errorHumSuelo = Integer.parseInt(values[indexData++]);
+        errorLdr1 = Integer.parseInt(values[indexData++]);
+        errorLdr2 = Integer.parseInt(values[indexData]);
+
+        boolean noHayError = true;
+
+        if(errorTemp == 0) {
+            noHayError = false;
+        }
+        if(errorHumAmb == 0) {
+            noHayError = false;
+        }
+        if(errorHumSuelo == 0) {
+            noHayError = false;
+        }
+        if(errorLdr1 == 0) {
+            noHayError = false;
+        }
+        if(errorLdr2 == 0) {
+            noHayError = false;
+        }
+        if(noHayError) {
+            MainActivity.mantenimientoStatus = MantenimientoStatus.OK;
+        } else {
+            MainActivity.mantenimientoStatus = MantenimientoStatus.Error;
+        }
+
+        boolean finalNoHayError = noHayError;
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            if (errorTemp == 0) {
                 txtTemp.setVisibility(View.VISIBLE);
             }
-            if(errorHumAmb == 0) {
-                noHayError = false;
+            if (errorHumAmb == 0) {
                 txtHumAmb.setVisibility(View.VISIBLE);
             }
-            if(errorHumSuelo == 0) {
-                noHayError = false;
+            if (errorHumSuelo == 0) {
                 txtHumSuelo.setVisibility(View.VISIBLE);
             }
-            if(errorLdr1 == 0) {
-                noHayError = false;
+            if (errorLdr1 == 0) {
                 txtLdr1.setVisibility(View.VISIBLE);
             }
-            if(errorLdr2 == 0) {
-                noHayError = false;
+            if (errorLdr2 == 0) {
                 txtLdr2.setVisibility(View.VISIBLE);
             }
-            if(noHayError) {
-                layoutActual = layoutOk;
+            if (finalNoHayError) {
+                layoutOk.setVisibility(View.VISIBLE);
             } else {
-                layoutActual = layoutError;
+                layoutError.setVisibility(View.VISIBLE);
             }
-            layoutActual.setVisibility(View.VISIBLE);
+            layoutInProgress.setVisibility(View.GONE);
         });
+
     }
 
     // ACCIONES EN OTROS FRAGMENTS
 
     @Override
     public void conexion(String[] values) {
-
+        MainActivity.mantenimientoStatus = MantenimientoStatus.InProgress;
+        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+            layoutInProgress.setVisibility(View.VISIBLE);
+            txtNoMantenimiento.setVisibility(View.GONE);
+        });
     }
 
     @Override
