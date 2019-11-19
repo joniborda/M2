@@ -65,7 +65,7 @@
 #define PIN_LED2                      8
 
 // INTERVALO PARA ACCION EN MS
-const unsigned long TIEMPO_RES_RIEGO = 3000;          // MS Para dar la respuesta de humedad despues de regar
+const unsigned long TIEMPO_RES_RIEGO = 10000;          // MS Para dar la respuesta de humedad despues de regar
 const unsigned long TIEMPO_RES_MANTENIMIENTO = 1000;  // MS Para dar la respuesta de mantenimiento despues de encender luces
 const unsigned long TIEMPO_INTERMITENCIA = 1000;      // MS En el cual prende y apaga la bomba de riego
 
@@ -164,11 +164,13 @@ void loop() {
         }
         if (abs(valorSensores[1] - valorSensores[5]) > 10) {
           vecMant[0] = 0;
-          //Serial.println("E_S_T");//Sensor de temperatura con fallas
+          //Serial.println("E_S_T");
+          //Sensor de temperatura con fallas
         }
         if (abs(valorSensores[2] - valorSensores[6]) > 10) {
           vecMant[1] = 0;
-          //Serial.println("E_S_H");//Sensor de humedad atmosferica con fallas
+          //Serial.println("E_S_H");
+          //Sensor de humedad atmosferica con fallas
         }
         vecMant[3] = valorSensores[4];
         digitalWrite(PIN_LED1, HIGH);
@@ -185,7 +187,7 @@ void loop() {
         tiempoComienzoRiegoZona1 = millis();
         tiempoComienzoIntermitencia1 = millis();
         intensidadRiegoZona1 = intesidadRiego;
-        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * 50;
+        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * 40;
         //analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
         String ret = "";
@@ -200,7 +202,7 @@ void loop() {
         tiempoComienzoRiegoZona2 = millis();
         tiempoComienzoIntermitencia2 = millis();
         intensidadRiegoZona2 = intesidadRiego;
-        intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * 50;
+        intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * 40;
         //analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
         analogWrite(PIN_BOMBA2, intensidadRiegoZona2);                
         String ret = "";
@@ -294,8 +296,10 @@ void loop() {
         TIEMPO_RIEGO_MANUAL = tRiegoManual;
         intensidadRiegoZona1 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
         intensidadRiegoZona2 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
-        analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
-        analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
+        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * 40;
+        intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * 40;
+        analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2);
       } else {
         sendMessageToBluetooth(M_RIEGO_MANUAL_ER);
       }
@@ -341,10 +345,10 @@ void loop() {
         analogWrite(PIN_BOMBA1, 0);
       }
       else if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
-        analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
+        analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
         tiempoComienzoIntermitencia1 = millis();
       } else {
-        analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
+        analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
       }
     }
     
@@ -355,10 +359,10 @@ void loop() {
         analogWrite(PIN_BOMBA2, 0);
       }
       else if (tiempoDentroIntermitencia >= TIEMPO_INTERMITENCIA * 2) {
-        analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2);
         tiempoComienzoIntermitencia2 = millis();
       } else {
-        analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
+        analogWrite(PIN_BOMBA2, intensidadRiegoZona2);
       }
     }
   }
@@ -443,6 +447,8 @@ void loop() {
       vecMant[3] = 0;
       //Serial.println("E_L_1");
       //Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto
+    } else {
+      vecMant[3] = 1;
     }
     digitalWrite(PIN_LED1, LOW);
     valorLuzActualZona = analogRead(PIN_SENSOR_LUZ2);
@@ -450,9 +456,11 @@ void loop() {
       vecMant[4] = 0;
       //Serial.println("E_L_2");
       //Se encendio la luz de la zona 2 y el sensor LDR2 no lo detecto
+    } else {
+      vecMant[4] = 1;
     }
     digitalWrite(PIN_LED2, LOW);
-    //Se envia <instruccion, ErrorTemp, ErrorHumAmb, ErrorHumSuelo, ErrorLDR1, ErrorLDR2> 
+    //Se envia <instruccion, errorTemp, errorHumAmb, errorHumSuelo, errorLDR1, errorLDR2> 
     String ret = "";
     ret = ret + "<" + INST_RES_MANTENIMIENTO + "," + vecMant[0] + "," + vecMant[1] + "," + vecMant[2] + "," + vecMant[3] + "," + vecMant[4] + ">";
     Serial.println(ret);
