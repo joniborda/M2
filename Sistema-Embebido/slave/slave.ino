@@ -2,8 +2,9 @@
 #include <DHT_U.h>
 #include <DHT.h>
 
-#define VALOR_MAX_LUZ 500
-#define VALOR_MIN_LUZ 300 // UMBRAL DE 200
+#define VALOR_MAX_LUZ 600
+#define VALOR_MIN_LUZ 550 // UMBRAL DE 50
+#define POND_LUZ_INT 150
 
 #define INST_CENSO                  1 // INSTRUCCION PARA RUTINA DE CENSO INICIO
 #define INST_FIN_CENSO              2 // INSTRUCCION PARA RUTINA DE CENSO FIN
@@ -51,8 +52,8 @@
 
 #define PIN_SENSOR_LUZ1             A0
 #define PIN_SENSOR_LUZ2             A1
-#define PIN_SENSOR_HUMEDAD_SUELO1   A2
-#define PIN_SENSOR_HUMEDAD_SUELO2   A3
+#define PIN_SENSOR_HUMEDAD_SUELO2   A2
+#define PIN_SENSOR_HUMEDAD_SUELO1   A3
 
 // PUERTOS DE CONEXION CON MAESTRO
 #define PUERTO_RX_MASTER              2
@@ -66,7 +67,7 @@
 
 // INTERVALO PARA ACCION EN MS
 const unsigned long TIEMPO_RES_RIEGO = 10000;          // MS Para dar la respuesta de humedad despues de regar
-const unsigned long TIEMPO_RES_MANTENIMIENTO = 1000;  // MS Para dar la respuesta de mantenimiento despues de encender luces
+const unsigned long TIEMPO_RES_MANTENIMIENTO = 10000;  // MS Para dar la respuesta de mantenimiento despues de encender luces
 const unsigned long TIEMPO_INTERMITENCIA = 1000;      // MS En el cual prende y apaga la bomba de riego
 
 unsigned long TIEMPO_RIEGO = 10000;
@@ -155,6 +156,7 @@ void loop() {
     case INST_MANTENIMIENTO: {
       if(!evaluaAccionConjunto()){
         tiempoMantenimiento = millis();
+        Serial.println(tiempoMantenimiento);
         mantenimientoManualEnCurso = true;
         int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
         censarZona1(valorSensores);
@@ -187,7 +189,7 @@ void loop() {
         tiempoComienzoRiegoZona1 = millis();
         tiempoComienzoIntermitencia1 = millis();
         intensidadRiegoZona1 = intesidadRiego;
-        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * 40;
+        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * POND_LUZ_INT;
         //analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
         String ret = "";
@@ -202,7 +204,7 @@ void loop() {
         tiempoComienzoRiegoZona2 = millis();
         tiempoComienzoIntermitencia2 = millis();
         intensidadRiegoZona2 = intesidadRiego;
-        intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * 40;
+        intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * POND_LUZ_INT;
         //analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
         analogWrite(PIN_BOMBA2, intensidadRiegoZona2);                
         String ret = "";
@@ -296,8 +298,8 @@ void loop() {
         TIEMPO_RIEGO_MANUAL = tRiegoManual;
         intensidadRiegoZona1 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
         intensidadRiegoZona2 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
-        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * 40;
-        intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * 40;
+        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * POND_LUZ_INT;
+        intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * POND_LUZ_INT;
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
         analogWrite(PIN_BOMBA2, intensidadRiegoZona2);
       } else {
@@ -323,15 +325,15 @@ void loop() {
       break;
     }
     case INST_DESCONEXION_BT: {
-  	  sendMessageToBluetooth(INST_DESCONEXION_BT);                                                                           
-	    break;
+      sendMessageToBluetooth(INST_DESCONEXION_BT);                                                                           
+      break;
     }  
     default:{
       //Serial.println("No se encontro rutina para ese valor.");
       break;
     }
   }
-  
+  //Serial.println(tiempoMantenimiento);
   tiempoActual = millis();
   if(tipoRiego == 1) {
     // Si es intermitente tengo que ver si está regando la zona y despues tengo que ver si esta dentro
@@ -367,7 +369,7 @@ void loop() {
     }
   }
   
-  tiempoActual = millis();
+  //tiempoActual = millis();
   if(tiempoComienzoRiegoManual > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoManual) >= TIEMPO_RIEGO_MANUAL) {
     // Aviso que termino el riego manual.
     analogWrite(PIN_BOMBA1, 0);
@@ -378,7 +380,7 @@ void loop() {
     sendMessageToBluetooth(INST_FIN_RIEGO_MANUAL);
   }
   
-  tiempoActual = millis();
+  //tiempoActual = millis();
   if (tiempoComienzoRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona1) >= TIEMPO_RIEGO) {
     // Aviso que termino de regar la zona 1.
     analogWrite(PIN_BOMBA1, 0);
@@ -389,7 +391,7 @@ void loop() {
     tiempoComienzoRiegoZona1 = 0;
   }
 
-  tiempoActual = millis();
+  //tiempoActual = millis();
   if (tiempoDespuesRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona1) >= TIEMPO_RES_RIEGO) {
     // Paso el tiempo establecido posterior al riego, se envia al maestro el valor del sensor de humedad del suelo.
     String ret = "";
@@ -399,7 +401,7 @@ void loop() {
     tiempoDespuesRiegoZona1 = 0;
   }
   
-  tiempoActual = millis();
+  //tiempoActual = millis();
   if (tiempoComienzoRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona2) >= TIEMPO_RIEGO) {
     // Aviso que termino de regar la zona 2.
     analogWrite(PIN_BOMBA2, 0);
@@ -410,7 +412,7 @@ void loop() {
     tiempoComienzoRiegoZona2 = 0;
   }
 
-  tiempoActual = millis();
+  //tiempoActual = millis();
   if (tiempoDespuesRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona2) >= TIEMPO_RES_RIEGO) {
     // Paso el tiempo establecido posterior al riego, se envia al maestro y dispositivo el valor del sensor de humedad del suelo.
     String ret = "";
@@ -439,7 +441,8 @@ void loop() {
   }
 
  
-  tiempoActual = millis();
+  //tiempoActual = millis();
+  //Serial.println(tiempoMantenimiento);
   if (tiempoMantenimiento > 0 && (unsigned long)(tiempoActual - tiempoMantenimiento) >= TIEMPO_RES_MANTENIMIENTO) {
     //Censa la luz para ver como varia y envia los resultados al esclavo
     int valorLuzActualZona = analogRead(PIN_SENSOR_LUZ1);
