@@ -66,12 +66,12 @@
 #define PIN_LED2                      8
 
 // INTERVALO PARA ACCION EN MS
-const unsigned long TIEMPO_RES_RIEGO = 10000;          // MS Para dar la respuesta de humedad despues de regar
-const unsigned long TIEMPO_RES_MANTENIMIENTO = 10000;  // MS Para dar la respuesta de mantenimiento despues de encender luces
-const unsigned long TIEMPO_INTERMITENCIA = 1000;      // MS En el cual prende y apaga la bomba de riego
+const unsigned long TIEMPO_RES_RIEGO = 10000UL;          // MS Para dar la respuesta de humedad despues de regar
+const unsigned long TIEMPO_RES_MANTENIMIENTO = 10000UL;  // MS Para dar la respuesta de mantenimiento despues de encender luces
+const unsigned long TIEMPO_INTERMITENCIA = 1000UL;      // MS En el cual prende y apaga la bomba de riego
 
-unsigned long TIEMPO_RIEGO = 10000;
-unsigned long TIEMPO_RIEGO_MANUAL = 0;
+unsigned long TIEMPO_RIEGO = 10000UL;
+unsigned long TIEMPO_RIEGO_MANUAL = 0UL;
 
 SoftwareSerial serialMaster(PUERTO_RX_MASTER, PUERTO_TX_MASTER);
 
@@ -79,14 +79,14 @@ DHT sensorDHT1 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE1, DHT11);
 DHT sensorDHT2 = DHT(PIN_SENSOR_HUMEDAD_AMBIENTE2, DHT11);
 
 unsigned long tiempoActual = millis();
-unsigned long tiempoComienzoRiegoZona1 = 0;     // Tiempo que falta para avisar que termino el riego
-unsigned long tiempoDespuesRiegoZona1 = 0;      // Tiempo que falta para dar la respuesta de riego
-unsigned long tiempoComienzoRiegoZona2 = 0;     // Tiempo que falta para avisar que termino el riego
-unsigned long tiempoDespuesRiegoZona2 = 0;      // Tiempo que falta para dar la respuesta de riego
-unsigned long tiempoMantenimiento = 0;          // Tiempo que falta para terminar el mantenimiento
-unsigned long tiempoComienzoRiegoManual = 0;    // Tiempo que debe transcurrir el riego manual
-unsigned long tiempoComienzoIntermitencia1 = 0; // Tiempo que apaga y prende la zona 1
-unsigned long tiempoComienzoIntermitencia2 = 0; // Tiempo que apaga y prende la zona 2
+unsigned long tiempoComienzoRiegoZona1 = 0UL;     // Tiempo que falta para avisar que termino el riego
+unsigned long tiempoDespuesRiegoZona1 = 0UL;      // Tiempo que falta para dar la respuesta de riego
+unsigned long tiempoComienzoRiegoZona2 = 0UL;     // Tiempo que falta para avisar que termino el riego
+unsigned long tiempoDespuesRiegoZona2 = 0UL;      // Tiempo que falta para dar la respuesta de riego
+unsigned long tiempoMantenimiento = 0UL;          // Tiempo que falta para terminar el mantenimiento
+unsigned long tiempoComienzoRiegoManual = 0UL;    // Tiempo que debe transcurrir el riego manual
+unsigned long tiempoComienzoIntermitencia1 = 0UL; // Tiempo que apaga y prende la zona 1
+unsigned long tiempoComienzoIntermitencia2 = 0UL; // Tiempo que apaga y prende la zona 2
 
 //Tipo de riego: 0 continuo, 1 intermitente
 static int tipoRiego = 0; //Por defecto es continuo

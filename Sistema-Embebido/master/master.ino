@@ -53,8 +53,8 @@ SoftwareSerial serialSlave(PUERTO_RX_SLAVE, PUERTO_TX_SLAVE);
 // INTERVALO DE RUTINA DE CENSO EN MS
 static unsigned int MS_INTERVAL_TO_CENSO = 10000;
 
-static unsigned long currentMillis = 0; // Tiempo actual
-static unsigned long msParaNuevoCenso = 0;  // Tiempo que falta para enviar el censo
+static unsigned long currentMillis = 0UL; // Tiempo actual
+static unsigned long msParaNuevoCenso = 0UL;  // Tiempo que falta para enviar el censo
 
 //La luz se comporta asi: 1 totalmente iluminado, 1023 totalmente oscuro.
 //La humedad del suelo se comporta asi: 1 totalmente humedo, 1023 totalmente seco.
