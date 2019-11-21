@@ -2,6 +2,14 @@
 #include <DHT_U.h>
 #include <DHT.h>
 
+#define DEBUG  //comentar esto para no usar el debug
+
+#ifdef DEBUG
+ #define DEBUG_PRINT(x) Serial.println(x)
+#else
+ #define DEBUG_PRINT(x)
+#endif
+
 #define VALOR_MAX_LUZ 600
 #define VALOR_MIN_LUZ 550 // UMBRAL DE 50
 #define POND_LUZ_INT 150
@@ -156,7 +164,7 @@ void loop() {
     case INST_MANTENIMIENTO: {
       if(!evaluaAccionConjunto()){
         tiempoMantenimiento = millis();
-        Serial.println(tiempoMantenimiento);
+        DEBUG_PRINT(tiempoMantenimiento);
         mantenimientoManualEnCurso = true;
         int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
         censarZona1(valorSensores);
@@ -166,12 +174,12 @@ void loop() {
         }
         if (abs(valorSensores[1] - valorSensores[5]) > 10) {
           vecMant[0] = 0;
-          //Serial.println("E_S_T");
+          //DEBUG_PRINT("E_S_T");
           //Sensor de temperatura con fallas
         }
         if (abs(valorSensores[2] - valorSensores[6]) > 10) {
           vecMant[1] = 0;
-          //Serial.println("E_S_H");
+          //DEBUG_PRINT("E_S_H");
           //Sensor de humedad atmosferica con fallas
         }
         vecMant[3] = valorSensores[4];
@@ -329,11 +337,10 @@ void loop() {
       break;
     }  
     default:{
-      //Serial.println("No se encontro rutina para ese valor.");
       break;
     }
   }
-  //Serial.println(tiempoMantenimiento);
+  //DEBUG_PRINT(tiempoMantenimiento);
   tiempoActual = millis();
   if(tipoRiego == 1) {
     // Si es intermitente tengo que ver si está regando la zona y despues tengo que ver si esta dentro
@@ -448,7 +455,7 @@ void loop() {
     int valorLuzActualZona = analogRead(PIN_SENSOR_LUZ1);
     if(vecMant[3] >= valorLuzActualZona) {
       vecMant[3] = 0;
-      //Serial.println("E_L_1");
+      DEBUG_PRINT("E_L_1");
       //Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto
     } else {
       vecMant[3] = 1;
@@ -457,7 +464,7 @@ void loop() {
     valorLuzActualZona = analogRead(PIN_SENSOR_LUZ2);
     if(vecMant[4] >= valorLuzActualZona) {
       vecMant[4] = 0;
-      //Serial.println("E_L_2");
+      DEBUG_PRINT("E_L_2");
       //Se encendio la luz de la zona 2 y el sensor LDR2 no lo detecto
     } else {
       vecMant[4] = 1;
@@ -584,7 +591,7 @@ void leerBluetooth(int* inst, float* intesidad, int* tiempo) {
     } else if (fieldIndex == 2) {
       *tiempo = atoi(input);
     }
-    //Serial.println(entrada);
+    DEBUG_PRINT(entrada);
   }
 }
 

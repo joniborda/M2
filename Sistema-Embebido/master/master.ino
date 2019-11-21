@@ -1,6 +1,14 @@
 #include <SD.h>
 #include <SoftwareSerial.h>
 
+#define DEBUG  //comentar esto para no usar el debug
+
+#ifdef DEBUG
+ #define DEBUG_PRINT(x) Serial.println(x)
+#else
+ #define DEBUG_PRINT(x)
+#endif
+
 // PUERTOS DE CONEXION CON ESCLAVO
 #define PUERTO_RX_SLAVE 2
 #define PUERTO_TX_SLAVE 3
@@ -72,22 +80,22 @@ static int valoresCensoAnterior[] = { -1, -1, -1, -1}; //Necesito que sea global
 void setup() {
   serialSlave.begin(9600);
   Serial.begin(9600);
-  Serial.println("M_OK"); //Maestro iniciado correctamente
+  DEBUG_PRINT("M_OK"); //Maestro iniciado correctamente
 
   if (!SD.begin(PIN_CS_SD)) {
-    Serial.println("E_SD_1"); //Error al inicializar la tarjeta SD
+    DEBUG_PRINT("E_SD_1"); //Error al inicializar la tarjeta SD
   } else {
-    Serial.println("SD_2"); //Tarjeta SD incializada correctamente.
+    DEBUG_PRINT("SD_2"); //Tarjeta SD incializada correctamente.
     inicializarArchivosDeCensos();
   }
-  Serial.println("ARDUINO MAESTRO INICIADO CORRECTAMENTE");
+  DEBUG_PRINT("ARDUINO MAESTRO INICIADO CORRECTAMENTE");
 }
 
 void loop() {
   currentMillis = millis();
   if ((unsigned long)(currentMillis - msParaNuevoCenso) >= MS_INTERVAL_TO_CENSO) {
 
-    Serial.println("M_C"); //Maestro envia orden de censar al esclavo
+    DEBUG_PRINT("M_C"); //Maestro envia orden de censar al esclavo
     enviarInstruccionAlEsclavo(INST_CENSO);
     msParaNuevoCenso = millis();
     MS_INTERVAL_TO_CENSO = (unsigned int)45000;
@@ -117,17 +125,17 @@ void loop() {
         float perEfectividadZ2 = calcularEfectividad(valoresRecibidos[5], valoresRecibidos[6], valoresRecibidos[7], valoresRecibidos[8]);
         String msg = "";
         msg = msg + "<" + INST_FIN_CENSO + "," + valoresRecibidos[1] + "," + valoresRecibidos[2] + "," + valoresRecibidos[3] + "," + valoresRecibidos[4] + "," + valoresRecibidos[5] + "," + valoresRecibidos[6] + "," + valoresRecibidos[7] + "," + valoresRecibidos[8] + ">";
-        Serial.println(msg);
+        DEBUG_PRINT(msg);
         
-        Serial.print("%EF1 ");
-        Serial.println(perEfectividadZ1);
-        Serial.print("%EF2 ");
-        Serial.println(perEfectividadZ2);
+        DEBUG_PRINT("%EF1 ");
+        DEBUG_PRINT(perEfectividadZ1);
+        DEBUG_PRINT("%EF2 ");
+        DEBUG_PRINT(perEfectividadZ2);
         
         guardarEnArchivo(valoresRecibidos, perEfectividadZ1, perEfectividadZ2);
 
         if (determinarRiegoEnZona(perEfectividadZ1, valoresRecibidos[4], valoresRecibidos[2], valoresCensoAnterior[0], valoresCensoAnterior[1])) {
-          Serial.println("RZ1"); //Es eficiente regar en la zona 1
+          DEBUG_PRINT("RZ1"); //Es eficiente regar en la zona 1
           float varZona1 = obtenerVariableRiego("V1.TXT");
           float vol1 = calcularVolumenRiego(valoresRecibidos[3], varZona1);
           String ret = "";
@@ -137,7 +145,7 @@ void loop() {
         }
 
         if (determinarRiegoEnZona(perEfectividadZ2, valoresRecibidos[8], valoresRecibidos[6], valoresCensoAnterior[2], valoresCensoAnterior[3])) {
-          Serial.println("RZ2"); //Es eficiente regar en la zona 2
+          DEBUG_PRINT("RZ2"); //Es eficiente regar en la zona 2
           float varZona2 = obtenerVariableRiego("V2.TXT");
           float vol2 = calcularVolumenRiego(valoresRecibidos[7], varZona2);
           String ret = "";
@@ -164,16 +172,10 @@ void loop() {
       }
     case INST_FIN_RIEGO_Z1: {
         // Ocurre cuando el esclavo me avisa que termino de regar la zona 1
-        /*String ret = "";
-        ret = ret + "<" + INST_FIN_RIEGO_Z1 + ">";
-        Serial.println(ret);*/
         break;
       }
     case INST_FIN_RIEGO_Z2: {
         // Ocurre cuando el esclavo me avisa que termino de regar la zona 2
-        /*String ret = "";
-        ret = ret + "<" + INST_FIN_RIEGO_Z2 + ">";
-        Serial.println(ret);*/
         break;
       }
     case INST_RES_RIEGO_Z1: {
@@ -223,7 +225,7 @@ void leerInstruccionEsclavo(int* vec) {
       entrada[i] = '\0';
     }
     serialSlave.readBytesUntil('>', entrada, 59);
-    Serial.println("L_E"); //Leyendo del esclavo
+    DEBUG_PRINT("L_E"); //Leyendo del esclavo
     
     int charIndex = 0;
     char input[4]; // El dato que este entre comas no puede tener una longitud mayor a 4.
@@ -249,7 +251,7 @@ void leerInstruccionEsclavo(int* vec) {
     input[charIndex] = '\0';
     vec[fieldIndex] = atoi(input);
     entrada[0] = '@'; //Indica que el dato leido proviene del esclavo o del bluetooth
-    Serial.println(entrada);
+    DEBUG_PRINT(entrada);
   }
 }
 
@@ -264,12 +266,12 @@ float obtenerVariableRiego(const char* archivo) {
       fp.read(input, sizeof(input));
       varRiego = atof(input);
     } else {
-      Serial.println("E_L_V"); //Error al leer el archivo de variable
+      DEBUG_PRINT("E_L_V"); //Error al leer el archivo de variable
     }
   } else {
     String ret = "";
     ret = ret + "E_A_V " + archivo;
-    Serial.println(ret);
+    DEBUG_PRINT(ret);
     varRiego = 33.33; //Si falla la apertura de la SD, se envia una variable fija de manera que el arduino pueda seguir regando.
   }
   fp.close();
@@ -282,8 +284,8 @@ void escribirVariableRiego(float var, const char* archivo) {
   if (fp) {
     fp.print(var);
   } else {
-    Serial.println("E_E_V");
-    Serial.println(archivo);
+    DEBUG_PRINT("E_E_V");
+    DEBUG_PRINT(archivo);
   }
   fp.close();
 }
@@ -295,7 +297,7 @@ void guardarEnArchivo(int* vec, float perEfectividadZ1, float perEfectividadZ2) 
     ret = ret + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + perEfectividadZ1;
     fp.println(ret);
   } else {
-    Serial.println("E_A_Z1"); //Error al abrir archivo Z1.TXT
+    DEBUG_PRINT("E_A_Z1"); //Error al abrir archivo Z1.TXT
   }
   fp.close();
 
@@ -305,7 +307,7 @@ void guardarEnArchivo(int* vec, float perEfectividadZ1, float perEfectividadZ2) 
     ret = ret + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + "," + perEfectividadZ2;
     fp.println(ret);
   } else {
-    Serial.println("E_A_Z2"); //Error al abrir archivo Z2.TXT
+    DEBUG_PRINT("E_A_Z2"); //Error al abrir archivo Z2.TXT
   }
   fp.close();
 }
@@ -315,60 +317,60 @@ float calcularEfectividad(int temp, int humedadAmbiente, int humedadSuelo, int l
   float perHumedadAmbiente = (float)humedadAmbiente / MAX_HUMEDAD;
   float perHumedadSuelo = (float)humedadSuelo / MAX_HUMEDAD_SUELO;
   float perLuz = (float)luz / MAX_LUZ;
-  Serial.print("T:");
-  Serial.println(perTemperatura);
-  Serial.print("HA:");
-  Serial.println(perHumedadAmbiente);
-  Serial.print("SS:");
-  Serial.println(perHumedadSuelo);
-  Serial.print("NL:");
-  Serial.println(perLuz);
+  DEBUG_PRINT("T:");
+  DEBUG_PRINT(perTemperatura);
+  DEBUG_PRINT("HA:");
+  DEBUG_PRINT(perHumedadAmbiente);
+  DEBUG_PRINT("SS:");
+  DEBUG_PRINT(perHumedadSuelo);
+  DEBUG_PRINT("NL:");
+  DEBUG_PRINT(perLuz);
 
-  Serial.println("V_PRIORIZADOS");
-  Serial.print("T:");
-  Serial.println(perTemperatura * PRIORIDAD_TEMP);
-  Serial.print("HA:");
-  Serial.println(perHumedadAmbiente * PRIORIDAD_HUM_AMB);
-  Serial.print("SS:");
-  Serial.println(perHumedadSuelo * PRIORIDAD_HUM_SUELO);
-  Serial.print("NL:");
-  Serial.println(perLuz * PRIORIDAD_LUZ);
+  DEBUG_PRINT("V_PRIORIZADOS");
+  DEBUG_PRINT("T:");
+  DEBUG_PRINT(perTemperatura * PRIORIDAD_TEMP);
+  DEBUG_PRINT("HA:");
+  DEBUG_PRINT(perHumedadAmbiente * PRIORIDAD_HUM_AMB);
+  DEBUG_PRINT("SS:");
+  DEBUG_PRINT(perHumedadSuelo * PRIORIDAD_HUM_SUELO);
+  DEBUG_PRINT("NL:");
+  DEBUG_PRINT(perLuz * PRIORIDAD_LUZ);
   return (PRIORIDAD_TEMP * (perTemperatura) + PRIORIDAD_HUM_AMB * (1 - perHumedadAmbiente) + PRIORIDAD_HUM_SUELO * (perHumedadSuelo) + PRIORIDAD_LUZ * (perLuz)) * 100;
 }
 
 int determinarRiegoEnZona(float perEfectividad, int luzActual, int humedadActual, int humedadAnterior, int luzAnterior) {
   if (luzAnterior == -1 || humedadAnterior == -1){
     //Es la primera vez que censa, no hay valores anteriores
-    Serial.println("NO_E_DATOS_PREV");
+    DEBUG_PRINT("NO_E_DATOS_PREV");
     return 0;
   }
 
   if (perEfectividad > 70.00) {
-    Serial.println("PER_EFE_MUY_ALTO");
+    DEBUG_PRINT("PER_EFE_MUY_ALTO");
     return 1;
   }
   else if (perEfectividad > 50.00) {
     float varLuz = ((float)(luzActual - luzAnterior) / (float)luzAnterior);
     if (varLuz < 0) {
-      Serial.println("L_DESC"); //La luz se encuentra en descenso
+      DEBUG_PRINT("L_DESC"); //La luz se encuentra en descenso
     } else if (varLuz < 60.00) {
-      Serial.println("L_EST"); //La luz se mantiene estable
+      DEBUG_PRINT("L_EST"); //La luz se mantiene estable
     } else {
-      Serial.println("L_ASC"); //La luz esta en ascenso, no es conveniente regar
+      DEBUG_PRINT("L_ASC"); //La luz esta en ascenso, no es conveniente regar
       return 0;
     }
 
     float varHum =  ((float)(humedadActual - humedadAnterior) / (float)humedadAnterior);
     if (varHum < 0) {
-      Serial.println("H_DESC"); //La humedad se encuentra en descenso
+      DEBUG_PRINT("H_DESC"); //La humedad se encuentra en descenso
     } else if (varHum < 60.00) {
-      Serial.println("H_EST"); //La humedad se mantiene estable
+      DEBUG_PRINT("H_EST"); //La humedad se mantiene estable
     } else {
-      Serial.println("H_ASC"); //La humedad esta en ascenso, no es conveniente regar
+      DEBUG_PRINT("H_ASC"); //La humedad esta en ascenso, no es conveniente regar
       return 0;
     }
   } else {
-    Serial.println("PER_EFE_MUY_BAJO"); //Porcentaje de efectividad por debajo del minimo
+    DEBUG_PRINT("PER_EFE_MUY_BAJO"); //Porcentaje de efectividad por debajo del minimo
     return 0;
   }
 
@@ -376,8 +378,8 @@ int determinarRiegoEnZona(float perEfectividad, int luzActual, int humedadActual
 }
 
 float calcularVolumenRiego(int riego, float var) {
-  Serial.print("INTESIDAD DE RIEGO: ");
-  Serial.println((riego * var) / 1023);
+  DEBUG_PRINT("INTESIDAD DE RIEGO: ");
+  DEBUG_PRINT((riego * var) / 1023);
   return (riego * var) / 1023;
 }
 
@@ -392,36 +394,36 @@ void inicializarArchivosDeCensos() {
   }
   fp = SD.open("Z1.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("E_A_1"); //Error al crear archivo Z1.TXT
+    DEBUG_PRINT("E_A_1"); //Error al crear archivo Z1.TXT
   }
   fp.close();
 
   fp = SD.open("Z2.TXT", FILE_WRITE);
   if (!fp) {
-    Serial.println("E_A_2"); //Error al crear archivo Z2.TXT
+    DEBUG_PRINT("E_A_2"); //Error al crear archivo Z2.TXT
   }
   fp.close();
 
   if (!SD.exists("V1.txt")) {
-    Serial.println("A_V_1"); //El archivo V1.TXT no existe en la tarjeta SD
+    DEBUG_PRINT("A_V_1"); //El archivo V1.TXT no existe en la tarjeta SD
     fp = SD.open("V1.txt", FILE_WRITE);
-    Serial.println("A_V_2"); //El archivo V1.TXT no existia y se acaba de crear
+    DEBUG_PRINT("A_V_2"); //El archivo V1.TXT no existia y se acaba de crear
     if (fp) {
       fp.println("33.33");
     } else {
-      Serial.println("E_A_1"); //Error al escribir el archivo V1.txt con el valor por defecto
+      DEBUG_PRINT("E_A_1"); //Error al escribir el archivo V1.txt con el valor por defecto
     }
     fp.close();
   }
 
   if (!SD.exists("V2.txt")) {
-    Serial.println("A_V_3"); //El archivo V2.TXT no existe en la tarjeta SD
+    DEBUG_PRINT("A_V_3"); //El archivo V2.TXT no existe en la tarjeta SD
     fp = SD.open("V2.txt", FILE_WRITE);
-    Serial.println("A_V_4"); //El archivo V2.TXT no existia y se acaba de crear
+    DEBUG_PRINT("A_V_4"); //El archivo V2.TXT no existia y se acaba de crear
     if (fp) {
       fp.println("33.33");
     } else {
-      Serial.println("E_A_2"); //Error al escribir el archivo V2.txt con el valor por defecto
+      DEBUG_PRINT("E_A_2"); //Error al escribir el archivo V2.txt con el valor por defecto
     }
     fp.close();
   }
@@ -432,23 +434,23 @@ void analizarResultadoRiego(int zona, int humedadSuelo, const char* archivo) {
   float humedadSueloZona = humedadSuelo;
   String ret = "";
   ret = ret + "I_R_" + zona;
-  Serial.println(ret); //Se va a analizar el resultado del riego de la ZONA N
+  DEBUG_PRINT(ret); //Se va a analizar el resultado del riego de la ZONA N
   ret = "";
   ret = ret + "HUMSUELO RESULTANTE: " + humedadSueloZona;
-  Serial.println(ret);
+  DEBUG_PRINT(ret);
   float perHumedadSueloZona = (100 - (humedadSueloZona * 100) / 1023);
   if (perHumedadSueloZona < 40 || perHumedadSueloZona > 60) {
     ret = "";
     ret = ret + "PH_Z" + zona;
-    Serial.println(ret); //Porcentaje de humedad resultado del ultimo riego ZONA N
+    DEBUG_PRINT(ret); //Porcentaje de humedad resultado del ultimo riego ZONA N
     ret = "";
     ret = ret + "%HUMSUELO RESULTANTE: " + perHumedadSueloZona;
-    Serial.println(ret);
+    DEBUG_PRINT(ret);
     var = obtenerVariableRiego(archivo);
     ret = "";
     ret = ret + "V_PH_Z" + zona;
-    Serial.println(ret); //Variable de riego con la que se rego ZONA N
-    Serial.println(var);
+    DEBUG_PRINT(ret); //Variable de riego con la que se rego ZONA N
+    DEBUG_PRINT(var);
     float ajuste = (50 - perHumedadSueloZona) / 2;
     var += ajuste;
     if (var < 0)
@@ -457,13 +459,13 @@ void analizarResultadoRiego(int zona, int humedadSuelo, const char* archivo) {
       var = 100.00;
     ret = "";
     ret = ret + "N_V_PH_Z" + zona;
-    Serial.println(ret); //Nueva variable de riego a almacenar ZONA 1
-    Serial.println(var);
+    DEBUG_PRINT(ret); //Nueva variable de riego a almacenar ZONA 1
+    DEBUG_PRINT(var);
     escribirVariableRiego(var, archivo);
   } else {
     ret = "";
     ret = ret + "R_C_Z" + zona;
-    Serial.println(ret); //Porcentaje de humedad en ZONA 1 correcto
+    DEBUG_PRINT(ret); //Porcentaje de humedad en ZONA 1 correcto
   }
 }
 
@@ -471,5 +473,5 @@ void enviarInstruccionAlEsclavo(const int instruccion) {
   String orden = "";
   orden = orden + '<' + instruccion + '>';
   serialSlave.print(orden);
-  Serial.println(orden); // Cuando se conecte el modulo bluetooth, esto puede salir por el dispositivo.
+  DEBUG_PRINT(orden);
 }
