@@ -584,6 +584,7 @@ void leerBluetooth(int* inst, float* intesidad, int* tiempo) {
     } else if (fieldIndex == 2) {
       *tiempo = atoi(input);
     }
+    //Serial.println(entrada);
   }
 }
 
