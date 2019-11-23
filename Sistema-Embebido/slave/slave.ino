@@ -72,7 +72,7 @@
 #define PIN_BOMBA2                    6
 #define PIN_LED1                      7
 #define PIN_LED2                      8
-#define PIN_BOCINA                    12
+#define PIN_BOCINA                    13
 
 // INTERVALO PARA ACCION EN MS
 const unsigned long TIEMPO_RES_RIEGO = 10000UL;          // MS Para dar la respuesta de humedad despues de regar
@@ -142,6 +142,7 @@ void setup() {
   pinMode(PIN_SENSOR_LUZ1, INPUT);
   pinMode(PIN_SENSOR_LUZ2, INPUT);
   pinMode(PIN_BOCINA, OUTPUT);
+  digitalWrite(PIN_BOCINA, LOW);
   sendMessageToMaster(M_INICIO_ARDUINO_OK);
 }
 
@@ -605,7 +606,6 @@ void leerBluetooth(int* inst, float* intesidad, int* tiempo) {
     } else if (fieldIndex == 2) {
       *tiempo = atoi(input);
     }
-    DEBUG_PRINT(entrada);
   }
 }
 
