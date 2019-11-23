@@ -141,7 +141,6 @@ void loop() {
           String ret = "";
           ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ",10000>";
           serialSlave.print(ret);
-          //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
 
         if (determinarRiegoEnZona(perEfectividadZ2, valoresRecibidos[8], valoresRecibidos[6], valoresCensoAnterior[2], valoresCensoAnterior[3])) {
@@ -151,7 +150,6 @@ void loop() {
           String ret = "";
           ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ",10000>";
           serialSlave.print(ret);
-          //Probar si el bluetooth recibe correctamente la orden de empezo a regar
         }
         // Guardo los valores para el determinar el riego
         valoresCensoAnterior[0] = valoresRecibidos[2]; // HumedadAmbiente1
