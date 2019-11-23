@@ -308,6 +308,9 @@ void loop() {
       break;
     }
     case INST_RIEGO_MANUAL: {
+      if (riegoManualEnCurso) {
+        break;
+      }
       if(!evaluaAccionConjunto()){
         riegoManualEnCurso = true;
         tiempoComienzoRiegoManual = millis();

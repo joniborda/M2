@@ -13,7 +13,7 @@ PENDIENTE
 -en el mantenimiento dice errores pero no los hay (1 es bien, 0 es error)
 -en mantenimieto dice no hay ningun mantenimiento en proceso cuando te muestra el ultima a la vez.
 -Cuando el maestro manda a regar las dos zonas la app rompe (probablemente sea por el enter y la concurrencia)
-
+-Manejar desconexion del bluetooth
 DUDAS
 
 PROBLEMAS
