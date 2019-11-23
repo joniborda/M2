@@ -1,6 +1,6 @@
 PENDIENTE
-- Probar mantenimiento
-- Maquina de estados de slave y maestro (Solo salidas, un estado por estado)
+- Repasar mantenimiento
+- Integracion con app
 
 DUDAS
 
