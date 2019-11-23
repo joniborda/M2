@@ -14,6 +14,7 @@ PENDIENTE
 -en mantenimieto dice no hay ningun mantenimiento en proceso cuando te muestra el ultima a la vez.
 -Cuando el maestro manda a regar las dos zonas la app rompe (probablemente sea por el enter y la concurrencia)
 -Manejar desconexion del bluetooth
+-Cuando detiene el riego <61> no se entera la app y podes seguir enviando el tener y empieza a tirar <62>
 DUDAS
 
 PROBLEMAS

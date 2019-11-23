@@ -78,7 +78,7 @@
 const unsigned long TIEMPO_RES_RIEGO = 10000UL;          // MS Para dar la respuesta de humedad despues de regar
 const unsigned long TIEMPO_RES_MANTENIMIENTO = 2000UL;  // MS Para dar la respuesta de mantenimiento despues de encender luces
 const unsigned long TIEMPO_INTERMITENCIA = 1000UL;      // MS En el cual prende y apaga la bomba de riego
-const unsigned long TIEMPO_MAX_BUZZER = 500UL;
+const unsigned long TIEMPO_MAX_BUZZER = 250UL;
 
 unsigned long TIEMPO_RIEGO = 10000UL;
 unsigned long TIEMPO_RIEGO_MANUAL = 0UL;
@@ -453,7 +453,7 @@ void loop() {
     if (prenderLuz1 == 1 || (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) > VALOR_MAX_LUZ)) {
       digitalWrite(PIN_LED1, HIGH);
     } else {
-      if (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) < VALOR_MIN_LUZ) {
+      if (prenderLuz1 == 2 || (prenderLuz1 == 0 && analogRead(PIN_SENSOR_LUZ1) < VALOR_MIN_LUZ)) {
         digitalWrite(PIN_LED1, LOW);
       }
     }
@@ -461,7 +461,7 @@ void loop() {
     if (prenderLuz2 == 1 || (prenderLuz2 == 0 && analogRead(PIN_SENSOR_LUZ2) > VALOR_MAX_LUZ)) {
       digitalWrite(PIN_LED2, HIGH);
     } else {
-      if (prenderLuz2 == 0 && analogRead(PIN_SENSOR_LUZ2) < VALOR_MIN_LUZ) {
+      if (prenderLuz2 == 2 || (prenderLuz2 == 0 && analogRead(PIN_SENSOR_LUZ2) < VALOR_MIN_LUZ)) {
         digitalWrite(PIN_LED2, LOW);
       }
     }
