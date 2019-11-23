@@ -453,10 +453,12 @@ void analizarResultadoRiego(int zona, int humedadSuelo, const char* archivo) {
     DEBUG_PRINT(var);
     float ajuste = (50 - perHumedadSueloZona) / 2;
     var += ajuste;
-    if (var < 0)
+    if (var < 0.0) {
       var = 1.00;
-    if (var > 100)
+    }
+    if (var > 100.00) {
       var = 100.00;
+    }
     ret = "";
     ret = ret + "N_V_PH_Z" + zona;
     DEBUG_PRINT(ret); //Nueva variable de riego a almacenar ZONA 1

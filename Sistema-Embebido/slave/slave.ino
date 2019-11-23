@@ -75,7 +75,7 @@
 
 // INTERVALO PARA ACCION EN MS
 const unsigned long TIEMPO_RES_RIEGO = 10000UL;          // MS Para dar la respuesta de humedad despues de regar
-const unsigned long TIEMPO_RES_MANTENIMIENTO = 10000UL;  // MS Para dar la respuesta de mantenimiento despues de encender luces
+const unsigned long TIEMPO_RES_MANTENIMIENTO = 2000UL;  // MS Para dar la respuesta de mantenimiento despues de encender luces
 const unsigned long TIEMPO_INTERMITENCIA = 1000UL;      // MS En el cual prende y apaga la bomba de riego
 
 unsigned long TIEMPO_RIEGO = 10000UL;
@@ -109,10 +109,10 @@ static bool mantenimientoAutomaticoEnCurso = false; //Ready to development
 
 static int prenderLuz1 = 0; // 0 Es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
 static int prenderLuz2 = 0; // 0 Es automatica, 1 es encendido manual, distinto de 0 y de 1 es apagado manual
-static float intensidadRiegoZona1 = 0;
-static float intensidadRiegoZona2 = 0;
+static float intensidadRiegoZona1 = 0.0;
+static float intensidadRiegoZona2 = 0.0;
 
-static int vecMant [5];
+static int vecMant[5];
 
 /* 
 Valores de Mantenimiento
@@ -164,22 +164,23 @@ void loop() {
     case INST_MANTENIMIENTO: {
       if(!evaluaAccionConjunto()){
         tiempoMantenimiento = millis();
-        DEBUG_PRINT(tiempoMantenimiento);
+        
         mantenimientoManualEnCurso = true;
         int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
         censarZona1(valorSensores);
         censarZona2(valorSensores);
-        for (int i = 0; i < sizeof(vecMant); i++) {
+        for (int i = 0; i < 5; i++) {
           vecMant[i] = 1;
         }
         if (abs(valorSensores[1] - valorSensores[5]) > 10) {
           vecMant[0] = 0;
-          //DEBUG_PRINT("E_S_T");
+          DEBUG_PRINT("E_S_T");
           //Sensor de temperatura con fallas
         }
+        
         if (abs(valorSensores[2] - valorSensores[6]) > 10) {
           vecMant[1] = 0;
-          //DEBUG_PRINT("E_S_H");
+          DEBUG_PRINT("E_S_H");
           //Sensor de humedad atmosferica con fallas
         }
         vecMant[3] = valorSensores[4];
@@ -340,9 +341,9 @@ void loop() {
       break;
     }
   }
-  //DEBUG_PRINT(tiempoMantenimiento);
-  tiempoActual = millis();
+  
   if(tipoRiego == 1) {
+    tiempoActual = millis();
     // Si es intermitente tengo que ver si está regando la zona y despues tengo que ver si esta dentro
     // del tiempo de intermitencia. 
     if (riegoZona1AutomaticoEnCurso || riegoManualEnCurso) {
@@ -376,7 +377,7 @@ void loop() {
     }
   }
   
-  //tiempoActual = millis();
+  tiempoActual = millis();
   if(tiempoComienzoRiegoManual > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoManual) >= TIEMPO_RIEGO_MANUAL) {
     // Aviso que termino el riego manual.
     analogWrite(PIN_BOMBA1, 0);
@@ -387,7 +388,7 @@ void loop() {
     sendMessageToBluetooth(INST_FIN_RIEGO_MANUAL);
   }
   
-  //tiempoActual = millis();
+  tiempoActual = millis();
   if (tiempoComienzoRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona1) >= TIEMPO_RIEGO) {
     // Aviso que termino de regar la zona 1.
     analogWrite(PIN_BOMBA1, 0);
@@ -397,8 +398,8 @@ void loop() {
     riegoZona1AutomaticoEnCurso = false;
     tiempoComienzoRiegoZona1 = 0;
   }
-
-  //tiempoActual = millis();
+  
+  tiempoActual = millis();
   if (tiempoDespuesRiegoZona1 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona1) >= TIEMPO_RES_RIEGO) {
     // Paso el tiempo establecido posterior al riego, se envia al maestro el valor del sensor de humedad del suelo.
     String ret = "";
@@ -407,8 +408,8 @@ void loop() {
     Serial.println(ret);
     tiempoDespuesRiegoZona1 = 0;
   }
-  
-  //tiempoActual = millis();
+
+  tiempoActual = millis();
   if (tiempoComienzoRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoComienzoRiegoZona2) >= TIEMPO_RIEGO) {
     // Aviso que termino de regar la zona 2.
     analogWrite(PIN_BOMBA2, 0);
@@ -419,7 +420,7 @@ void loop() {
     tiempoComienzoRiegoZona2 = 0;
   }
 
-  //tiempoActual = millis();
+  tiempoActual = millis();
   if (tiempoDespuesRiegoZona2 > 0 && (unsigned long)(tiempoActual - tiempoDespuesRiegoZona2) >= TIEMPO_RES_RIEGO) {
     // Paso el tiempo establecido posterior al riego, se envia al maestro y dispositivo el valor del sensor de humedad del suelo.
     String ret = "";
@@ -446,14 +447,11 @@ void loop() {
       }
     }
   }
-
- 
-  //tiempoActual = millis();
-  //Serial.println(tiempoMantenimiento);
-  if (tiempoMantenimiento > 0 && (unsigned long)(tiempoActual - tiempoMantenimiento) >= TIEMPO_RES_MANTENIMIENTO) {
+  tiempoActual = millis();
+  if (tiempoMantenimiento > 0UL && (unsigned long)(tiempoActual - tiempoMantenimiento) >= TIEMPO_RES_MANTENIMIENTO) {
     //Censa la luz para ver como varia y envia los resultados al esclavo
     int valorLuzActualZona = analogRead(PIN_SENSOR_LUZ1);
-    if(vecMant[3] >= valorLuzActualZona) {
+    if(vecMant[3] <= valorLuzActualZona) { // si antes era menor, es porque estaba mas iluminado antes
       vecMant[3] = 0;
       DEBUG_PRINT("E_L_1");
       //Se encendio la luz de la zona 1 y el sensor LDR1 no lo detecto
@@ -462,7 +460,7 @@ void loop() {
     }
     digitalWrite(PIN_LED1, LOW);
     valorLuzActualZona = analogRead(PIN_SENSOR_LUZ2);
-    if(vecMant[4] >= valorLuzActualZona) {
+    if(vecMant[4] <= valorLuzActualZona) { // si antes era menor, es porque estaba mas iluminado antes
       vecMant[4] = 0;
       DEBUG_PRINT("E_L_2");
       //Se encendio la luz de la zona 2 y el sensor LDR2 no lo detecto
@@ -474,7 +472,7 @@ void loop() {
     String ret = "";
     ret = ret + "<" + INST_RES_MANTENIMIENTO + "," + vecMant[0] + "," + vecMant[1] + "," + vecMant[2] + "," + vecMant[3] + "," + vecMant[4] + ">";
     Serial.println(ret);
-    tiempoMantenimiento = 0;
+    tiempoMantenimiento = 0UL;
     mantenimientoManualEnCurso = false;
   }
 }
