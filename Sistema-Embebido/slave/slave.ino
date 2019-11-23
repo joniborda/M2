@@ -72,7 +72,7 @@
 #define PIN_BOMBA2                    6
 #define PIN_LED1                      7
 #define PIN_LED2                      8
-#define PIN_BOCINA                    9
+#define PIN_BOCINA                    12
 
 // INTERVALO PARA ACCION EN MS
 const unsigned long TIEMPO_RES_RIEGO = 10000UL;          // MS Para dar la respuesta de humedad despues de regar
