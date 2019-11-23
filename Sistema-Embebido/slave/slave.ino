@@ -72,11 +72,13 @@
 #define PIN_BOMBA2                    6
 #define PIN_LED1                      7
 #define PIN_LED2                      8
+#define PIN_BOCINA                    9
 
 // INTERVALO PARA ACCION EN MS
 const unsigned long TIEMPO_RES_RIEGO = 10000UL;          // MS Para dar la respuesta de humedad despues de regar
 const unsigned long TIEMPO_RES_MANTENIMIENTO = 2000UL;  // MS Para dar la respuesta de mantenimiento despues de encender luces
 const unsigned long TIEMPO_INTERMITENCIA = 1000UL;      // MS En el cual prende y apaga la bomba de riego
+const unsigned long TIEMPO_MAX_BUZZER = 500UL;
 
 unsigned long TIEMPO_RIEGO = 10000UL;
 unsigned long TIEMPO_RIEGO_MANUAL = 0UL;
@@ -95,6 +97,7 @@ unsigned long tiempoMantenimiento = 0UL;          // Tiempo que falta para termi
 unsigned long tiempoComienzoRiegoManual = 0UL;    // Tiempo que debe transcurrir el riego manual
 unsigned long tiempoComienzoIntermitencia1 = 0UL; // Tiempo que apaga y prende la zona 1
 unsigned long tiempoComienzoIntermitencia2 = 0UL; // Tiempo que apaga y prende la zona 2
+unsigned long tiempoBuzzer = 0UL;
 
 //Tipo de riego: 0 continuo, 1 intermitente
 static int tipoRiego = 0; //Por defecto es continuo
@@ -138,6 +141,7 @@ void setup() {
   pinMode(PIN_SENSOR_HUMEDAD_SUELO1, INPUT);
   pinMode(PIN_SENSOR_LUZ1, INPUT);
   pinMode(PIN_SENSOR_LUZ2, INPUT);
+  pinMode(PIN_BOCINA, OUTPUT);
   sendMessageToMaster(M_INICIO_ARDUINO_OK);
 }
 
@@ -199,7 +203,8 @@ void loop() {
         tiempoComienzoIntermitencia1 = millis();
         intensidadRiegoZona1 = intesidadRiego;
         intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * POND_LUZ_INT;
-        //analogWrite(PIN_BOMBA1, (intensidadRiegoZona1 * 178/100) + 76);
+        digitalWrite(PIN_BOCINA, HIGH);
+        tiempoBuzzer = millis();
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z1 + "," + intensidadRiegoZona1 + "," + TIEMPO_RIEGO + ">";
@@ -214,7 +219,8 @@ void loop() {
         tiempoComienzoIntermitencia2 = millis();
         intensidadRiegoZona2 = intesidadRiego;
         intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * POND_LUZ_INT;
-        //analogWrite(PIN_BOMBA2, (intensidadRiegoZona2 * 178/100) + 76);
+        digitalWrite(PIN_BOCINA, HIGH);
+        tiempoBuzzer = millis();
         analogWrite(PIN_BOMBA2, intensidadRiegoZona2);                
         String ret = "";
         ret = ret + "<" + INST_RIEGO_Z2 + "," + intensidadRiegoZona2 + "," + TIEMPO_RIEGO + ">";
@@ -309,6 +315,8 @@ void loop() {
         intensidadRiegoZona2 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
         intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * POND_LUZ_INT;
         intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * POND_LUZ_INT;
+        digitalWrite(PIN_BOCINA, HIGH);
+        tiempoBuzzer = millis();
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
         analogWrite(PIN_BOMBA2, intensidadRiegoZona2);
       } else {
@@ -340,6 +348,13 @@ void loop() {
     default:{
       break;
     }
+  }
+
+  tiempoActual = millis();
+  if(tiempoBuzzer > 0 && (unsigned long)(tiempoActual - tiempoBuzzer) >= TIEMPO_MAX_BUZZER) {
+    // Apago la bocina que indica que comenzo el riego
+    digitalWrite(PIN_BOCINA, LOW);
+    tiempoBuzzer = 0;
   }
   
   if(tipoRiego == 1) {
