@@ -515,6 +515,7 @@ void enviarResultadoCensoAMaestro(int* vec) {
   String ret = "";
   ret = ret + "<" + vec[0] + "," + vec[1] + "," + vec[2] + "," + vec[3] + "," + vec[4] + "," + vec[5] + "," + vec[6] + "," + vec[7] + "," + vec[8] + ">";
   serialMaster.print(ret);
+  Serial.println(ret);
 }
 
 void leerMaestro(int* inst, float* intesidad) {
