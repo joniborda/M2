@@ -1,7 +1,7 @@
 #include <SD.h>
 #include <SoftwareSerial.h>
 
-#define DEBUG  //comentar esto para no usar el debug
+#define DEBUG // Comentar para no hacer debug
 
 #ifdef DEBUG
  #define DEBUG_PRINT(x) Serial.println(x)
@@ -21,36 +21,15 @@
 #define INST_RIEGO_Z2               4 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 INICIO
 #define INST_FIN_RIEGO_Z1           5 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 1 FIN
 #define INST_FIN_RIEGO_Z2           6 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 FIN
-#define INST_MANTENIMIENTO          7 // INSTRUCCION PARA INICIO RUTINA DE MANTENIMIENTO
-#define INST_RES_MANTENIMIENTO      8 // INSTRUCCION PARA RESPUESTA DE RUTINA DE MANTENIMIENTO
-#define INST_DETENER_RIEGO_Z1       9 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1
-#define INST_DETENER_RIEGO_Z2       10 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2
-#define INST_ENCENDER_LUZ_1_MANUAL  11 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
-#define INST_ENCENDER_LUZ_2_MANUAL  12 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
-#define INST_APAGAR_LUZ_1_MANUAL    13 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
-#define INST_APAGAR_LUZ_2_MANUAL    14 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
-#define INST_AUTO_LUZ_1             15 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
-#define INST_AUTO_LUZ_2             16 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
 #define INST_RES_RIEGO_Z1           17 // INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 1
 #define INST_RES_RIEGO_Z2           18 // INSTRUCCION PARA ENVIAR EL RESULTADO DEL RIEGO EN LA ZONA 2
-#define INST_INICIO_CONEXION_BT     19 // INSTRUCCION QUE ENVIA EL BLUETOOTH AVISANDO QUE SE CONECTO
-#define INST_CENSO_MANUAL           20 // INSTRUCCION PARA COMENZAR UN CENSO MANUAL
-#define INST_RIEGO_MANUAL           21 // INSTRUCCION PARA COMENZAR UN RIEGO MANUAL
-#define INST_TIPO_RIEGO_CONT        22 // INSTRUCCION PARA CAMBIAR EL TIPO DE RIEGO A CONTINUO
-#define INST_TIPO_RIEGO_INTER       23 // INSTRUCCION PARA CAMBIAR EL TIPO DE RIEGO A INTERMITENTE
-#define INST_FIN_RIEGO_MANUAL       24 // INSTRUCCION QUE INDICA QUE SE FINALIZO EL RIEGO MANUAL
-#define INST_DETENER_RIEGO_MANUAL   25 // INSTRUCCION QUE DETIENE EL RIEGO MANUAL
-
-#define M_INICIO_ARDUINO_OK         50 // MENSAJE ARDUINO ESCLAVO INICIO EXISTOSO
-#define M_INICIO_RIEGO_M            54
-#define M_STOP_RIEGO_GRAL_OK        61
-#define M_CAMBIO_T_RIEGO_CONT       63
-#define M_CAMBIO_T_RIEGO_INT        64
+#define M_INICIO_ARDUINO_OK         50
+#define M_INICIO_CENSO              55
 
 #define PRIORIDAD_TEMP            0.05
 #define PRIORIDAD_HUM_AMB         0.05
-#define PRIORIDAD_HUM_SUELO       0.3
-#define PRIORIDAD_LUZ             0.6
+#define PRIORIDAD_HUM_SUELO       0.35
+#define PRIORIDAD_LUZ             0.55
 #define MAX_TEMP                  50
 #define MAX_HUMEDAD_SUELO         1023
 #define MAX_LUZ                   1023
@@ -67,7 +46,6 @@ static unsigned long msParaNuevoCenso = 0UL;  // Tiempo que falta para enviar el
 //La luz se comporta asi: 1 totalmente iluminado, 1023 totalmente oscuro.
 //La humedad del suelo se comporta asi: 1 totalmente humedo, 1023 totalmente seco.
 
-static bool mantenimientoEnCurso = false;
 static int valoresCensoAnterior[] = { -1, -1, -1, -1}; //Necesito que sea global, se guarda luego de censar y determinar si censo
 /*  Valores de censo anterior 
  *  0 HumedadAmbiente1
@@ -100,6 +78,7 @@ void loop() {
     msParaNuevoCenso = millis();
     MS_INTERVAL_TO_CENSO = (unsigned int)45000;
   }
+
   // [0] => Instruccion
   // [1] => Temp1
   // [2] => HumAmb1
@@ -112,10 +91,6 @@ void loop() {
   int valoresRecibidos[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1};
   leerInstruccionEsclavo(valoresRecibidos); //Proviene del esclavo
   switch (valoresRecibidos[0]) {
-    case INST_CENSO: {
-        // Implementar guardar que el esclavo inicio el censo
-        break;
-      }
     case INST_FIN_CENSO: {
         // Ocurre cuando el esclavo avisa que termino el censo y me envia los valores de ese censo
         // De la zona 1 y de la zona 2
@@ -156,24 +131,6 @@ void loop() {
         valoresCensoAnterior[3] = valoresRecibidos[8]; // Luz2
         break;
       }
-    case INST_MANTENIMIENTO: {
-        // El esclavo le avisa que empezo el mantenimiento
-        mantenimientoEnCurso = true;
-        break;
-      }
-    case INST_RES_MANTENIMIENTO: {
-        // El esclavo le avisa que termino el mantenimiento
-        mantenimientoEnCurso = false;
-        break;
-      }
-    case INST_FIN_RIEGO_Z1: {
-        // Ocurre cuando el esclavo me avisa que termino de regar la zona 1
-        break;
-      }
-    case INST_FIN_RIEGO_Z2: {
-        // Ocurre cuando el esclavo me avisa que termino de regar la zona 2
-        break;
-      }
     case INST_RES_RIEGO_Z1: {
       //Aca se analiza el resultado del riego de la zona 1.
       analizarResultadoRiego(1, valoresRecibidos[1], "V1.TXT");
@@ -185,30 +142,14 @@ void loop() {
       break;
     }
     case M_INICIO_ARDUINO_OK: {
+      DEBUG_PRINT("Arduino esclavo iniciado correctamente");
       break;
     }
-    case M_INICIO_RIEGO_M: {
+    case M_INICIO_CENSO: {
+      DEBUG_PRINT("Arduino esclavo censando...");
       break;
     }
-    case M_STOP_RIEGO_GRAL_OK: {
-      break;
-    }
-    case M_CAMBIO_T_RIEGO_CONT: {
-      break;
-    }
-    case M_CAMBIO_T_RIEGO_INT: {
-      break;
-    }
-    case INST_ENCENDER_LUZ_1_MANUAL: {
-      break;
-    }
-    case INST_ENCENDER_LUZ_2_MANUAL: {
-      break;
-    }
-    case INST_APAGAR_LUZ_1_MANUAL: {
-      break;
-    }
-    case INST_APAGAR_LUZ_2_MANUAL: {
+    default: {
       break;
     }
   }

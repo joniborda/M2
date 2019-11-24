@@ -2,7 +2,7 @@
 #include <DHT_U.h>
 #include <DHT.h>
 
-#define DEBUG  //comentar esto para no usar el debug
+#define DEBUG  // Comentar para no hacer debug
 
 #ifdef DEBUG
  #define DEBUG_PRINT(x) Serial.println(x)
@@ -22,8 +22,6 @@
 #define INST_FIN_RIEGO_Z2           6 // INSTRUCCION PARA RUTINA DE RIEGO ZONA 2 FIN
 #define INST_MANTENIMIENTO          7 // INSTRUCCION PARA INICIO RUTINA DE MANTENIMIENTO
 #define INST_RES_MANTENIMIENTO      8 // INSTRUCCION PARA RESPUESTA DE RUTINA DE MANTENIMIENTO
-#define INST_DETENER_RIEGO_Z1       9 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 1               @DEPRECATED
-#define INST_DETENER_RIEGO_Z2       10 // INSTRUCCION PARA DETENER EL RIEGO DE LA ZONA 2              @DEPRECATED
 #define INST_ENCENDER_LUZ_1_MANUAL  11 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
 #define INST_ENCENDER_LUZ_2_MANUAL  12 // INSTRUCCION PARA ENCENDER LUZ 2 MANUALMENTE
 #define INST_APAGAR_LUZ_1_MANUAL    13 // INSTRUCCION PARA ENCENDER LUZ 1 MANUALMENTE
@@ -38,18 +36,12 @@
 #define INST_TIPO_RIEGO_CONT        22 // INSTRUCCION PARA CAMBIAR EL TIPO DE RIEGO A CONTINUO
 #define INST_TIPO_RIEGO_INTER       23 // INSTRUCCION PARA CAMBIAR EL TIPO DE RIEGO A INTERMITENTE
 #define INST_FIN_RIEGO_MANUAL       24 // INSTRUCCION QUE INDICA QUE SE FINALIZO EL RIEGO MANUAL
-#define INST_DETENER_RIEGO_MANUAL   25 // INSTRUCCION QUE DETIENE EL RIEGO MANUAL                     @DEPRECATED
 #define INST_DETENER_RIEGO_GRAL     26 // INSTRUCCION QUE DETENIENE CUALQUIER TIPO DE RIEGO, SEA MANUAL O AUTOMATICO
 #define INST_DESCONEXION_BT         27 // INSTRUCCION QUE INDICA LA DESCONEXION DE UN DISPOSITIVO  
 
 #define M_INICIO_ARDUINO_OK         50
-#define M_INICIO_RIEGO_Z1           52
-#define M_INICIO_RIEGO_Z2           53
-#define M_INICIO_RIEGO_M            54
 #define M_INICIO_CENSO              55
-#define M_INICIO_CENSO_M            56
 
-#define M_INICIO_CONEXION_BT_ER     57
 #define M_RIEGO_MANUAL_ER           58
 #define M_CENSO_MANUAL_ER           59
 #define M_MANT_MANUAL_ER            60
@@ -155,8 +147,8 @@ void loop() {
   leerBluetooth(&instr_recibida, &intesidadRiego, &tRiegoManual); //El bluetooth posee mas prioridad que el maestro
   switch (instr_recibida) {
     case INST_CENSO: {
-      sendMessageToMaster(M_INICIO_CENSO);
       if (!evaluaAccionEnProcesoBluetooth()) {
+        sendMessageToMaster(M_INICIO_CENSO);
         censoAutomaticoEnCurso = true;
         int valorSensores[] = {INST_FIN_CENSO, -1, -1, -1, -1, -1, -1, -1, -1};
         censarZona1(valorSensores); //Obtiene los valores de los sensores de la zona 1 
@@ -315,10 +307,7 @@ void loop() {
         riegoManualEnCurso = true;
         tiempoComienzoRiegoManual = millis();
         TIEMPO_RIEGO_MANUAL = tRiegoManual;
-        intensidadRiegoZona1 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
-        intensidadRiegoZona2 = intesidadRiego; //Se utiliza para el tipo de riego del tipo intermitente
-        intensidadRiegoZona1 = (intensidadRiegoZona1 / 100) * POND_LUZ_INT;
-        intensidadRiegoZona2 = (intensidadRiegoZona2 / 100) * POND_LUZ_INT;
+        intensidadRiegoZona1 = intensidadRiegoZona2 = (intesidadRiego / 100) * POND_LUZ_INT;
         digitalWrite(PIN_BOCINA, HIGH);
         tiempoBuzzer = millis();
         analogWrite(PIN_BOMBA1, intensidadRiegoZona1);
@@ -349,7 +338,7 @@ void loop() {
       sendMessageToBluetooth(INST_DESCONEXION_BT);                                                                           
       break;
     }  
-    default:{
+    default: {
       break;
     }
   }
