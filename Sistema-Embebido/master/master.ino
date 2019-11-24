@@ -119,8 +119,6 @@ void loop() {
     case INST_FIN_CENSO: {
         // Ocurre cuando el esclavo avisa que termino el censo y me envia los valores de ese censo
         // De la zona 1 y de la zona 2
-        bool fRiegoEnCursoZ1 = false;
-        bool fRiegoEnCursoZ2 = false;
         float perEfectividadZ1 = calcularEfectividad(valoresRecibidos[1], valoresRecibidos[2], valoresRecibidos[3], valoresRecibidos[4]);
         float perEfectividadZ2 = calcularEfectividad(valoresRecibidos[5], valoresRecibidos[6], valoresRecibidos[7], valoresRecibidos[8]);
         String msg = "";
