@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.os.Handler;
 import android.text.method.KeyListener;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +22,6 @@ import com.example.smartgarden.R;
 import com.example.smartgarden.logic.ArduinoStatus;
 import com.example.smartgarden.logic.BTHandler;
 import com.example.smartgarden.logic.Command;
-import com.example.smartgarden.logic.DBHelper;
 import com.example.smartgarden.logic.Message;
 import com.example.smartgarden.logic.RiegoStandard;
 
@@ -45,9 +45,11 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
     private boolean isEditingDuracion;
     private boolean isEditingintensidad;
     private int tipoRiego;
+    private Handler handler;
 
-    public TabConfiguracionFragment() {
+    public TabConfiguracionFragment(Handler handler) {
         tipoRiego = 0;
+        this.handler = handler;
     }
 
     @SuppressLint("HandlerLeak")
@@ -106,7 +108,6 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
             }
         });
 
-        bandera = false;
         rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener()
         {
             public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -146,7 +147,7 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
                     String txtDuracionString = txtDuracion.getText().toString();
                     // Validate txtIntensidad
                     if(!txtDuracionString.equals("") && txtDuracionString.matches("\\d+")) {
-                        MainActivity.dbHelper.setIntensidad(Integer.parseInt(txtDuracionString));
+                        MainActivity.dbHelper.setDuracion(Integer.parseInt(txtDuracionString));
                         // ahora se convierte en boton de editar
                         editButtonDuracion.setBackgroundResource(android.R.drawable.ic_menu_edit);
                         isEditingDuracion = true;
@@ -204,6 +205,7 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
             btnDetenerRiego.setTextColor(getResources().getColor(R.color.colorBoton));
             tiposDeRiego.setVisibility(View.VISIBLE);
             rg.setVisibility(View.VISIBLE);
+            bandera = false;
             switch (tipoRiego) {
                 case 0:
                     rg.check(R.id.radiobtn_continuo);
@@ -247,6 +249,7 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
 
     private void iniciarMantenimiento(){
         BTHandler.getInstance().sendMsg(new Message(Command.INICIAR_MANTENIMIENTO));
+        handler.obtainMessage(0, -1, -1, null).sendToTarget();
     }
 
     private void detenerRiego(){
@@ -269,7 +272,7 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
             btnDetenerRiego.setTextColor(getResources().getColor(R.color.colorBoton));
             tiposDeRiego.setVisibility(View.VISIBLE);
             rg.setVisibility(View.VISIBLE);
-
+            bandera = false;
             switch (tipoRiego) {
                 case 0:
                     rg.check(R.id.radiobtn_continuo);
@@ -283,9 +286,11 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
 
     @Override
     public void desconexion() {
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            mostrarComoDesconectado();
-        });
+        if(isVisible()) {
+            Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                mostrarComoDesconectado();
+            });
+        }
     }
 
     @Override
@@ -328,6 +333,10 @@ public class TabConfiguracionFragment extends Fragment implements IFragment {
     }
 
     // ACCIONES EN OTROS FRAGMENTS
+
+    @Override
+    public void resultadoCensoAutomatico(String[] values) {
+    }
 
     @Override
     public void comenzoRiegoAutomatico(int nroZona, String[] values) {

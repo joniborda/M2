@@ -6,13 +6,13 @@ import java.util.Map;
 public enum Command {
     // ENVIO Y RECIBO
     CONEXION(19),
-    DESCONEXION(1),
+    DESCONEXION(27),
 
     // SOLO ENVIO
     DETENER_RIEGO(26),
     INICIAR_RIEGO(21), // junto con la intensidad y duracion seeteadas
     INICIAR_MANTENIMIENTO(7),
-    INICIAR_CENSO(20),
+    INICIAR_CENSO(20), // Es el mismo para fin - Data: 8 valores representativos de cada sensor/actuador
     CAMBIAR_RIEGO_INTERMITENTE(23),
     CAMBIAR_RIEGO_CONTINUO(22),
     ENCENDER_LUZ_1(11),
@@ -33,18 +33,17 @@ public enum Command {
     // Solo me avisan cuando comienzan un riego automatico por zona,
     // la de manual yo la ordeno y debo accionar
     // Data acompañada: intensidad y tiempo
-    REGANDO_ZONA_1(52),
-    REGANDO_ZONA_2(53),
+    REGANDO_ZONA_1(3),
+    REGANDO_ZONA_2(4),
     // Me avisan cuando se termino el riego manual, y me mandan unicamente los
     // resultados(humedad del suelo) de los riegos automaticos
     REGUE_MANUAL(24),
     RESULTADO_RIEGO_1(17),
     RESULTADO_RIEGO_2(18),
-    // Data: 8 valores representativos de cada sensor/actuador
-    RESULTADO_CENSO(2),
     // <comando, errorTemp, errorHumAmb, errorHumSuelo, errorldr1, errorldr2>
-    RESULTADO_MANTENIMIENTO(8); // 0 error
+    RESULTADO_MANTENIMIENTO(8), // 0 error
                                       // 1 bien
+    FIN_CENSO_AUTOMATICO(2); // Data: 8 valores representativos de cada sensor/actuador
 
 
     private int value;

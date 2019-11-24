@@ -11,6 +11,7 @@ public class Zona {
     private float tempAmb, humAmb, humSuelo, luzAmb;
     private Riego riego;
     private ZonaStatus estado;
+    private boolean luzPrendida, luzAutomatica;
 
     public Zona(int nroZona) {
         this.nroZona = nroZona;
@@ -20,6 +21,8 @@ public class Zona {
         this.humSuelo = 0;
         this.luzAmb = 0;
         this.riego = new Riego(nroZona);
+        this.luzPrendida = false;
+        this.luzAutomatica = true;
     }
 
     public int getEstado() {
@@ -30,8 +33,8 @@ public class Zona {
         this.estado = estado;
     }
 
-    public int getStringFromNroZona() {
-        return this.nroZona == 1 ? R.string.zona_1 : R.string.zona_2;
+    public String getStringFromNroZona() {
+        return this.nroZona == 1 ? "Zona 1" : "Zona 2";
     }
 
     public float getTempAmb() {
@@ -87,5 +90,19 @@ public class Zona {
         return nroZona;
     }
 
+    public boolean isLuzPrendida() {
+        return luzPrendida;
+    }
 
+    public void setLuzPrendida(boolean luzPrendida) {
+        this.luzPrendida = luzPrendida;
+    }
+
+    public boolean isLuzAutomatica() {
+        return luzAutomatica;
+    }
+
+    public void setLuzAutomatica(boolean luzAutomatica) {
+        this.luzAutomatica = luzAutomatica;
+    }
 }

@@ -2,13 +2,12 @@ package com.example.smartgarden.ui.main;
 
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Lifecycle;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,23 +33,21 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
     private TextView txtNoMantenimiento;
     private TextView txtTemp;
     private TextView txtHumAmb;
-    private TextView txtHumSuelo;
     private TextView txtLdr1;
     private TextView txtLdr2;
 
     private int errorTemp;
     private int errorHumAmb;
-    private int errorHumSuelo;
     private int errorLdr1;
     private int errorLdr2;
 
     public TabMantenimientoFragment() {
+        MainActivity.mantenimientoStatus = MantenimientoStatus.NoMantenimiento;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        MainActivity.mantenimientoStatus = MantenimientoStatus.NoMantenimiento;
     }
 
     @SuppressLint("HandlerLeak")
@@ -65,11 +62,22 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
         txtNoMantenimiento  = root.findViewById(R.id.txt_no_mantenimiento);
         txtTemp = root.findViewById(R.id.txt_error_temp);
         txtHumAmb = root.findViewById(R.id.txt_error_hum_amb);
-        txtHumSuelo = root.findViewById(R.id.txt_error_hum_suelo);
         txtLdr1 = root.findViewById(R.id.txt_error_ldr1);
         txtLdr2 = root.findViewById(R.id.txt_error_ldr2);
 
         return root;
+    }
+
+    public void iniciarMantenimiento() {
+        MainActivity.mantenimientoStatus = MantenimientoStatus.InProgress;
+        layoutInProgress.setVisibility(View.VISIBLE);
+        txtNoMantenimiento.setVisibility(View.GONE);
+        layoutOk.setVisibility(View.GONE);
+        layoutError.setVisibility(View.GONE);
+        txtTemp.setVisibility(View.GONE);
+        txtHumAmb.setVisibility(View.GONE);
+        txtLdr1.setVisibility(View.GONE);
+        txtLdr2.setVisibility(View.GONE);
     }
 
     @Override
@@ -86,14 +94,17 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
                     layoutOk.setVisibility(View.VISIBLE);
                     layoutInProgress.setVisibility(View.GONE);
                     txtNoMantenimiento.setVisibility(View.GONE);
+                    layoutError.setVisibility(View.GONE);
                     break;
                 case InProgress:
                     layoutInProgress.setVisibility(View.VISIBLE);
                     txtNoMantenimiento.setVisibility(View.GONE);
+                    layoutOk.setVisibility(View.GONE);
+                    layoutError.setVisibility(View.GONE);
                     break;
                 case Error:
+                    layoutOk.setVisibility(View.GONE);
                     layoutInProgress.setVisibility(View.GONE);
-                    layoutError.setVisibility(View.VISIBLE);
                     txtNoMantenimiento.setVisibility(View.GONE);
                     if (errorTemp == 0) {
                         txtTemp.setVisibility(View.VISIBLE);
@@ -101,15 +112,13 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
                     if(errorHumAmb == 0) {
                         txtHumAmb.setVisibility(View.VISIBLE);
                     }
-                    if(errorHumSuelo == 0) {
-                        txtHumSuelo.setVisibility(View.VISIBLE);
-                    }
                     if(errorLdr1 == 0) {
                         txtLdr1.setVisibility(View.VISIBLE);
                     }
                     if(errorLdr2 == 0) {
                         txtLdr2.setVisibility(View.VISIBLE);
                     }
+                    layoutError.setVisibility(View.VISIBLE);
                     break;
             }
         }
@@ -117,12 +126,14 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
 
     @Override
     public void desconexion() {
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            layoutError.setVisibility(View.GONE);
-            layoutInProgress.setVisibility(View.GONE);
-            layoutOk.setVisibility(View.GONE);
-            txtNoMantenimiento.setVisibility(View.VISIBLE);
-        });
+        if(isVisible()) {
+            Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                layoutError.setVisibility(View.GONE);
+                layoutInProgress.setVisibility(View.GONE);
+                layoutOk.setVisibility(View.GONE);
+                txtNoMantenimiento.setVisibility(View.VISIBLE);
+            });
+        }
         MainActivity.mantenimientoStatus = MantenimientoStatus.NoMantenimiento;
     }
 
@@ -141,11 +152,12 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
     public void resultadoMantenimiento(String[] values) {
 
         int indexData = 0;
+        int noHacerNada;
 
         // leer datos
         errorTemp = Integer.parseInt(values[indexData++]);
         errorHumAmb = Integer.parseInt(values[indexData++]);
-        errorHumSuelo = Integer.parseInt(values[indexData++]);
+        noHacerNada = Integer.parseInt(values[indexData++]);
         errorLdr1 = Integer.parseInt(values[indexData++]);
         errorLdr2 = Integer.parseInt(values[indexData]);
 
@@ -155,9 +167,6 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
             noHayError = false;
         }
         if(errorHumAmb == 0) {
-            noHayError = false;
-        }
-        if(errorHumSuelo == 0) {
             noHayError = false;
         }
         if(errorLdr1 == 0) {
@@ -173,29 +182,31 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
         }
 
         boolean finalNoHayError = noHayError;
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            if (errorTemp == 0) {
-                txtTemp.setVisibility(View.VISIBLE);
-            }
-            if (errorHumAmb == 0) {
-                txtHumAmb.setVisibility(View.VISIBLE);
-            }
-            if (errorHumSuelo == 0) {
-                txtHumSuelo.setVisibility(View.VISIBLE);
-            }
-            if (errorLdr1 == 0) {
-                txtLdr1.setVisibility(View.VISIBLE);
-            }
-            if (errorLdr2 == 0) {
-                txtLdr2.setVisibility(View.VISIBLE);
-            }
-            if (finalNoHayError) {
-                layoutOk.setVisibility(View.VISIBLE);
-            } else {
-                layoutError.setVisibility(View.VISIBLE);
-            }
-            layoutInProgress.setVisibility(View.GONE);
-        });
+        if(isVisible()) {
+            Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
+                if (errorTemp == 0) {
+                    txtTemp.setVisibility(View.VISIBLE);
+                }
+                if (errorHumAmb == 0) {
+                    txtHumAmb.setVisibility(View.VISIBLE);
+                }
+                if (errorLdr1 == 0) {
+                    txtLdr1.setVisibility(View.VISIBLE);
+                }
+                if (errorLdr2 == 0) {
+                    txtLdr2.setVisibility(View.VISIBLE);
+                }
+                if (finalNoHayError) {
+                    layoutOk.setVisibility(View.VISIBLE);
+                    layoutError.setVisibility(View.GONE);
+                } else {
+                    layoutOk.setVisibility(View.GONE);
+                    layoutError.setVisibility(View.VISIBLE);
+                }
+                layoutInProgress.setVisibility(View.GONE);
+                txtNoMantenimiento.setVisibility(View.GONE);
+            });
+        }
 
     }
 
@@ -203,11 +214,6 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
 
     @Override
     public void conexion(String[] values) {
-        MainActivity.mantenimientoStatus = MantenimientoStatus.InProgress;
-        Objects.requireNonNull(getActivity()).runOnUiThread(() -> {
-            layoutInProgress.setVisibility(View.VISIBLE);
-            txtNoMantenimiento.setVisibility(View.GONE);
-        });
     }
 
     @Override
@@ -241,6 +247,11 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
     }
 
     @Override
+    public void resultadoCensoAutomatico(String[] values) {
+
+    }
+
+    @Override
     public void resultadoDetenerRiego(boolean ok) {
 
     }
@@ -249,4 +260,5 @@ public class TabMantenimientoFragment extends Fragment implements IFragment {
     public void showErrorRiegoManual() {
 
     }
+
 }

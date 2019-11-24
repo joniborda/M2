@@ -17,7 +17,7 @@
     <string name="luz">On/Off - Modo manual de la luz</string>
     <string name="modo_luz">Modo automático de la luz</string>
     <string name="image_desconnected">image desconnected</string>
-    <string name="state_zona">Estado actual: </string>
+    <string name="state_zona">Estado: </string>
     <string name="ult_riego">Último Riego</string>
     <string name="intensidad">Intensidad (%): </string>
     <string name="duracion">Duración (ms): </string>

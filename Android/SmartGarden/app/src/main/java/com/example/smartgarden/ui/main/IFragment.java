@@ -23,5 +23,7 @@ public interface IFragment {
 
     void resultadoCenso(String[] values);
 
+    void resultadoCensoAutomatico(String[] values);
+
     void resultadoMantenimiento(String[] values);
 }

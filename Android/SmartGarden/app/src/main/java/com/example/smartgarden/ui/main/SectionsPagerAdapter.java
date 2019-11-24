@@ -1,6 +1,8 @@
 package com.example.smartgarden.ui.main;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Handler;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -9,7 +11,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
+import com.example.smartgarden.MainActivity;
 import com.example.smartgarden.R;
+import com.example.smartgarden.logic.ArduinoStatus;
 
 import java.util.ArrayList;
 
@@ -26,11 +30,19 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     private TabConfiguracionFragment config;
     private TabMantenimientoFragment mantenimiento;
 
+    @SuppressLint("HandlerLeak")
     public SectionsPagerAdapter(Context context, FragmentManager fm) {
         super(fm);
         mContext = context;
+        Handler handler = new Handler() {
+            public void handleMessage(android.os.Message msg) {
+                if (msg.what == 0) {
+                    mantenimiento.iniciarMantenimiento();
+                }
+            }
+        };
         home = new TabHomeFragment();
-        config = new TabConfiguracionFragment();
+        config = new TabConfiguracionFragment(handler);
         mantenimiento = new TabMantenimientoFragment();
     }
 
@@ -55,11 +67,6 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         return fragment;
     }
 
-    @Override
-    public int getItemPosition(Object object) {
-        // POSITION_NONE makes it possible to reload the PagerAdapter
-        return POSITION_NONE;
-    }
 
     @Nullable
     @Override

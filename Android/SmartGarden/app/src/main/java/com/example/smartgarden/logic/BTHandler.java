@@ -3,6 +3,7 @@ package com.example.smartgarden.logic;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.os.MessageQueue;
 
 import com.example.smartgarden.MainActivity;
 
@@ -28,7 +29,9 @@ public class BTHandler {
     private BluetoothAdapter btAdapter;
     private BluetoothSocket btSocket = null;
 
-    private ConnectedThread myConexionBT;
+    private ReceiveMessagesThread myReceiveMessagesThread;
+    private SendMessagesThread mySendMessagesThread;
+
     // Identificador unico de servicio - SPP UUID
     private static final UUID BTMODULEUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
@@ -36,7 +39,6 @@ public class BTHandler {
 
     public boolean connect() {
         String MAC_ADRESS_JONI = "20:16:04:18:17:73";
-
         BluetoothDevice device = btAdapter.getRemoteDevice(MAC_ADRESS_JONI);
 
         try {
@@ -66,15 +68,21 @@ public class BTHandler {
             return false;
         }
 
-        myConexionBT = new ConnectedThread(inStream, outStream);
-        myConexionBT.start();
-                sendMsg(new Message(Command.CONEXION));
+        myReceiveMessagesThread = new ReceiveMessagesThread(inStream);
+        myReceiveMessagesThread.start();
+        mySendMessagesThread = new SendMessagesThread(outStream);
+        mySendMessagesThread.start();
+        sendMsg(new Message(Command.CONEXION));
 
         return true;
     }
 
-    public void desconnect() throws IOException {
+    public void sendDesconnect() {
         sendMsg(new Message(Command.DESCONEXION));
+        //btSocket.close();
+    }
+
+    public void desconnect() throws IOException {
         btSocket.close();
     }
 
@@ -83,20 +91,17 @@ public class BTHandler {
     }
 
     public void sendMsg(Message msg) {
-        myConexionBT.write(msg.toString());
+        mySendMessagesThread.write(msg.toString());
     }
 
-    //Crea la clase que permite crear el evento de conexion
-    public class ConnectedThread extends Thread
+    public class ReceiveMessagesThread extends Thread
     {
 
         private InputStream mmInStream;
-        private OutputStream mmOutStream;
 
-        ConnectedThread(InputStream inStream, OutputStream outStream)
+        ReceiveMessagesThread(InputStream inputStream)
         {
-            mmInStream = inStream;
-            mmOutStream = outStream;
+            mmInStream = inputStream;
         }
 
         public void run()
@@ -120,7 +125,7 @@ public class BTHandler {
                 while ((r = buffer.read()) != -1) {
                     char c = (char) r;
 
-                    if (c == '>'){
+                    if (c == '\n'){
                         sb.append(c);
                         break;
                     }
@@ -134,13 +139,35 @@ public class BTHandler {
             return sb.toString();
         }
 
+    }
+
+    public class SendMessagesThread extends Thread {
+        private OutputStream mmOutStream;
+        private String input;
+
+
+        public SendMessagesThread(OutputStream outputStream){
+            mmOutStream = outputStream;
+            input = null;
+        }
+
+        public void run() {
+            while(true) {
+                if (input != null) {
+                    try {
+                        mmOutStream.write(input.getBytes());
+                        input = null;
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+        }
+
         //Envio de trama
         void write(String input)
         {
-            try {
-                mmOutStream.write(input.getBytes());
-            }
-            catch (IOException ignored){}
+            this.input = input;
         }
+
     }
 }

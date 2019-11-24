@@ -5,27 +5,20 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.smartgarden.logic.ArduinoStatus;
 import com.example.smartgarden.logic.BTHandler;
-import com.example.smartgarden.logic.Command;
 import com.example.smartgarden.logic.DBHelper;
 import com.example.smartgarden.logic.HandlerMessage;
 import com.example.smartgarden.logic.MantenimientoStatus;
-import com.example.smartgarden.logic.Message;
-import com.example.smartgarden.logic.RiegoStandard;
-import com.example.smartgarden.logic.SensorEventHandler;
-import com.example.smartgarden.ui.main.IFragment;
-import com.example.smartgarden.ui.main.TabConfiguracionFragment;
-import com.example.smartgarden.ui.main.TabMantenimientoFragment;
+import com.example.smartgarden.logic.MySensorEventListener;
 import com.google.android.material.tabs.TabLayout;
 
 import androidx.annotation.Nullable;
@@ -34,7 +27,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.smartgarden.ui.main.SectionsPagerAdapter;
 
-import java.io.IOException;
 import java.util.Objects;
 
 @SuppressLint("Registered")
@@ -46,18 +38,15 @@ public class MainActivity extends AppCompatActivity {
     public static Handler bluetoothIN;
     public static DBHelper dbHelper;
     public static MantenimientoStatus mantenimientoStatus;
-    private StringBuilder dataStringIN;
 
     // Sensores
     private SensorManager sensorManager;
+    private HandlerThread mSensorThread;
+    private Handler mSensorHandler;
+    private MySensorEventListener mySensorEventListener;
 
-    ///Variables para Shake
-    private float acelVal; // valor actual de la aceleracion y gravedad
-    private float acelLast; // ultimo valor de la aceleracion y gravedad
-    private float shake; // diferencia de valor entre aceleracion y gravedad
 
     public static ArduinoStatus arduinoStatus = ArduinoStatus.Desconnected; // 0 no, 1 si, 2 estableciendo conexion
-
 
     @SuppressLint("HandlerLeak")
     @Override
@@ -74,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         tabs.setupWithViewPager(viewPager);
         populateviewPager();
 
-        bluetoothIN = new HandlerMessage(sectionsPagerAdapter.getItems());
+        bluetoothIN = new HandlerMessage(sectionsPagerAdapter.getItems(), this);
 
         dbHelper = new DBHelper(this);
 
@@ -83,13 +72,15 @@ public class MainActivity extends AppCompatActivity {
         Sensor sensorShake = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         Sensor sensorProx = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
 
-        //Asigno listeners a sensores
-        sensorManager.registerListener(sensorChangedEventListener, sensorShake, SensorManager.SENSOR_DELAY_GAME);
-        sensorManager.registerListener(sensorChangedEventListener, sensorProx, SensorManager.SENSOR_DELAY_GAME);
+        mySensorEventListener = new MySensorEventListener(this);
 
-        acelVal = SensorManager.GRAVITY_EARTH;
-        acelLast = SensorManager.GRAVITY_EARTH;
-        shake = 0.00f;
+        mSensorThread = new HandlerThread("Sensor thread", Thread.MAX_PRIORITY);
+        mSensorThread.start();
+        mSensorHandler = new Handler(mSensorThread.getLooper()); //Blocks until looper is prepared, which is fairly quick
+
+        //Asigno listeners a sensores
+        sensorManager.registerListener(mySensorEventListener, sensorShake, SensorManager.SENSOR_DELAY_GAME, mSensorHandler);
+        sensorManager.registerListener(mySensorEventListener, sensorProx, SensorManager.SENSOR_DELAY_GAME, mSensorHandler);
 
         btnConnect = findViewById(R.id.btn_connect);
         btnConnect.setOnClickListener(new View.OnClickListener() {
@@ -112,46 +103,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void desconnect() {
-        try {
-            BTHandler.getInstance().desconnect();
-        } catch (IOException ignored) {
-        }
-        setArduinoStatus(ArduinoStatus.Desconnected);
+        BTHandler.getInstance().sendDesconnect();
     }
-
-    SensorEventListener sensorChangedEventListener
-            = new SensorEventListener() {
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-            // TODO Auto-generated method stub
-        }
-
-        @Override
-        public void onSensorChanged(SensorEvent event) {
-            switch (event.sensor.getType()) {
-                case Sensor.TYPE_PROXIMITY:
-                    if(SensorEventHandler.eventProx(event)) {
-                        // Detected something nearby
-                        if (getArduinoStatus() == ArduinoStatus.Connected) {
-                            BTHandler.getInstance().sendMsg(new Message(Command.DETENER_RIEGO));
-                        } else if(getArduinoStatus() == ArduinoStatus.Desconnected){
-                            showToast("Debe iniciar una conexión con SmartGarden", Toast.LENGTH_LONG);
-                        }
-                    }
-                    break;
-                case Sensor.TYPE_ACCELEROMETER:
-                    if(SensorEventHandler.eventAcceletometer(event, acelLast, acelVal, shake)) {
-                        if (getArduinoStatus() == ArduinoStatus.Connected) {
-                            RiegoStandard riego = MainActivity.dbHelper.getRiegoStandard();
-                            BTHandler.getInstance().sendMsg(new Message(Command.INICIAR_RIEGO, riego));
-                        } else if (getArduinoStatus() == ArduinoStatus.Desconnected) {
-                            showToast("Debe iniciar una conexión con SmartGarden", Toast.LENGTH_LONG);
-                        }
-                    }
-                    break;
-            }
-        }
-    };
 
     public void showToast(String message, int length) {
         Toast.makeText(this, message, length).show();
@@ -179,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
                 //llama al metodo conectar de la clase bluetooh, si se conecta setea el flag de modo de trabajo arduino
                 if (BTHandler.getInstance().connect()) {
                     conectionAttempts = 3;
-                    setArduinoStatus(ArduinoStatus.Connected);
+                    //setArduinoStatus(ArduinoStatus.Connected);
                     runOnUiThread(new Runnable(){
                         public void run() {
                             btnConnect.setEnabled(true);
@@ -222,10 +175,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        sensorManager.unregisterListener(sensorChangedEventListener);
+        sensorManager.unregisterListener(mySensorEventListener);
+        mSensorThread.quitSafely();
         if (getArduinoStatus() == ArduinoStatus.Connected) {
             desconnect();
         }
+    }
+
+    public void showErrorDesconexion() {
+        showToast("Se ha detectado una inesperada desconexión. Se cerrará la aplicación. Vuelva a intentar más tarde", Toast.LENGTH_LONG);
+        new Handler().postDelayed(new Runnable(){
+            @Override
+            public void run(){
+                finish();
+            };
+        }, 3000);
     }
 
     public void setArduinoStatus(ArduinoStatus arduinoStatus) {

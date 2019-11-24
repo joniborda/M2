@@ -113,8 +113,8 @@ public class DBHelper extends SQLiteOpenHelper {
         );
 
         if(c.moveToNext()){
-            String intensidad = c.getString(c.getColumnIndex(DataBaseContract.RiegoStandardEntry.DURATION_STANDARD));
-            String duracion = c.getString(c.getColumnIndex(DataBaseContract.RiegoStandardEntry.INTENSITY_STANDARD));
+            String duracion = c.getString(c.getColumnIndex(DataBaseContract.RiegoStandardEntry.DURATION_STANDARD));
+            String intensidad = c.getString(c.getColumnIndex(DataBaseContract.RiegoStandardEntry.INTENSITY_STANDARD));
             riegoStandard = new RiegoStandard(intensidad, duracion);
         }
 

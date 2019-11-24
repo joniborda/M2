@@ -88,6 +88,8 @@ public class ZonaAdapter extends RecyclerView.Adapter<ZonaAdapter.ViewHolder> {
     public void onBindViewHolder(ZonaAdapter.ViewHolder viewHolder, int position) {
         // Get the data model based on position
         Zona zona = mZonas.get(position);
+        float humSueloFormatedo;
+        float luzAmbFormateada;
 
         // Set item views based on your views and data model
 
@@ -105,17 +107,19 @@ public class ZonaAdapter extends RecyclerView.Adapter<ZonaAdapter.ViewHolder> {
 
         txt_zona.setText(zona.getStringFromNroZona());
         txt_state_zona.setText(zona.getEstado());
-        txt_hum_amb.setText(String.format("%.2f",zona.getHumAmb()));
-        txt_temp_amb.setText(String.format("%.2f",zona.getTempAmb()));
-        txt_hum_suelo.setText(String.format("%.2f",zona.getHumSuelo()));
-        txt_int_luz.setText(String.format("%.2f",zona.getLuzAmb()));
+        txt_hum_amb.setText(String.format("%.2f",zona.getHumAmb()) + " %");
+        txt_temp_amb.setText(String.format("%.0f",zona.getTempAmb()) + " ºC");
+        humSueloFormatedo = (1 - (zona.getHumSuelo() / 1023 )) * 100;
+        txt_hum_suelo.setText(String.format("%.2f", humSueloFormatedo) + " %");
+        luzAmbFormateada = (1 - (zona.getLuzAmb() / 1023 )) * 100;
+        txt_int_luz.setText(String.format("%.2f",luzAmbFormateada) + " %");
         txt_int_riego.setText(String.valueOf(zona.getRiego().getIntensidad()));
         txt_duracion.setText(String.valueOf(zona.getRiego().getDuracion()));
-        txt_hum_suelo_riego.setText(String.valueOf(zona.getRiego().getHumSueloResultado()));
+        humSueloFormatedo = (1 - (zona.getRiego().getHumSueloResultado() / 1023 )) * 100;
+        txt_hum_suelo_riego.setText(String.format("%.2f", humSueloFormatedo) + " %");
 
-        switch_luz.setChecked(false);
-        switch_modo_luz.setChecked(true);
-
+        switch_luz.setChecked(zona.isLuzPrendida());
+        switch_modo_luz.setChecked(zona.isLuzAutomatica());
 
         switch_modo_luz.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -143,22 +147,28 @@ public class ZonaAdapter extends RecyclerView.Adapter<ZonaAdapter.ViewHolder> {
     }
 
     private void switchLuzEventListener(boolean isOn, int position) {
+        Zona zona = mZonas.get(position);
         if(isOn) {
             // mandar a encender la luz
-            Command cmd = mZonas.get(position).getNroZona() == 1 ? Command.ENCENDER_LUZ_1 : Command.ENCENDER_LUZ_2;
+            Command cmd = zona.getNroZona() == 1 ? Command.ENCENDER_LUZ_1 : Command.ENCENDER_LUZ_2;
             BTHandler.getInstance().sendMsg(new Message(cmd));
+            zona.setLuzAutomatica(false);
+            zona.setLuzPrendida(true);
         } else {
             // mandar a apagar la luz
-            Command cmd = mZonas.get(position).getNroZona() == 1 ? Command.APAGAR_LUZ_1 : Command.APAGAR_LUZ_2;
+            Command cmd = zona.getNroZona() == 1 ? Command.APAGAR_LUZ_1 : Command.APAGAR_LUZ_2;
             BTHandler.getInstance().sendMsg(new Message(cmd));
+            zona.setLuzPrendida(false);
         }
     }
 
     private void switchModoLuzEventListener(boolean isModoAutomatico, int position) {
+        Zona zona = mZonas.get(position);
         if(isModoAutomatico) {
             // mandar instruccion modo automatico
-            Command cmd = mZonas.get(position).getNroZona() == 1 ? Command.AUTO_LUZ_1 : Command.AUTO_LUZ_2;
+            Command cmd = zona.getNroZona() == 1 ? Command.AUTO_LUZ_1 : Command.AUTO_LUZ_2;
             BTHandler.getInstance().sendMsg(new Message(cmd));
+            zona.setLuzAutomatica(true);
         }
     }
 
