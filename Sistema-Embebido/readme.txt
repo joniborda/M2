@@ -9,3 +9,8 @@ PROBLEMAS
 
 PROBAR
 
+APP
+
+-Falta agregar un sensor nuevo para la aplicacion
+-Buscar icono de app
+-Manifest que es action
