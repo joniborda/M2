@@ -64,4 +64,7 @@
         <item name="android:paddingTop">3dp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
+    <style name="MyCustomTabText" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">11sp</item>
+    </style>
 </resources>
