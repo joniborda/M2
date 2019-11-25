@@ -4,13 +4,16 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.widget.Toast;
 
 import com.example.smartgarden.MainActivity;
 
+import android.os.Handler;
+import android.widget.Toast;
+
 public class MySensorEventListener implements SensorEventListener {
 
-    MainActivity main;
+    private MainActivity main;
+    private Handler handler;
     private int intentosToStop;
     
     ///Variables para Shake
@@ -18,15 +21,16 @@ public class MySensorEventListener implements SensorEventListener {
     private float acelLast; // ultimo valor de la aceleracion y gravedad
     private float shake; // diferencia de valor entre aceleracion y gravedad
 
-    public MySensorEventListener(MainActivity main) {
+    public MySensorEventListener(MainActivity main, Handler handler) {
         this.main = main;
         intentosToStop = 0;
         acelVal = SensorManager.GRAVITY_EARTH;
         acelLast = SensorManager.GRAVITY_EARTH;
         shake = 0.00f;
+        this.handler = handler;
     }
 
-    public static boolean eventAcceletometer(SensorEvent event, float acelLast, float acelVal, float shake) {
+    private boolean eventAcceletometer(SensorEvent event) {
         float x = event.values[0];
         float y = event.values[1];
         float z = event.values[2];
@@ -39,8 +43,13 @@ public class MySensorEventListener implements SensorEventListener {
         return shake > 12;
     }
 
-    public static boolean eventProx(SensorEvent event) {
+    private boolean eventProx(SensorEvent event) {
         return event.values[0] < event.sensor.getMaximumRange();
+    }
+
+    private boolean eventLuz(SensorEvent event) {
+        // No hay luz
+        return event.values[0] < 5;
     }
 
     @Override
@@ -52,7 +61,7 @@ public class MySensorEventListener implements SensorEventListener {
     public void onSensorChanged(SensorEvent event) {
         switch (event.sensor.getType()) {
             case Sensor.TYPE_PROXIMITY:
-                if(MySensorEventListener.eventProx(event)) {
+                if(eventProx(event)) {
                     // Detected something nearby
                     if (main.getArduinoStatus() == ArduinoStatus.Connected) {
                         intentosToStop++;
@@ -61,21 +70,27 @@ public class MySensorEventListener implements SensorEventListener {
                         } else if(intentosToStop > 10) {
                             intentosToStop = 0;
                         }
-                    } else if(main.getArduinoStatus() == ArduinoStatus.Desconnected){
-                        main.showToast("Debe iniciar una conexión con SmartGarden", Toast.LENGTH_LONG);
                     }
                 }
                 break;
             case Sensor.TYPE_ACCELEROMETER:
-                if(MySensorEventListener.eventAcceletometer(event, acelLast, acelVal, shake)) {
+                if(eventAcceletometer(event)) {
                     if (main.getArduinoStatus() == ArduinoStatus.Connected) {
                         RiegoStandard riego = MainActivity.dbHelper.getRiegoStandard();
                         BTHandler.getInstance().sendMsg(new Message(Command.INICIAR_RIEGO, riego));
-                    } else if (main.getArduinoStatus() == ArduinoStatus.Desconnected) {
-                        main.showToast("Debe iniciar una conexión con SmartGarden", Toast.LENGTH_LONG);
+                        main.showToast("Riego iniciado", Toast.LENGTH_LONG);
                     }
                 }
                 break;
+            case Sensor.TYPE_LIGHT:
+                if(eventLuz(event)) {
+                    if (main.getArduinoStatus() == ArduinoStatus.Connected &&
+                            MainActivity.mantenimientoStatus != MantenimientoStatus.InProgress) {
+                        handler.obtainMessage(0, -1, -1, null).sendToTarget();
+                        main.showToast("Mantenimiento iniciado", Toast.LENGTH_LONG);
+                    }
+
+                }
         }
     }
 }

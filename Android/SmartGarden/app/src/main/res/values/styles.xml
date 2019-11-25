@@ -43,7 +43,7 @@
     <style name="StyleDatosArduino">
         <item name="android:fontFamily">casual</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:paddingTop">3dp</item>
         <item name="android:textColor">@android:color/black</item>
     </style>

@@ -1,6 +1,7 @@
 package com.example.smartgarden.ui.main;
 
 public interface IFragment {
+
     void conexion(String[] values);
 
     void desconexion();

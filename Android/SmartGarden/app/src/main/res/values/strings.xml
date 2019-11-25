@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">SmartGarden</string>
-    <string name="tab_home">Home</string>
-    <string name="tab_configuracion">Settings</string>
+    <string name="tab_home">Inicio</string>
+    <string name="tab_configuracion">Configuración</string>
     <string name="tab_mantenimiento">Mantenimiento</string>
     <string name="image_logo">Image Logo</string>
     <string name="name_app_logo_1">Smart</string>

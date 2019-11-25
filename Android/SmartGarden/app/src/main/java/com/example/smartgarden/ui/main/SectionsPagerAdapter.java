@@ -11,9 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
-import com.example.smartgarden.MainActivity;
 import com.example.smartgarden.R;
-import com.example.smartgarden.logic.ArduinoStatus;
 
 import java.util.ArrayList;
 
@@ -26,6 +24,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     @StringRes
     private static final int[] TAB_TITLES = new int[] {R.string.tab_home, R.string.tab_configuracion, R.string.tab_mantenimiento };
     private final Context mContext;
+    private Handler handler;
     private TabHomeFragment home;
     private TabConfiguracionFragment config;
     private TabMantenimientoFragment mantenimiento;
@@ -34,7 +33,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     public SectionsPagerAdapter(Context context, FragmentManager fm) {
         super(fm);
         mContext = context;
-        Handler handler = new Handler() {
+        handler = new Handler() {
             public void handleMessage(android.os.Message msg) {
                 if (msg.what == 0) {
                     mantenimiento.iniciarMantenimiento();
@@ -44,6 +43,10 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         home = new TabHomeFragment();
         config = new TabConfiguracionFragment(handler);
         mantenimiento = new TabMantenimientoFragment();
+    }
+
+    public Handler getHandler() {
+        return handler;
     }
 
     @NonNull

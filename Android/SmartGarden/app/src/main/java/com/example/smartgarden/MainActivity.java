@@ -27,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.smartgarden.ui.main.SectionsPagerAdapter;
 
+import java.io.IOException;
 import java.util.Objects;
 
 @SuppressLint("Registered")
@@ -44,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
     private HandlerThread mSensorThread;
     private Handler mSensorHandler;
     private MySensorEventListener mySensorEventListener;
-
 
     public static ArduinoStatus arduinoStatus = ArduinoStatus.Desconnected; // 0 no, 1 si, 2 estableciendo conexion
 
@@ -71,16 +71,18 @@ public class MainActivity extends AppCompatActivity {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         Sensor sensorShake = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         Sensor sensorProx = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        Sensor sensorLight = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
-        mySensorEventListener = new MySensorEventListener(this);
+        mySensorEventListener = new MySensorEventListener(this, sectionsPagerAdapter.getHandler());
 
         mSensorThread = new HandlerThread("Sensor thread", Thread.MAX_PRIORITY);
         mSensorThread.start();
         mSensorHandler = new Handler(mSensorThread.getLooper()); //Blocks until looper is prepared, which is fairly quick
 
         //Asigno listeners a sensores
-        sensorManager.registerListener(mySensorEventListener, sensorShake, SensorManager.SENSOR_DELAY_GAME, mSensorHandler);
-        sensorManager.registerListener(mySensorEventListener, sensorProx, SensorManager.SENSOR_DELAY_GAME, mSensorHandler);
+        sensorManager.registerListener(mySensorEventListener, sensorShake, SensorManager.SENSOR_DELAY_NORMAL, mSensorHandler);
+        sensorManager.registerListener(mySensorEventListener, sensorProx, SensorManager.SENSOR_DELAY_NORMAL, mSensorHandler);
+        sensorManager.registerListener(mySensorEventListener, sensorLight, SensorManager.SENSOR_DELAY_NORMAL, mSensorHandler);
 
         btnConnect = findViewById(R.id.btn_connect);
         btnConnect.setOnClickListener(new View.OnClickListener() {
@@ -178,18 +180,11 @@ public class MainActivity extends AppCompatActivity {
         sensorManager.unregisterListener(mySensorEventListener);
         mSensorThread.quitSafely();
         if (getArduinoStatus() == ArduinoStatus.Connected) {
-            desconnect();
+            try {
+                BTHandler.getInstance().desconnect();
+            } catch (IOException ignored) {
+            }
         }
-    }
-
-    public void showErrorDesconexion() {
-        showToast("Se ha detectado una inesperada desconexión. Se cerrará la aplicación. Vuelva a intentar más tarde", Toast.LENGTH_LONG);
-        new Handler().postDelayed(new Runnable(){
-            @Override
-            public void run(){
-                finish();
-            };
-        }, 3000);
     }
 
     public void setArduinoStatus(ArduinoStatus arduinoStatus) {

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum Command {
+
     // ENVIO Y RECIBO
     CONEXION(19),
     DESCONEXION(27),

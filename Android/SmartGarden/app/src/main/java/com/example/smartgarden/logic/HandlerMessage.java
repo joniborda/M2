@@ -24,12 +24,9 @@ public class  HandlerMessage extends Handler {
         if(msg.what == BTHandler.handlerState){
             String readMessage = (String) msg.obj;
             dataStringIN.append(readMessage);
-            System.out.println("Mensaje: "+dataStringIN);
             if(dataStringIN.charAt(0) == '<') {
-                System.out.println("Entre por <");
                 int endOfLineIndex = dataStringIN.indexOf(">");
                 if (endOfLineIndex > 0) {
-                    System.out.println("Entre por >");
                     int firstCommaIndex = dataStringIN.indexOf(",");
                     Command command;
                     String [] values = new String[0];
@@ -140,7 +137,6 @@ public class  HandlerMessage extends Handler {
                             }
                             break;
                         default:
-                            System.out.println("Instruccion recibida: " + command.toString());
                             break;
                     }
                 }

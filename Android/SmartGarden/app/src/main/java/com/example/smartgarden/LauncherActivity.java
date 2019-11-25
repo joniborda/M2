@@ -32,7 +32,6 @@ public class LauncherActivity extends AppCompatActivity {
             String[] PERMISSIONS = {Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADMIN,
             };
-
             if (!hasPermissions(mContext, PERMISSIONS)) {
                 ActivityCompat.requestPermissions((Activity) mContext, PERMISSIONS, REQUEST );
             } else {
