@@ -1,7 +1,7 @@
 #include <SD.h>
 #include <SoftwareSerial.h>
 
-#define DEBUG // Comentar para no hacer debug
+//#define DEBUG // Comentar para no hacer debug
 
 #ifdef DEBUG
  #define DEBUG_PRINT(x) Serial.println(x)
@@ -142,11 +142,11 @@ void loop() {
       break;
     }
     case M_INICIO_ARDUINO_OK: {
-      DEBUG_PRINT("Arduino esclavo iniciado correctamente");
+      DEBUG_PRINT("ARDUINO ESCLAVO INICIADO CORRECTAMENTE");
       break;
     }
     case M_INICIO_CENSO: {
-      DEBUG_PRINT("Arduino esclavo censando...");
+      DEBUG_PRINT("ARDUINO ESCLAVO CENSANDO...");
       break;
     }
     default: {

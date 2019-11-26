@@ -2,7 +2,7 @@
 #include <DHT_U.h>
 #include <DHT.h>
 
-#define DEBUG  // Comentar para no hacer debug
+//#define DEBUG  // Comentar para no hacer debug
 
 #ifdef DEBUG
  #define DEBUG_PRINT(x) Serial.println(x)
