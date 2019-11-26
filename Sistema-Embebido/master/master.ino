@@ -28,8 +28,8 @@
 
 #define PRIORIDAD_TEMP            0.05
 #define PRIORIDAD_HUM_AMB         0.05
-#define PRIORIDAD_HUM_SUELO       0.35
-#define PRIORIDAD_LUZ             0.55
+#define PRIORIDAD_HUM_SUELO       0.45
+#define PRIORIDAD_LUZ             0.45
 #define MAX_TEMP                  50
 #define MAX_HUMEDAD_SUELO         1023
 #define MAX_LUZ                   1023
@@ -112,7 +112,7 @@ void loop() {
           float varZona1 = obtenerVariableRiego("V1.TXT");
           float vol1 = calcularVolumenRiego(valoresRecibidos[3], varZona1);
           String ret = "";
-          ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ",10000>";
+          ret = ret + "<" + INST_RIEGO_Z1 + "," + vol1 + ",15000>";
           serialSlave.print(ret);
         }
 
@@ -121,7 +121,7 @@ void loop() {
           float varZona2 = obtenerVariableRiego("V2.TXT");
           float vol2 = calcularVolumenRiego(valoresRecibidos[7], varZona2);
           String ret = "";
-          ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ",10000>";
+          ret = ret + "<" + INST_RIEGO_Z2 + "," + vol2 + ",15000>";
           serialSlave.print(ret);
         }
         // Guardo los valores para el determinar el riego
@@ -282,11 +282,11 @@ int determinarRiegoEnZona(float perEfectividad, int luzActual, int humedadActual
     return 0;
   }
 
-  if (perEfectividad > 70.00) {
+  if (perEfectividad > 80.00) {
     DEBUG_PRINT("PER_EFE_MUY_ALTO");
     return 1;
   }
-  else if (perEfectividad > 50.00) {
+  else if (perEfectividad > 65.00) {
     float varLuz = ((float)(luzActual - luzAnterior) / (float)luzAnterior);
     if (varLuz < 0) {
       DEBUG_PRINT("L_DESC"); //La luz se encuentra en descenso
@@ -300,7 +300,7 @@ int determinarRiegoEnZona(float perEfectividad, int luzActual, int humedadActual
     float varHum =  ((float)(humedadActual - humedadAnterior) / (float)humedadAnterior);
     if (varHum < 0) {
       DEBUG_PRINT("H_DESC"); //La humedad se encuentra en descenso
-    } else if (varHum < 60.00) {
+    } else if (varHum < 90.00) {
       DEBUG_PRINT("H_EST"); //La humedad se mantiene estable
     } else {
       DEBUG_PRINT("H_ASC"); //La humedad esta en ascenso, no es conveniente regar
@@ -376,13 +376,13 @@ void analizarResultadoRiego(int zona, int humedadSuelo, const char* archivo) {
   ret = ret + "HUMSUELO RESULTANTE: " + humedadSueloZona;
   DEBUG_PRINT(ret);
   float perHumedadSueloZona = (100 - (humedadSueloZona * 100) / 1023);
+  ret = "";
+  ret = ret + "PH_Z" + zona;
+  DEBUG_PRINT(ret); //Porcentaje de humedad resultado del ultimo riego ZONA N
+  ret = "";
+  ret = ret + "%HUMSUELO RESULTANTE: " + perHumedadSueloZona;
+  DEBUG_PRINT(ret);
   if (perHumedadSueloZona < 40 || perHumedadSueloZona > 60) {
-    ret = "";
-    ret = ret + "PH_Z" + zona;
-    DEBUG_PRINT(ret); //Porcentaje de humedad resultado del ultimo riego ZONA N
-    ret = "";
-    ret = ret + "%HUMSUELO RESULTANTE: " + perHumedadSueloZona;
-    DEBUG_PRINT(ret);
     var = obtenerVariableRiego(archivo);
     ret = "";
     ret = ret + "V_PH_Z" + zona;

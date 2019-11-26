@@ -67,7 +67,7 @@
 #define PIN_BOCINA                    13
 
 // INTERVALO PARA ACCION EN MS
-const unsigned long TIEMPO_RES_RIEGO = 10000UL;          // MS Para dar la respuesta de humedad despues de regar
+const unsigned long TIEMPO_RES_RIEGO = 20000UL;          // MS Para dar la respuesta de humedad despues de regar
 const unsigned long TIEMPO_RES_MANTENIMIENTO = 2000UL;  // MS Para dar la respuesta de mantenimiento despues de encender luces
 const unsigned long TIEMPO_INTERMITENCIA = 1000UL;      // MS En el cual prende y apaga la bomba de riego
 const unsigned long TIEMPO_MAX_BUZZER = 250UL;
@@ -161,7 +161,6 @@ void loop() {
     case INST_MANTENIMIENTO: {
       if(!evaluaAccionConjunto()){
         tiempoMantenimiento = millis();
-        
         mantenimientoManualEnCurso = true;
         int valorSensores[] = {INST_MANTENIMIENTO, -1, -1, -1, -1, -1, -1, -1, -1};
         censarZona1(valorSensores);
