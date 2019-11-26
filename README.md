@@ -71,7 +71,9 @@ Proyecto de la materia Sistemas Operativos Avanzados.
 # Firmware:
 ## Diagrama de estados
 En el diagrama se puede observar el estado del dispositivo en un momento dado, y los posibles estados al cual puede pasar. Por estado se debe entender como las diferentes combinaciones de información que la maquina puede mantener.
+
 ![](Sistema-Embebido/diagramas/estado.jpeg)
+
 ## Automatizacion de riego realizada en Arduino 
 La primera parte del proyecto consiste en la automatización de riego que actúa mediante cálculos matemáticos realizados en base a los datos censados para poder determinar el momento ideal para efectuar el riego, generando así una alta eficiencia en dicha actividad y un bajo consumo de agua.
 El proyecto consta de dos plaquetas Arduino uno, implementadas de forma Maestro – Esclavo, en la cual el maestro se encarga pura y exclusivamente en el control del esclavo y también del procesamiento de datos que este arroja. Este procesamiento de datos consiste en diversos cálculos matemáticos para poder, como ya comentamos, encontrar el momento oportuno de riego. En cuanto al esclavo, se encarga de la realización de los sensos correspondientes, el accionar de los actuadores y de la comunicación con el dispositivo bluetooth.
@@ -108,7 +110,9 @@ Para ello debemos seleccionar la opción “Conectarse a SmartGarden”. Mientra
 
 Como podemos observar nuestra pantalla de inicio esta compuesta por tres pestañas, HOME, SETTINGS y MAINTENANCE.
 ## HOME 
-![](Android/imagenes/Home.JPG)
+
+![](Android/imagenes/Home.jpeg)
+
 Nuestra pantalla Home contara con una división en el centro de la pantalla en la que separa las dos zonas que cuenta nuestro jardín. En cada una de ellas podremos observar campos que serán completados en los momentos de finalización de riego o de senseo que constan de los siguientes valores: 
 •	Temperatura Ambiental
 •	Humedad Ambiental
@@ -117,7 +121,8 @@ Nuestra pantalla Home contara con una división en el centro de la pantalla en l
 •	Luz Apagada
 En esta pantalla, vamos a poder interactuar con el sistema de riego de las siguientes formas. Podremos observar el resultado de un riego, viendo la actualización del valor de humedad de suelo y podremos observar el resultado de la rutina de senseo, viendo allí, los valores correspondientes a cada zona.
 ## SETTINGS 
-![](Android/imagenes/settings.JPG)
+![](Android/imagenes/settings.jpeg)
+
 La siguiente pantalla que veremos será donde podremos realizar las mayores interacciones con el dispositivo, nos permitirá no solo consultar datos sino poder ejercer alguna acción frente al jardín. Como se aprecia en la foto, vamos a poder mediante el accionar de los botones específicos, Iniciar riego manual, Detener el riego, Iniciar censo e Iniciar Mantenimiento. Cada una de ellas realizara la acción correspondiente sin afectar a los informes automaticos que realiza por si solo el Arduino. Luego, tendremos la opción de poder alterar los parametros de riego manual, estos son la duración en ms y la intensidad. Por ultimo, tenemos la posibilidad de seleccionar la configuración de tipo de riego entre dos opciones, riego continuo o riego intermitente. 
 Iniciar riego manual -> Al presionar este botón, dará inicio mientras pueda a un riego manual con los parámetros seteados en la misma pantalla de Settings.
 Detener riego -> Al presionar este botón, se finalizara el riego en ese mismo instante. 
@@ -135,10 +140,10 @@ _El mantenimiento se realizo correctamente y no hay fallas en los sensores
 _El mantenimiento se realizo correctamente y presento falla en algún sensor. En este caso, luego del mensaje de detección de error, podremos observar que sensor no esta funcionando correctamente.
 
 
-![](Android/imagenes/Mantenimiento.JPG)
-![](Android/imagenes/MantenimientoK.JPG)
-![](Android/imagenes/Mantenimiento1.JPG)
-![](Android/imagenes/Mantenimiento2.JPG)
+![](Android/imagenes/Mantenimiento.jpeg)
+![](Android/imagenes/MantenimientoK.jpeg)
+![](Android/imagenes/Mantenimiento1.jpeg)
+![](Android/imagenes/Mantenimiento2.jpeg)
 
 
 # Manual de uso:
@@ -189,5 +194,3 @@ _¿Dónde puedo ver los resultados del ultimo riego? : Cuando un riego finaliza,
 _¿Qué sucede si dejo la aplicación en segundo plano?: Cuando la aplicación queda en segundo plano, no afectara en absoluto en la inteligencia del riego. Es decir, si tenia un riego programado para cierto momento en el cual estoy desconectado o en segundo plano, el riego se activara de todas formas. Sin embargo, no podremos comunicarnos con el jardín. Si queremos detener el riego, iniciar censo o realizar el mantenimiento mediante los sensores mientras esta en segundo plano, no tendría efecto en la aplicación, no seria posible. 
 
 _¿Qué sucede si me desconecto, es decir, si cierro la aplicacion? Cuando finalizamos la aplicación, se comunicara al jardín que el dispositivo fue desconectado y continuara funcionando normalmente. No se podrán modificar parámetros, no se podrá realizar censos manualmente y ni tampoco detener el riego sin el dispositivo Android conectado.  Las reacciones de los sensores del dispositivo tienen valor siempre y cuando se este conectado con el Arduino
-
-# Conclusiones
