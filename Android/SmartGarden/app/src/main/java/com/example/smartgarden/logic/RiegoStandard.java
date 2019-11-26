@@ -18,8 +18,8 @@ public class RiegoStandard {
     public String toString() {
         String coma = ",";
         StringBuilder toString = new StringBuilder();
-        toString.append(coma).append(duracion);
         toString.append(coma).append(intensidad);
+        toString.append(coma).append(duracion);
         return toString.toString();
     }
 

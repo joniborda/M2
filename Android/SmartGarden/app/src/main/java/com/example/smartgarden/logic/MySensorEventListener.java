@@ -87,6 +87,7 @@ public class MySensorEventListener implements SensorEventListener {
                     if (main.getArduinoStatus() == ArduinoStatus.Connected &&
                             MainActivity.mantenimientoStatus != MantenimientoStatus.InProgress) {
                         handler.obtainMessage(0, -1, -1, null).sendToTarget();
+                        BTHandler.getInstance().sendMsg(new Message(Command.INICIAR_MANTENIMIENTO));
                         main.showToast("Mantenimiento iniciado", Toast.LENGTH_LONG);
                     }
 
