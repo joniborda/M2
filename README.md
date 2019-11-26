@@ -71,7 +71,7 @@ Proyecto de la materia Sistemas Operativos Avanzados.
 # Firmware:
 ## Diagrama de estados
 En el diagrama se puede observar el estado del dispositivo en un momento dado, y los posibles estados al cual puede pasar. Por estado se debe entender como las diferentes combinaciones de información que la maquina puede mantener.
-![](Sistema-Embebido/diagramas/estado.jpg)
+![](Sistema-Embebido/diagramas/estado.jpeg)
 ## Automatizacion de riego realizada en Arduino 
 La primera parte del proyecto consiste en la automatización de riego que actúa mediante cálculos matemáticos realizados en base a los datos censados para poder determinar el momento ideal para efectuar el riego, generando así una alta eficiencia en dicha actividad y un bajo consumo de agua.
 El proyecto consta de dos plaquetas Arduino uno, implementadas de forma Maestro – Esclavo, en la cual el maestro se encarga pura y exclusivamente en el control del esclavo y también del procesamiento de datos que este arroja. Este procesamiento de datos consiste en diversos cálculos matemáticos para poder, como ya comentamos, encontrar el momento oportuno de riego. En cuanto al esclavo, se encarga de la realización de los sensos correspondientes, el accionar de los actuadores y de la comunicación con el dispositivo bluetooth.
