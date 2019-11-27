@@ -102,7 +102,7 @@ En cuanto al esclavo, realiza las tareas de recopilación y envio de informació
 # Descripción de la Aplicación Android:
 Esta segunda parte del proyecto consiste en una aplicación móvil que nos sirve de ayuda y de complemento para ejecutar, consultar y poner en practica todas funcionalidades de nuestro jardín inteligente. Nos ofrece la posibilidad de poner en actividad a los sensores y actuadores, como también, de consultar un registro histórico de los sucesos recientes. 
 En principio, al iniciar la aplicación veremos una pantalla que contiene tanto el logo como el nombre de nuestra aplicación. 
-![](Android/imagenes/desconectado.JPG)
+![](Android/imagenes/desconectado.jpeg)
 Por unos segundos se podrá observar  y luego nos redireccionara a la pantalla de inicio
 ## Inicio
 Dentro de esta pantalla de inicio se podrá crear una conexión con el Bluetooth del jardín, realizando un emparejamiento directo al componente bluetooth. No es necesario la búsqueda de cientos de dispositivos cuando solo nos interesa uno en este caso. No se puede interactuar estando sin conexión, por ende, lo único que se podrá hacer en este momento es conectarse al dispositivo.
@@ -194,3 +194,7 @@ _¿Dónde puedo ver los resultados del ultimo riego? : Cuando un riego finaliza,
 _¿Qué sucede si dejo la aplicación en segundo plano?: Cuando la aplicación queda en segundo plano, no afectara en absoluto en la inteligencia del riego. Es decir, si tenia un riego programado para cierto momento en el cual estoy desconectado o en segundo plano, el riego se activara de todas formas. Sin embargo, no podremos comunicarnos con el jardín. Si queremos detener el riego, iniciar censo o realizar el mantenimiento mediante los sensores mientras esta en segundo plano, no tendría efecto en la aplicación, no seria posible. 
 
 _¿Qué sucede si me desconecto, es decir, si cierro la aplicacion? Cuando finalizamos la aplicación, se comunicara al jardín que el dispositivo fue desconectado y continuara funcionando normalmente. No se podrán modificar parámetros, no se podrá realizar censos manualmente y ni tampoco detener el riego sin el dispositivo Android conectado.  Las reacciones de los sensores del dispositivo tienen valor siempre y cuando se este conectado con el Arduino
+
+# Conclusiones
+
+_Finalizando el proyecto arduino-android nos encontramos con un cambio notable en nuestra mirada de sistemas. No solo es una experiencia muy buena, que nos ayuda a incorporar conocimientos altamente utilizados hoy en dia en el mercado laboral, sino que causo que la cursada cuatrimestral sea mas llevadera. Es importante destacar la perspectiva adquirida respecto a las tecnologias que gobiernan el negocio IT hoy en dia como lo es por ejemplo IOT. Conseguir llevar adelante un proyecto de sistemas embebidos adquiriendo paralelamente conceptos IOT no es comun y es considerado valores importantes para la epoca actual. El conocer nuevas tecnologias (Android Studio, Arduino IDE) nos abre las puertas a todo el mundo de sistemas embebidos y nos acerca a algo que no estamos permanentemente acostumbrados, como el mundo electronico.
